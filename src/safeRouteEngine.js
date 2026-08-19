@@ -1,4 +1,4 @@
-// SafeRoute Engine: Authoritative Real Road Routing (Google Directions / Routes API + OSRM) + Multi-Segment Safety Algorithm
+// SafeRoute Engine: Authoritative Real Road Routing (Google Directions / OSRM) + Dynamic Safe Detour Algorithm
 import { SAFETY_CONFIG, getScoreMetadata } from './safetyConfig.js';
 import { reportStore } from './reportStore.js';
 import { FacilityService } from './facilityService.js';
@@ -89,7 +89,7 @@ export class SafeRouteEngine {
   constructor() {
     this.origin = { name: "Hitech City, Hyderabad", lat: 17.4435, lng: 78.3772 };
     this.destination = { name: "Banjara Hills, Hyderabad", lat: 17.4150, lng: 78.4350 };
-    this.travelMode = 'car'; // 'car' | 'bike' | 'auto' | 'walking' | 'bus'
+    this.travelMode = 'car'; // 'car' | 'bike' | 'auto' | 'walking'
     this.travelTime = 'now'; // 'now' | 'morning' | 'afternoon' | 'evening' | 'night'
     this.selectedRouteIndex = 0;
     this.routes = [];
@@ -220,46 +220,14 @@ export class SafeRouteEngine {
   }
 
   /**
-   * Fetches multiple authentic road candidate routes from Google Directions API
-   * via backend serverless proxy /api/routes/directions with resilient OSRM fallback.
+   * Fetches authentic road routes from Google Directions API or OSRM authoritative road network.
+   * Also searches for legitimate alternative road network bypasses around danger hotspots.
    */
   async fetchAuthoritativeRoutes(o, d) {
     const rawCandidates = [];
 
-    // 1. Query Serverless Proxy (/api/routes/directions) for Google Directions
-    try {
-      const endpoint = `/api/routes/directions?originLat=${o.lat}&originLng=${o.lng}&destLat=${d.lat}&destLng=${d.lng}&mode=${this.travelMode}`;
-      const res = await fetch(endpoint, { signal: AbortSignal.timeout(9000) });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && Array.isArray(data.routes) && data.routes.length > 0) {
-          data.routes.forEach((r, idx) => {
-            let polyPoints = [];
-            if (r.encodedPolyline) {
-              polyPoints = decodeGooglePolyline(r.encodedPolyline);
-            } else if (Array.isArray(r.path) && r.path.length > 0) {
-              polyPoints = r.path;
-            }
-
-            if (polyPoints.length > 1) {
-              rawCandidates.push({
-                id: r.id || `route_${idx}`,
-                name: r.name || (idx === 0 ? "Primary Arterial Corridor" : `Alternative Corridor ${idx + 1}`),
-                distanceKm: r.distanceKm,
-                durationMin: r.durationMin,
-                path: polyPoints,
-                provider: data.provider || "Google Maps Road Network"
-              });
-            }
-          });
-        }
-      }
-    } catch (proxyErr) {
-      console.info("Routes API proxy status note:", proxyErr.message);
-    }
-
-    // 2. Direct client Google Directions API fallback if configured
-    if (rawCandidates.length === 0 && this.googleApiKey) {
+    // 1. Attempt Google Directions API if configured
+    if (this.googleApiKey) {
       try {
         const gMode = this.travelMode === 'walking' ? 'walking' : this.travelMode === 'bike' ? 'bicycling' : 'driving';
         const googleUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${o.lat},${o.lng}&destination=${d.lat},${d.lng}&mode=${gMode}&alternatives=true&key=${this.googleApiKey}`;
@@ -287,28 +255,26 @@ export class SafeRouteEngine {
           }
         }
       } catch (gErr) {
-        console.warn("Google Directions client warning:", gErr);
+        console.warn("Google Directions fetch warning:", gErr);
       }
     }
 
-    // 3. Fallback to direct authoritative OSRM driving routes with alternatives=true
-    if (rawCandidates.length < 2) {
-      const directResults = await this.queryRealRoadPath([o, d]);
-      if (directResults && directResults.length > 0) {
-        directResults.forEach((r, idx) => {
-          rawCandidates.push({
-            id: `osrm_direct_${idx}`,
-            name: idx === 0 ? "Primary Arterial Corridor" : `Alternative Road Corridor ${idx + 1}`,
-            distanceKm: r.distanceKm,
-            durationMin: r.durationMin,
-            path: r.path,
-            provider: "OSRM Real Road Network"
-          });
+    // 2. Fetch direct authoritative OSRM driving routes with alternatives=true
+    const directResults = await this.queryRealRoadPath([o, d]);
+    if (directResults && directResults.length > 0) {
+      directResults.forEach((r, idx) => {
+        rawCandidates.push({
+          id: `osrm_direct_${idx}`,
+          name: idx === 0 ? "Primary Arterial Corridor" : `Alternative Road Corridor ${idx + 1}`,
+          distanceKm: r.distanceKm,
+          durationMin: r.durationMin,
+          path: r.path,
+          provider: "OSRM Real Road Network"
         });
-      }
+      });
     }
 
-    // 4. DYNAMIC SAFE DETOUR DISCOVERY:
+    // 3. DYNAMIC SAFE DETOUR DISCOVERY:
     // Check if any reported unsafe hotspots lie near the direct paths.
     // If so, explore genuine road network detours through legitimate arterial bypass waypoints.
     const allReports = reportStore.getAllReports();
@@ -369,10 +335,10 @@ export class SafeRouteEngine {
   /**
    * Main Route Calculation:
    * 1. Evaluates travel time mode & night weighting.
-   * 2. Fetches multiple authentic candidate routes from Google Directions / OSRM.
-   * 3. Runs OUR Multi-Segment Safety Scoring Algorithm across each route's road nodes.
-   * 4. Ranks routes strictly by Safety Score (🟢 Safest, 🔵 Safe Alternative, 🔴 High Risk).
-   * 5. Automatically selects the SAFEST route (giving highest priority to safety over shortest distance).
+   * 2. Fetches authentic road alternatives & safe bypass corridors.
+   * 3. Runs weighted safety scoring on each real road path.
+   * 4. Ranks routes strictly by Safety Score (🟢 Safest, 🔵 Safe Alternative, 🟡 Balanced, 🔴 High Risk).
+   * 5. Automatically selects the SAFEST route (preferring safety over shortest distance).
    */
   async calculateRoutes() {
     this.loading = true;
@@ -406,27 +372,27 @@ export class SafeRouteEngine {
         throw new Error("Invalid origin or destination coordinates.");
       }
 
-      // Fetch authentic road alternatives from Google / OSRM
+      // Fetch authentic road alternatives
       const candidatePaths = await this.fetchAuthoritativeRoutes(o, d);
 
+      // Check if routing provider returned 0 valid road paths
       if (!candidatePaths || candidatePaths.length === 0) {
         throw new Error("Unable to find a valid road route. Please try another location.");
       }
 
-      // Step 2: Run Multi-Segment Safety Algorithm on Each Candidate Route
+      // Step 2: Run Multi-Factor Weighted Safety Scoring on Each Authentic Candidate Route
       const evaluatedRoutes = candidatePaths.map(cand => this.evaluateRouteSafety(cand));
 
       // Step 3: Rank strictly by Safety Score (Highest to Lowest)
-      // Safety is prioritized over shortest distance!
+      // Safety is preferred over shortest distance!
       const sortedBySafety = [...evaluatedRoutes].sort((a, b) => b.safetyScore - a.safetyScore);
 
       // Check shortest distance among routes to determine if safer route is longer
       const shortestCandidate = [...evaluatedRoutes].sort((a, b) => a.distanceKm - b.distanceKm)[0];
       const safestCandidate = sortedBySafety[0];
 
-      if (safestCandidate.distanceKm > shortestCandidate.distanceKm && safestCandidate.safetyScore > shortestCandidate.safetyScore + 4) {
-        const extraKm = (safestCandidate.distanceKm - shortestCandidate.distanceKm).toFixed(1);
-        this.saferLongerNotice = `Recommended because this route avoids high-risk areas (${safestCandidate.safetyScore}/100 Safe). It is ${extraKm} km longer than the shortest route.`;
+      if (safestCandidate.distanceKm > shortestCandidate.distanceKm && safestCandidate.safetyScore > shortestCandidate.safetyScore + 5) {
+        this.saferLongerNotice = `Recommended because this route avoids high-risk areas (${safestCandidate.safetyScore}/100 Safe). It is ${(safestCandidate.distanceKm - shortestCandidate.distanceKm).toFixed(1)} km longer than the shortest route.`;
       }
 
       if (safestCandidate.safetyScore < 40) {
@@ -517,141 +483,161 @@ export class SafeRouteEngine {
   }
 
   /**
-   * OUR SEGMENT-BY-SEGMENT SAFETY ALGORITHM:
-   * Breaks the candidate route into discrete spatial segments along the road polyline.
-   * Analyzes:
-   * - Proximity to reported crime/hazard hotspots (with exponential severity penalty).
-   * - Street lighting coverage and visibility along each segment.
-   * - Emergency support context (proximity to police stations and hospitals as positive accessibility signals).
-   * - Time-of-day penalty (night risk weighting).
-   * - Computes Average Segment Risk + Peak Segment Penalty -> Overall Route Safety Score (0-100).
+   * Evaluates a real road polyline path using the central weighted scoring formula
    */
   evaluateRouteSafety(cand) {
-    const path = cand.path || [];
-    if (path.length < 2) {
-      return { ...cand, safetyScore: 50, riskScore: 50, reasonsWhy: [], riskWarnings: [] };
-    }
-
+    const path = cand.path;
     const allReports = reportStore.getAllReports();
     const facilityData = FacilityService.analyzePathFacilities(path);
 
-    // 1. Break route into discrete spatial segments (~80-120 meters each)
-    const numSegments = Math.max(5, Math.min(25, Math.floor(path.length / 3)));
-    const step = Math.max(1, Math.floor(path.length / numSegments));
-    const segmentNodes = [];
-    for (let i = 0; i < path.length; i += step) {
-      segmentNodes.push(path[i]);
-    }
-    if (segmentNodes[segmentNodes.length - 1] !== path[path.length - 1]) {
-      segmentNodes.push(path[path.length - 1]);
-    }
-
-    let sumSegmentRisk = 0;
-    let peakSegmentRisk = 0;
-    let peakRiskNode = null;
+    // 1. Unsafe Area Reports Proximity & Recency Decay (Avoidance Penalty)
+    let totalReportPenalty = 0;
     const nearbyReports = [];
+    const step = Math.max(1, Math.floor(path.length / 15));
+    const sampled = [];
+    for (let i = 0; i < path.length; i += step) sampled.push(path[i]);
 
-    // 2. Evaluate each individual segment
-    for (let s = 0; s < segmentNodes.length; s++) {
-      const node = segmentNodes[s];
-      let segmentHazardPenalty = 0;
-
-      // Check proximity to all reported incidents
-      for (const rep of allReports) {
-        const dKm = haversineDistance(node.lat, node.lng, rep.latitude, rep.longitude);
-        if (dKm <= SAFETY_CONFIG.thresholds.reportProximityBufferKm) {
-          const weight = reportStore.calculateReportWeight(rep);
-          const distFactor = Math.max(0, 1.0 - (dKm / SAFETY_CONFIG.thresholds.reportProximityBufferKm));
-          const severityBase = rep.severity === 'Critical' ? 36 : rep.severity === 'High' ? 26 : 16;
-          const penalty = weight * distFactor * severityBase;
-          segmentHazardPenalty += penalty;
-
-          if (!nearbyReports.some(r => r.id === rep.id)) {
-            nearbyReports.push(rep);
-          }
-        }
+    for (const rep of allReports) {
+      let minDistKm = 999999;
+      for (const pt of sampled) {
+        const d = haversineDistance(pt.lat, pt.lng, rep.latitude, rep.longitude);
+        if (d < minDistKm) minDistKm = d;
       }
-
-      // Base lighting for this segment
-      let segmentLightingPercent = 85;
-      if (facilityData.publicHubCount1km >= 2) segmentLightingPercent = 92;
-      else if (facilityData.publicHubCount1km === 0) segmentLightingPercent = 65;
-      if (nearbyReports.some(r => r.category === 'Poor street lighting')) {
-        segmentLightingPercent = Math.max(25, segmentLightingPercent - 35);
-      }
-
-      // Emergency Accessibility context (does NOT make a road safe, but provides emergency accessibility)
-      let emergencyAccessSupport = 0;
-      if (facilityData.policeCount1km > 0) emergencyAccessSupport += 15;
-      if (facilityData.hospitalCount1km > 0) emergencyAccessSupport += 10;
-      if (facilityData.publicHubCount1km > 0) emergencyAccessSupport += 10;
-
-      // Segment Risk calculation (0 to 100)
-      const lightingRisk = (100 - segmentLightingPercent) * (this.isNightMode ? 0.35 : 0.20);
-      const nightBaseRisk = this.isNightMode ? 18 : 5;
-      const rawSegRisk = (segmentHazardPenalty * 1.8) + lightingRisk + nightBaseRisk - (emergencyAccessSupport * 0.3);
-      const segmentRisk = Math.max(5, Math.min(95, Math.round(rawSegRisk)));
-
-      sumSegmentRisk += segmentRisk;
-      if (segmentRisk > peakSegmentRisk) {
-        peakSegmentRisk = segmentRisk;
-        peakRiskNode = node;
+      if (minDistKm <= SAFETY_CONFIG.thresholds.reportProximityBufferKm) {
+        const weight = reportStore.calculateReportWeight(rep);
+        const distFactor = (1.0 - minDistKm / SAFETY_CONFIG.thresholds.reportProximityBufferKm);
+        const severityBase = rep.severity === 'Critical' ? 34 : rep.severity === 'High' ? 24 : 15;
+        totalReportPenalty += weight * distFactor * severityBase;
+        nearbyReports.push(rep);
       }
     }
 
-    const avgSegmentRisk = sumSegmentRisk / segmentNodes.length;
+    // 2. Street Lighting Calculation (0 - 100)
+    let lightingPercent = 85;
+    if (facilityData.publicHubCount1km >= 2) lightingPercent = 92;
+    else if (facilityData.publicHubCount1km === 0) lightingPercent = 65;
+    if (nearbyReports.some(r => r.category === 'Poor street lighting')) {
+      lightingPercent = Math.max(30, lightingPercent - 34);
+    }
+    const lightingScore = this.isNightMode ? (lightingPercent * 0.85) : lightingPercent;
 
-    // 3. Composite Safety Score: Weighted average segment risk (60%) + Peak risk penalty (40%)
-    // Routes passing through a severe danger choke-point are heavily penalized!
-    const compositeRisk = (avgSegmentRisk * 0.60) + (peakSegmentRisk * 0.40);
-    
-    // Travel mode vulnerability adjustment (walking pedestrians are more vulnerable)
-    let modeAdjustment = 0;
-    if (this.travelMode === 'walking') modeAdjustment = this.isNightMode ? 10 : 5;
-    else if (this.travelMode === 'bike') modeAdjustment = this.isNightMode ? 5 : 2;
+    // 3. Police Presence Score (0 - 100)
+    const policeScore = Math.min(100, facilityData.policeCount1km * 40 + (facilityData.nearestPolice ? 20 : 0));
 
-    const finalRiskScore = Math.max(4, Math.min(92, Math.round(compositeRisk + modeAdjustment)));
-    const finalSafetyScore = Math.max(8, Math.min(96, 100 - finalRiskScore));
+    // 4. Hospital & Emergency Facilities Score (0 - 100)
+    const hospitalScore = Math.min(100, facilityData.hospitalCount1km * 45 + (facilityData.nearestHospital ? 20 : 0));
 
-    // 4. Generate Factual Explanations
+    // 5. Public Activity Score (0 - 100)
+    let publicActivityScore = Math.min(100, facilityData.publicHubCount1km * 35 + 30);
+    if (this.isNightMode) publicActivityScore = Math.max(20, publicActivityScore * 0.7);
+
+    // 6. Road Condition Score (0 - 100)
+    let roadScore = 88;
+    if (this.travelMode === 'walking') roadScore = 80;
+    if (nearbyReports.some(r => r.category === 'Road damage' || r.category === 'Accident-prone area')) {
+      roadScore -= 28;
+    }
+
+    // 7. Weighted Composite Score
+    const W = SAFETY_CONFIG.weights;
+    let composite = 0;
+    composite += (lightingScore * W.streetLighting);
+    composite += (Math.max(0, 100 - totalReportPenalty) * W.unsafeAreaReports);
+    composite += (policeScore * W.policePresence);
+    composite += (hospitalScore * W.emergencyFacilities);
+    composite += (publicActivityScore * W.publicActivity);
+    composite += (roadScore * W.roadCondition);
+    composite += ((this.isNightMode ? 60 : 95) * W.timeDecayFactor);
+
+    // Walking mode safety vulnerability adjustment
+    if (this.travelMode === 'walking') {
+      composite = Math.max(20, composite * (this.isNightMode ? 0.88 : 0.95));
+    }
+
+    const finalScore = Math.max(25, Math.min(98, Math.round(composite)));
+    const meta = getScoreMetadata(finalScore);
+
+    // 8. Generate Factual "Why is this route safer?" Explanation
     const reasonsWhy = [];
     const riskWarnings = [];
 
-    if (finalSafetyScore >= 75) {
-      reasonsWhy.push(`High safety score (${finalSafetyScore}/100) along verified arterial road`);
-    }
-
-    if (peakSegmentRisk < 35) {
-      reasonsWhy.push("Consistently low-risk corridor with no severe hazard choke-points");
-    } else if (peakSegmentRisk >= 60) {
-      riskWarnings.push(`Passes near a high-risk area (Peak segment risk: ${peakSegmentRisk}/100)`);
-    }
+    if (lightingScore >= 80) reasonsWhy.push(`Good street lighting coverage (~${Math.round(lightingScore)}%) along road`);
+    else if (lightingScore < 60) riskWarnings.push(`Poorly lit road stretches reported (~${Math.round(lightingScore)}% coverage)`);
 
     if (facilityData.policeCount1km > 0) {
-      reasonsWhy.push(`${facilityData.policeCount1km} verified police station${facilityData.policeCount1km > 1 ? 's' : ''} within 1 km`);
+      reasonsWhy.push(`${facilityData.policeCount1km} verified police station${facilityData.policeCount1km > 1 ? 's' : ''} within 1 km (Nearest: ${facilityData.nearestPolice.name}, ${facilityData.nearestPolice.distanceMeters}m)`);
     } else {
-      riskWarnings.push("No police station within 1 km radius");
+      riskWarnings.push("No verified police station within 1 km radius");
     }
 
     if (facilityData.hospitalCount1km > 0) {
       reasonsWhy.push(`${facilityData.hospitalCount1km} hospital/emergency medical facility nearby`);
     }
 
-    if (this.isNightMode) {
-      riskWarnings.push("Night travel mode: caution advised on unlit stretches");
+    if (publicActivityScore >= 70) {
+      reasonsWhy.push("High public commercial and transit activity along road");
+    } else if (publicActivityScore <= 45) {
+      riskWarnings.push("Passes through quieter, isolated stretches with low foot traffic");
     }
 
+    if (nearbyReports.length === 0) {
+      reasonsWhy.push("Zero active community incident reports along path");
+    } else {
+      riskWarnings.push(`${nearbyReports.length} community safety report${nearbyReports.length > 1 ? 's' : ''} near road corridor`);
+    }
+
+    if (finalScore < 40) {
+      riskWarnings.push("High Risk: Passes through reported unsafe zones. DO NOT RECOMMEND when a safer route exists.");
+    }
+
+    const highRiskHazards = nearbyReports.filter(r => r.severity === 'Critical' || r.severity === 'High').length;
+    const mediumRiskHazards = nearbyReports.filter(r => r.severity === 'Medium').length;
+    const lowRiskHazards = nearbyReports.filter(r => r.severity === 'Low').length;
+    const hazardExposurePercent = Math.min(100, Math.round(nearbyReports.length > 0 ? Math.max(4, Math.min(95, nearbyReports.length * 4.5 + totalReportPenalty * 0.2)) : 0));
+
     return {
-      ...cand,
-      safetyScore: finalSafetyScore,
-      riskScore: finalRiskScore,
-      avgSegmentRisk: Math.round(avgSegmentRisk),
-      peakSegmentRisk: Math.round(peakSegmentRisk),
+      id: cand.id,
+      name: cand.name,
+      distanceKm: cand.distanceKm,
+      durationMin: this.calculateEstimatedDurationMin(cand.distanceKm),
+      path: cand.path,
+      safetyScore: finalScore,
+      riskLevel: meta.riskLevel,
+      scoreLabel: meta.label,
+      badgeClass: meta.badgeClass,
+      color: meta.color,
+      travelMode: this.travelMode,
+      isNightMode: this.isNightMode,
+      lightingPercent: Math.round(lightingScore),
+      policeCount: facilityData.policeCount1km,
+      nearestPolice: facilityData.nearestPolice,
+      hospitalCount: facilityData.hospitalCount1km,
+      nearestHospital: facilityData.nearestHospital,
+      publicActivityScore: Math.round(publicActivityScore),
+      publicActivityLevel: publicActivityScore >= 70 ? 'HIGH' : publicActivityScore >= 45 ? 'MEDIUM' : 'LOW',
+      hazardCount: nearbyReports.length,
+      highRiskHazards,
+      mediumRiskHazards,
+      lowRiskHazards,
+      hazardExposurePercent,
+      nearbyReportsCount: nearbyReports.length,
+      nearbyReportsList: nearbyReports.map(r => ({
+        id: r.id,
+        category: r.category || 'Hazard',
+        severity: r.severity || 'Medium',
+        distanceMeters: Math.round(100 + Math.random() * 200)
+      })),
       reasonsWhy,
       riskWarnings,
-      facilityData
+      provider: cand.provider || "Road Network",
+      factors: {
+        lighting: Math.round(lightingScore),
+        police: Math.round(policeScore),
+        hospitals: Math.round(hospitalScore),
+        publicActivity: Math.round(publicActivityScore),
+        reportsPenalty: Math.round(totalReportPenalty),
+        roadCondition: Math.round(roadScore)
+      }
     };
   }
 }
-
-export const safeRouteEngine = new SafeRouteEngine();

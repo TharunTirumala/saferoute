@@ -1460,19 +1460,18 @@ async function handleFindSafeRoutes() {
       }
     }
 
-    // Transition to Interface 2 immediately with 0 delay
+    await safeRouteEngine.calculateRoutes();
+
     document.body.classList.remove('page-first');
     document.body.classList.add('page-second');
     interfaceTripInput.classList.add('hidden');
     interfaceRouteResult.classList.remove('hidden');
 
     summaryLocations.innerHTML = `
-      <span class="loc-text origin">${safeRouteEngine.origin ? safeRouteEngine.origin.name : sourceInput.value}</span>
+      <span class="loc-text origin">${safeRouteEngine.origin.name}</span>
       <svg class="arrow-sep" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-      <span class="loc-text destination">${safeRouteEngine.destination ? safeRouteEngine.destination.name : destInput.value}</span>
+      <span class="loc-text destination">${safeRouteEngine.destination.name}</span>
     `;
-
-    await safeRouteEngine.calculateRoutes();
 
     const modeLabels = { car: 'Car', bike: 'Bike', auto: 'Auto', walking: 'Walking' };
     summaryModeChip.textContent = modeLabels[safeRouteEngine.travelMode] || 'Car';
@@ -2042,25 +2041,6 @@ function processHeadlineNLP(headlineText) {
       `).openPopup();
     });
   }
-
-  // Update Ticker Card Text
-  const tickerHeadlineText = document.getElementById('tickerHeadlineText');
-  const tickerMetaText = document.getElementById('tickerMetaText');
-  if (tickerHeadlineText) tickerHeadlineText.textContent = headlineText;
-  if (tickerMetaText) tickerMetaText.innerHTML = `📍 Location: <strong style="color: #f87171;">${result.locationsFound.join(', ')}</strong> | Risk Score: <strong style="color: #ef4444;">${result.newLocationRisk} (${result.riskDelta})</strong>`;
-}
-
-const btnTickerViewMap = document.getElementById('btnTickerViewMap');
-if (btnTickerViewMap) {
-  btnTickerViewMap.addEventListener('click', async () => {
-    switchToSafeRoute();
-    if (safeRouteEngine && !safeRouteEngine.routes.length) {
-      await safeRouteEngine.calculateRoutes();
-      renderSafeRouteUI();
-    }
-    const tickerText = document.getElementById('tickerHeadlineText')?.textContent || '';
-    if (tickerText) processHeadlineNLP(tickerText);
-  });
 }
 
 if (selectSampleHeadline) {
