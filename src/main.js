@@ -1,4 +1,6 @@
 import './style.css';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { ScenarioRunner } from './cvEngine.js';
 import { renderCCTV } from './canvasRenderer.js';
 import { telegramDispatcher } from './telegram.js';
@@ -10,6 +12,7 @@ import { AIReportClassifier } from './aiClassifier.js';
 import { SAFETY_CONFIG } from './safetyConfig.js';
 import { VoicePanicEngine, SUPPORTED_LANGUAGES } from './voicePanicEngine.js';
 import { EmergencySosService, SOS_STATUS } from './emergencySosService.js';
+import { liveSosSessionStore } from './liveSosSessionStore.js';
 
 // ================= TAB SWITCHING =================
 const tabGuardianEye = document.getElementById('tabGuardianEye');
@@ -122,7 +125,39 @@ const photoPreviewContainer = document.getElementById('photoPreviewContainer');
 const photoPreviewImg = document.getElementById('photoPreviewImg');
 const btnRemovePhoto = document.getElementById('btnRemovePhoto');
 
-// ================= CENTRAL SOS SERVICE INITIALIZATION =================
+// ================= SOS READINESS & SETUP ELEMENTS =================
+const btnOpenSosSetup = document.getElementById('btnOpenSosSetup');
+const headerSosReadinessPill = document.getElementById('headerSosReadinessPill');
+const headerSosReadinessLabel = document.getElementById('headerSosReadinessLabel');
+
+const sosReadinessBanner = document.getElementById('sosReadinessBanner');
+const readinessIconBox = document.getElementById('readinessIconBox');
+const readinessBannerTitle = document.getElementById('readinessBannerTitle');
+const readinessBadgeTag = document.getElementById('readinessBadgeTag');
+const readinessBannerSub = document.getElementById('readinessBannerSub');
+const btnBannerOpenSetup = document.getElementById('btnBannerOpenSetup');
+
+const sosSetupModal = document.getElementById('sosSetupModal');
+const closeSosSetupBtn = document.getElementById('closeSosSetupBtn');
+const btnDoneSosSetup = document.getElementById('btnDoneSosSetup');
+const setupStatusCard = document.getElementById('setupStatusCard');
+const setupStatusDot = document.getElementById('setupStatusDot');
+const setupStatusHeadline = document.getElementById('setupStatusHeadline');
+const setupStatusSubtext = document.getElementById('setupStatusSubtext');
+const setupStatusPill = document.getElementById('setupStatusPill');
+const setupStatusPillText = document.getElementById('setupStatusPillText');
+
+const locStatusTag = document.getElementById('locStatusTag');
+const btnGrantLocation = document.getElementById('btnGrantLocation');
+const micStatusTag = document.getElementById('micStatusTag');
+const btnGrantMicrophone = document.getElementById('btnGrantMicrophone');
+const notifStatusTag = document.getElementById('notifStatusTag');
+const btnGrantNotifications = document.getElementById('btnGrantNotifications');
+const contactsStatusTag = document.getElementById('contactsStatusTag');
+const contactsCheckDesc = document.getElementById('contactsCheckDesc');
+const btnSetupManageContacts = document.getElementById('btnSetupManageContacts');
+
+// Central SOS Elements
 const centralSosCountdownModal = document.getElementById('centralSosCountdownModal');
 const countdownModalHeading = document.getElementById('countdownModalHeading');
 const countdownTriggerSourceName = document.getElementById('countdownTriggerSourceName');
@@ -137,7 +172,10 @@ const sosTriggerSourceName = document.getElementById('sosTriggerSourceName');
 const sosGpsStatusBadge = document.getElementById('sosGpsStatusBadge');
 const sosGpsCoords = document.getElementById('sosGpsCoords');
 const sosGpsTimestamp = document.getElementById('sosGpsTimestamp');
-const linkOpenMapLocation = document.getElementById('linkOpenMapLocation');
+const sosGpsBreadcrumbsCount = document.getElementById('sosGpsBreadcrumbsCount');
+const inputLiveUrlDisplay = document.getElementById('inputLiveUrlDisplay');
+const btnCopyLiveUrl = document.getElementById('btnCopyLiveUrl');
+const btnTestOpenLiveUrl = document.getElementById('btnTestOpenLiveUrl');
 
 const btnCallPrimaryContactNow = document.getElementById('btnCallPrimaryContactNow');
 const btnSendEmergencyMessageNow = document.getElementById('btnSendEmergencyMessageNow');
@@ -168,7 +206,6 @@ const contactsManagerList = document.getElementById('contactsManagerList');
 // Voice SOS Modal Elements
 const btnOpenVoiceSettings = document.getElementById('btnOpenVoiceSettings');
 const headerVoiceLabel = document.getElementById('headerVoiceLabel');
-const voicePanicStatusTag = document.getElementById('voicePanicStatusTag');
 const btnInputVoiceToggle = document.getElementById('btnInputVoiceToggle');
 const btnOpenVoiceSettingsPromo = document.getElementById('btnOpenVoiceSettingsPromo');
 const voiceSettingsModal = document.getElementById('voiceSettingsModal');
@@ -192,10 +229,23 @@ const selectPhraseLangTag = document.getElementById('selectPhraseLangTag');
 const addPhraseErrorMsg = document.getElementById('addPhraseErrorMsg');
 const btnSavePhraseSubmit = document.getElementById('btnSavePhraseSubmit');
 
-// State for exact report coordinate picking
+// Contact Live Location Viewer Modal Elements
+const contactLiveViewerModal = document.getElementById('contactLiveViewerModal');
+const viewerSessionIdTag = document.getElementById('viewerSessionIdTag');
+const viewerStatusBanner = document.getElementById('viewerStatusBanner');
+const viewerCoordinates = document.getElementById('viewerCoordinates');
+const viewerAccuracy = document.getElementById('viewerAccuracy');
+const viewerLastUpdated = document.getElementById('viewerLastUpdated');
+const viewerSessionState = document.getElementById('viewerSessionState');
+const closeViewerModalBtn = document.getElementById('closeViewerModalBtn');
+
+// State variables
 let currentReportCoords = { lat: 17.4435, lng: 78.3772 };
 let activePhotoDataUrl = null;
 let navigationSimulationInterval = null;
+let viewerMapInstance = null;
+let viewerMarker = null;
+let viewerPolyline = null;
 
 // Initialize Central Emergency SOS Service
 const emergencySos = new EmergencySosService({
@@ -214,6 +264,9 @@ const emergencySos = new EmergencySosService({
     renderSosActiveContacts(contacts);
     renderContactsManagerList(contacts);
     updateContactsCountBadge();
+  },
+  onReadinessChange: (isReady, report) => {
+    renderSosReadiness(isReady, report);
   }
 });
 
@@ -225,6 +278,131 @@ const voicePanicEngine = new VoicePanicEngine({
   onEmergencyDetected: (phrase) => {
     emergencySos.startSosCountdown(`Voice Trigger ("${phrase}")`);
   }
+});
+
+// ================= SOS READINESS RENDERING =================
+function renderSosReadiness(isReady, report) {
+  if (isReady) {
+    headerSosReadinessPill.className = 'status-indicator-pill ready';
+    headerSosReadinessLabel.textContent = 'SOS READY';
+
+    sosReadinessBanner.className = 'sos-readiness-banner ready';
+    readinessIconBox.className = 'readiness-icon-box ready';
+    readinessBannerTitle.textContent = 'SOS READY';
+    readinessBadgeTag.className = 'badge-tag-clean success';
+    readinessBadgeTag.textContent = 'Pre-Authorized';
+    readinessBannerSub.textContent = 'All emergency permissions pre-authorized. 1-Tap SOS will execute immediately with zero prompts.';
+    btnBannerOpenSetup.textContent = 'Check Setup';
+
+    setupStatusDot.className = 'status-indicator-dot ready';
+    setupStatusHeadline.textContent = 'SOS READY';
+    setupStatusSubtext.textContent = 'Emergency SOS is fully pre-authorized. In an emergency, alerts dispatch instantly.';
+    setupStatusPill.className = 'status-indicator-pill ready';
+    setupStatusPillText.textContent = 'Ready';
+  } else {
+    headerSosReadinessPill.className = 'status-indicator-pill not-ready';
+    headerSosReadinessLabel.textContent = 'SOS Setup Required';
+
+    sosReadinessBanner.className = 'sos-readiness-banner not-ready';
+    readinessIconBox.className = 'readiness-icon-box not-ready';
+    readinessBannerTitle.textContent = 'SOS NOT READY';
+    readinessBadgeTag.className = 'badge-tag-clean warning';
+    readinessBadgeTag.textContent = 'Setup Required';
+    readinessBannerSub.textContent = 'Some emergency permissions or contacts are missing. Complete one-time setup now to ensure instant 1-tap SOS.';
+    btnBannerOpenSetup.textContent = 'Complete Setup';
+
+    setupStatusDot.className = 'status-indicator-dot not-ready';
+    setupStatusHeadline.textContent = 'SOS NOT READY';
+    setupStatusSubtext.textContent = 'Grant location access and configure contacts so emergency dispatch operates with zero prompts.';
+    setupStatusPill.className = 'status-indicator-pill not-ready';
+    setupStatusPillText.textContent = 'Setup Needed';
+  }
+
+  // Location item
+  if (report.location === 'granted') {
+    locStatusTag.className = 'check-status-tag success';
+    locStatusTag.textContent = '✓ Granted';
+    btnGrantLocation.classList.add('hidden');
+  } else {
+    locStatusTag.className = 'check-status-tag warning';
+    locStatusTag.textContent = (report.location === 'denied') ? 'Denied' : 'Action Required';
+    btnGrantLocation.classList.remove('hidden');
+  }
+
+  // Microphone item
+  if (report.microphone === 'granted') {
+    micStatusTag.className = 'check-status-tag success';
+    micStatusTag.textContent = '✓ Granted';
+    btnGrantMicrophone.classList.add('hidden');
+  } else {
+    micStatusTag.className = 'check-status-tag';
+    micStatusTag.textContent = 'Optional / Needed for Voice';
+    btnGrantMicrophone.classList.remove('hidden');
+  }
+
+  // Notification item
+  if (report.notifications === 'granted') {
+    notifStatusTag.className = 'check-status-tag success';
+    notifStatusTag.textContent = '✓ Granted';
+    btnGrantNotifications.classList.add('hidden');
+  } else {
+    notifStatusTag.className = 'check-status-tag';
+    notifStatusTag.textContent = 'Optional';
+    btnGrantNotifications.classList.remove('hidden');
+  }
+
+  // Contacts item
+  if (report.contactsCount > 0 && report.primaryContact) {
+    contactsStatusTag.className = 'check-status-tag success';
+    contactsStatusTag.textContent = '✓ Configured';
+    contactsCheckDesc.textContent = `${report.contactsCount} Contacts Configured (Primary: ${report.primaryContact.name}).`;
+  } else {
+    contactsStatusTag.className = 'check-status-tag warning';
+    contactsStatusTag.textContent = 'Contact Required';
+    contactsCheckDesc.textContent = 'At least 1 emergency contact with a primary contact must be saved.';
+  }
+}
+
+// Open SOS Setup Modal
+function openSosSetupModal() {
+  emergencySos.checkPermissionStatus();
+  sosSetupModal.classList.remove('hidden');
+}
+
+btnOpenSosSetup.addEventListener('click', openSosSetupModal);
+btnBannerOpenSetup.addEventListener('click', openSosSetupModal);
+closeSosSetupBtn.addEventListener('click', () => sosSetupModal.classList.add('hidden'));
+btnDoneSosSetup.addEventListener('click', () => sosSetupModal.classList.add('hidden'));
+
+btnGrantLocation.addEventListener('click', async () => {
+  btnGrantLocation.disabled = true;
+  btnGrantLocation.textContent = 'Requesting...';
+  const res = await emergencySos.requestLocationPreAuthorization();
+  btnGrantLocation.disabled = false;
+  btnGrantLocation.textContent = 'Grant Access';
+  if (!res.success) {
+    alert(`Location access error: ${res.error}. Please check browser/device settings.`);
+  }
+});
+
+btnGrantMicrophone.addEventListener('click', async () => {
+  btnGrantMicrophone.disabled = true;
+  btnGrantMicrophone.textContent = 'Requesting...';
+  const res = await emergencySos.requestMicrophonePreAuthorization();
+  btnGrantMicrophone.disabled = false;
+  btnGrantMicrophone.textContent = 'Grant Access';
+  if (!res.success) {
+    alert(`Microphone access error: ${res.error}.`);
+  }
+});
+
+btnGrantNotifications.addEventListener('click', async () => {
+  await emergencySos.requestNotificationPreAuthorization();
+});
+
+btnSetupManageContacts.addEventListener('click', () => {
+  sosSetupModal.classList.add('hidden');
+  openContactsManager();
 });
 
 // ================= CENTRAL SOS STATE HANDLER =================
@@ -250,6 +428,12 @@ function handleSosStateChange(state, data = {}) {
     sosTriggerSourceName.textContent = (data.source || 'EMERGENCY TRIGGER').toUpperCase();
     sosModal.classList.remove('hidden');
     sound.playSiren();
+    
+    if (data.liveUrl) {
+      inputLiveUrlDisplay.value = data.liveUrl;
+      btnTestOpenLiveUrl.href = data.liveUrl;
+    }
+
     renderSosActiveContacts(emergencySos.getContacts());
   }
 }
@@ -257,22 +441,39 @@ function handleSosStateChange(state, data = {}) {
 function renderSosLocation(loc, error) {
   if (loc) {
     sosGpsStatusBadge.className = 'status-indicator-pill listening';
-    sosGpsStatusBadge.innerHTML = '<span class="status-dot"></span><span class="status-label">Location Detected</span>';
+    sosGpsStatusBadge.innerHTML = '<span class="status-dot"></span><span class="status-label">Live Active</span>';
     sosGpsCoords.textContent = `${loc.latitude}° N, ${loc.longitude}° E (±${loc.accuracy}m)`;
-    sosGpsTimestamp.textContent = `Timestamp: ${loc.timestamp}`;
+    sosGpsTimestamp.textContent = `Time: ${loc.timestamp}`;
     
-    linkOpenMapLocation.href = `https://maps.google.com/?q=${loc.latitude},${loc.longitude}`;
-    linkOpenMapLocation.classList.remove('hidden');
+    if (emergencySos.activeLiveSession) {
+      const bCount = emergencySos.activeLiveSession.breadcrumbs.length || 1;
+      sosGpsBreadcrumbsCount.textContent = `${bCount} fix${bCount > 1 ? 'es' : ''} recorded`;
+      
+      const liveUrl = liveSosSessionStore.getLiveTrackingUrl(emergencySos.activeLiveSession.id);
+      inputLiveUrlDisplay.value = liveUrl;
+      btnTestOpenLiveUrl.href = liveUrl;
+    }
 
     safeRouteMapRenderer.updateUserLocation(loc.latitude, loc.longitude);
   } else {
     sosGpsStatusBadge.className = 'status-indicator-pill unsupported';
     sosGpsStatusBadge.innerHTML = '<span class="status-dot"></span><span class="status-label">Location Unavailable</span>';
     sosGpsCoords.textContent = error || 'Unable to access your current location.';
-    sosGpsTimestamp.textContent = `Timestamp: ${new Date().toLocaleTimeString()}`;
-    linkOpenMapLocation.classList.add('hidden');
+    sosGpsTimestamp.textContent = `Time: ${new Date().toLocaleTimeString()}`;
   }
 }
+
+// Copy Live Tracking Link
+btnCopyLiveUrl.addEventListener('click', () => {
+  if (inputLiveUrlDisplay.value) {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(inputLiveUrlDisplay.value);
+      showSosStatusToast("Live tracking link copied to clipboard.");
+    } else {
+      prompt("Copy live tracking link:", inputLiveUrlDisplay.value);
+    }
+  }
+});
 
 // Render contacts list inside active SOS screen
 function renderSosActiveContacts(contacts) {
@@ -345,7 +546,7 @@ function showSosStatusToast(msg) {
 
 // Wire SOS Trigger Buttons
 openSosBtn.addEventListener('click', () => {
-  emergencySos.startSosCountdown('Manual SOS Button');
+  emergencySos.startSosCountdown('One-Tap SOS Button');
 });
 
 const triggerManualSos = document.getElementById('triggerManualSos');
@@ -518,12 +719,6 @@ function updateVoicePanicStatusUI(status) {
   if (status === 'LISTENING') {
     headerVoiceLabel.textContent = 'Voice SOS: Active';
     btnOpenVoiceSettings.classList.add('listening');
-    
-    voicePanicStatusTag.className = 'status-indicator-pill listening';
-    voicePanicStatusTag.innerHTML = '<span class="status-dot"></span><span class="status-label">Listening</span>';
-
-    modalVoiceStatusPill.className = 'status-indicator-pill listening';
-    modalVoiceStatusPill.innerHTML = '<span class="status-dot"></span><span class="status-label">Listening</span>';
     btnModalToggleVoice.textContent = 'Disable';
     btnModalToggleVoice.className = 'btn-danger-outline-sm';
 
@@ -542,12 +737,6 @@ function updateVoicePanicStatusUI(status) {
   } else if (status === 'UNSUPPORTED') {
     headerVoiceLabel.textContent = 'Voice SOS: N/A';
     btnOpenVoiceSettings.classList.remove('listening');
-
-    voicePanicStatusTag.className = 'status-indicator-pill unsupported';
-    voicePanicStatusTag.innerHTML = '<span class="status-dot"></span><span class="status-label">Not Supported</span>';
-
-    modalVoiceStatusPill.className = 'status-indicator-pill unsupported';
-    modalVoiceStatusPill.innerHTML = '<span class="status-dot"></span><span class="status-label">Browser Unsupported</span>';
     btnModalToggleVoice.textContent = 'Unsupported';
     btnModalToggleVoice.disabled = true;
 
@@ -558,12 +747,6 @@ function updateVoicePanicStatusUI(status) {
   } else {
     headerVoiceLabel.textContent = 'Voice SOS';
     btnOpenVoiceSettings.classList.remove('listening');
-
-    voicePanicStatusTag.className = 'status-indicator-pill off';
-    voicePanicStatusTag.innerHTML = '<span class="status-dot"></span><span class="status-label">Disabled</span>';
-
-    modalVoiceStatusPill.className = 'status-indicator-pill off';
-    modalVoiceStatusPill.innerHTML = '<span class="status-dot"></span><span class="status-label">Disabled</span>';
     btnModalToggleVoice.textContent = 'Enable';
     btnModalToggleVoice.className = 'btn-primary-action-sm';
 
@@ -712,6 +895,107 @@ addPhraseForm.addEventListener('submit', (e) => {
   addPhraseModal.classList.add('hidden');
   renderPhrasesList();
 });
+
+// ================= CONTACT LIVE LOCATION VIEWER MODE (?sos_session=...) =================
+function checkUrlSosSession() {
+  const params = new URLSearchParams(window.location.search);
+  const sessionId = params.get('sos_session');
+  if (sessionId) {
+    openContactLiveViewer(sessionId);
+  }
+}
+
+function openContactLiveViewer(sessionId) {
+  contactLiveViewerModal.classList.remove('hidden');
+  viewerSessionIdTag.textContent = `Session: ${sessionId}`;
+
+  const session = liveSosSessionStore.getSession(sessionId);
+  renderViewerSessionData(session, sessionId);
+
+  // Initialize Viewer Leaflet Map
+  if (!viewerMapInstance) {
+    const initialLat = session?.currentCoords?.latitude || 17.4435;
+    const initialLng = session?.currentCoords?.longitude || 78.3772;
+    
+    viewerMapInstance = L.map('viewerLeafletMap', {
+      center: [initialLat, initialLng],
+      zoom: 16,
+      zoomControl: true
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(viewerMapInstance);
+
+    const pulseIcon = L.divIcon({
+      className: 'live-viewer-marker',
+      html: '<span class="live-viewer-pulse-core"></span>',
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
+    });
+
+    viewerMarker = L.marker([initialLat, initialLng], { icon: pulseIcon }).addTo(viewerMapInstance);
+    viewerPolyline = L.polyline([], { color: '#dc2626', weight: 4, opacity: 0.8 }).addTo(viewerMapInstance);
+  }
+
+  // Live session update listener
+  liveSosSessionStore.onSessionUpdate((updatedSession) => {
+    if (updatedSession.id === sessionId) {
+      renderViewerSessionData(updatedSession, sessionId);
+    }
+  });
+
+  setTimeout(() => {
+    if (viewerMapInstance) viewerMapInstance.invalidateSize();
+  }, 200);
+}
+
+function renderViewerSessionData(session, sessionId) {
+  if (!session) {
+    viewerCoordinates.textContent = 'Waiting for initial GPS fix...';
+    viewerSessionState.textContent = 'CONNECTING...';
+    viewerSessionState.className = 'text-warning';
+    return;
+  }
+
+  if (session.status === 'TERMINATED') {
+    viewerSessionState.textContent = 'SOS ENDED';
+    viewerSessionState.className = 'text-danger';
+    viewerStatusBanner.className = 'viewer-alert-banner ended';
+    viewerStatusBanner.innerHTML = '<strong>🔴 SOS SESSION TERMINATED</strong><p>The emergency session has been ended by the user.</p>';
+  } else {
+    viewerSessionState.textContent = 'ACTIVE LIVE';
+    viewerSessionState.className = 'text-success';
+  }
+
+  if (session.currentCoords) {
+    const { latitude, longitude, accuracy, timestamp } = session.currentCoords;
+    viewerCoordinates.textContent = `${latitude}° N, ${longitude}° E`;
+    viewerAccuracy.textContent = `±${accuracy || 10} meters`;
+    viewerLastUpdated.textContent = timestamp ? new Date(timestamp).toLocaleTimeString() : 'Just now';
+
+    if (viewerMapInstance && viewerMarker) {
+      viewerMarker.setLatLng([latitude, longitude]);
+      viewerMapInstance.panTo([latitude, longitude]);
+
+      if (session.breadcrumbs && session.breadcrumbs.length > 0) {
+        const latLngs = session.breadcrumbs.map(b => [b.latitude, b.longitude]);
+        viewerPolyline.setLatLngs(latLngs);
+      }
+    }
+  }
+}
+
+closeViewerModalBtn.addEventListener('click', () => {
+  contactLiveViewerModal.classList.add('hidden');
+  // Clean URL parameter without reload
+  const url = new URL(window.location);
+  url.searchParams.delete('sos_session');
+  window.history.pushState({}, '', url);
+});
+
+// Check URL parameter on initial load
+checkUrlSosSession();
 
 // ================= DYNAMIC GEOCODING & AUTOCOMPLETE =================
 let sourceDebounce = null;
@@ -1340,5 +1624,5 @@ function cctvLoop() {
 }
 requestAnimationFrame(cctvLoop);
 
-// Initial drawer counts
+// Initial setup checks & drawer counts
 renderCommunityReportsDrawer();

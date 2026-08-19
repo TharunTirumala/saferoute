@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/shield.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SafeRoute — Professional Safety-First Navigation & Emergency SOS</title>
-    <meta name="description" content="SafeRoute: Safety navigation platform with verified road network routing, multilingual hands-free voice panic SOS, and real-time emergency contact call and messaging system." />
+    <title>SafeRoute — Professional Safety Navigation & One-Tap Emergency SOS</title>
+    <meta name="description" content="SafeRoute: Safety navigation platform with verified road network routing, pre-authorized one-tap emergency SOS, and continuous live GPS location tracking." />
     <!-- Modern Sans Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,7 +27,7 @@
               </svg>
               <div class="brand-titles">
                 <span class="brand-name">SafeRoute</span>
-                <span class="brand-tag">SAFETY NAVIGATION & SOS</span>
+                <span class="brand-tag">ONE-TAP SOS & LIVE TRACKING</span>
               </div>
             </div>
 
@@ -45,15 +45,19 @@
           </div>
 
           <div class="header-actions">
+            <!-- Pre-Authorized SOS Readiness Indicator -->
+            <button id="btnOpenSosSetup" class="status-indicator-pill-btn" title="Click to view Emergency SOS Setup & Permissions">
+              <span id="headerSosReadinessPill" class="status-indicator-pill not-ready">
+                <span class="status-dot"></span>
+                <span id="headerSosReadinessLabel" class="status-label">SOS Setup</span>
+              </span>
+            </button>
+
             <!-- Hands-Free Voice SOS Settings Button -->
             <button id="btnOpenVoiceSettings" class="btn-voice-toggle" title="Open Hands-Free Voice SOS Settings">
               <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
               <span id="headerVoiceLabel">Voice SOS</span>
             </button>
-            <span id="voicePanicStatusTag" class="status-indicator-pill off">
-              <span class="status-dot"></span>
-              <span class="status-label">Disabled</span>
-            </span>
 
             <!-- Emergency Contacts Manager -->
             <button id="btnOpenContactsManager" class="btn-outline-sm" title="Configure Emergency Contacts">
@@ -73,10 +77,10 @@
               <span>Report Hazard</span>
             </button>
 
-            <!-- Emergency SOS Trigger Button -->
-            <button id="openSosBtn" class="btn-emergency-sos" title="Activate Emergency SOS Countdown">
+            <!-- One-Tap Emergency SOS Trigger Button -->
+            <button id="openSosBtn" class="btn-emergency-sos" title="One-Tap Emergency SOS (Zero Permission Delay)">
               <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <span>SOS Panic</span>
+              <span>ONE-TAP SOS</span>
             </button>
           </div>
 
@@ -94,7 +98,28 @@
             
             <div class="input-screen-header">
               <h2>Find the Safest Way to Travel</h2>
-              <p>Compare verified road corridors, avoid hazardous zones, and navigate with multilingual emergency SOS awareness</p>
+              <p>Compare verified road corridors, avoid hazardous zones, and navigate with pre-authorized one-tap emergency SOS</p>
+            </div>
+
+            <!-- Pre-Authorized SOS Readiness Status Card Banner -->
+            <div class="sos-readiness-banner" id="sosReadinessBanner">
+              <div class="readiness-banner-left">
+                <div class="readiness-icon-box" id="readinessIconBox">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                </div>
+                <div>
+                  <div class="flex-align-center gap-2">
+                    <span class="readiness-title" id="readinessBannerTitle">SOS READY</span>
+                    <span class="badge-tag-clean success" id="readinessBadgeTag">Pre-Authorized</span>
+                  </div>
+                  <span class="readiness-subtitle" id="readinessBannerSub">All emergency permissions pre-authorized. 1-Tap SOS will execute immediately with zero prompts.</span>
+                </div>
+              </div>
+              <div class="readiness-banner-right">
+                <button type="button" id="btnBannerOpenSetup" class="btn-outline-subtle-sm">
+                  Check Setup
+                </button>
+              </div>
             </div>
 
             <form id="tripInputForm" class="trip-input-form" onsubmit="return false;">
@@ -511,9 +536,141 @@
         </main>
       </div>
 
-      <!-- ================= MODALS & DRAWERS (CLEAN, MINIMAL DESIGN) ================= -->
+      <!-- ================= MODALS & DRAWERS ================= -->
 
-      <!-- 1. CENTRAL 5-SECOND SOS COUNTDOWN MODAL (Manual or Voice Triggered) -->
+      <!-- 1. EMERGENCY SOS SETUP & PERMISSIONS PRE-AUTHORIZATION MODAL -->
+      <div id="sosSetupModal" class="modal-backdrop-clean hidden">
+        <div class="modal-box-clean sos-setup-box">
+          <div class="modal-clean-header">
+            <div class="header-with-icon">
+              <svg class="header-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+              <h3>Emergency SOS Setup</h3>
+            </div>
+            <button id="closeSosSetupBtn" class="btn-close-modal">✕</button>
+          </div>
+
+          <div class="sos-setup-content">
+            <p class="setup-intro-text">
+              Authorize required emergency permissions once now so that in a real emergency, pressing <strong>ONE-TAP SOS</strong> instantly transmits live GPS location and alerts your emergency contacts without displaying permission popups.
+            </p>
+
+            <!-- Overall Setup Status Box -->
+            <div class="setup-status-card" id="setupStatusCard">
+              <div class="setup-status-left">
+                <span class="status-indicator-dot ready" id="setupStatusDot"></span>
+                <div>
+                  <strong id="setupStatusHeadline">SOS READY</strong>
+                  <span id="setupStatusSubtext" class="text-xs text-muted">All required emergency services pre-authorized.</span>
+                </div>
+              </div>
+              <span class="status-indicator-pill ready" id="setupStatusPill">
+                <span class="status-dot"></span>
+                <span id="setupStatusPillText">Ready</span>
+              </span>
+            </div>
+
+            <!-- Permission Checklist -->
+            <div class="setup-checklist-group">
+              
+              <!-- Location Permission Item -->
+              <div class="setup-check-item" id="checkItemLocation">
+                <div class="check-item-info">
+                  <div class="check-item-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg>
+                    <strong>Location & GPS Access</strong>
+                  </div>
+                  <span class="check-item-desc" id="locCheckDesc">Required for real-time emergency coordinates and live route tracking.</span>
+                </div>
+                <div class="check-item-action">
+                  <span class="check-status-tag" id="locStatusTag">✓ Granted</span>
+                  <button type="button" id="btnGrantLocation" class="btn-setup-action hidden">Grant Access</button>
+                </div>
+              </div>
+
+              <!-- Microphone Permission Item (Voice SOS) -->
+              <div class="setup-check-item" id="checkItemMicrophone">
+                <div class="check-item-info">
+                  <div class="check-item-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                    <strong>Microphone (Voice SOS)</strong>
+                  </div>
+                  <span class="check-item-desc" id="micCheckDesc">Allows hands-free emergency activation via multilingual trigger phrases.</span>
+                </div>
+                <div class="check-item-action">
+                  <span class="check-status-tag" id="micStatusTag">✓ Granted</span>
+                  <button type="button" id="btnGrantMicrophone" class="btn-setup-action hidden">Grant Access</button>
+                </div>
+              </div>
+
+              <!-- Emergency Contacts Item -->
+              <div class="setup-check-item" id="checkItemContacts">
+                <div class="check-item-info">
+                  <div class="check-item-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <strong>Emergency Contacts</strong>
+                  </div>
+                  <span class="check-item-desc" id="contactsCheckDesc">2 Contacts Configured (Primary: Mother).</span>
+                </div>
+                <div class="check-item-action">
+                  <span class="check-status-tag" id="contactsStatusTag">✓ Configured</span>
+                  <button type="button" id="btnSetupManageContacts" class="btn-setup-action">Manage</button>
+                </div>
+              </div>
+
+              <!-- Phone & SMS Communication Protocols -->
+              <div class="setup-check-item">
+                <div class="check-item-info">
+                  <div class="check-item-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    <strong>Phone & SMS Dispatch</strong>
+                  </div>
+                  <span class="check-item-desc">Native mobile dialer (tel:) and emergency SMS / Web Share pre-configured.</span>
+                </div>
+                <div class="check-item-action">
+                  <span class="check-status-tag success">✓ Supported</span>
+                </div>
+              </div>
+
+              <!-- Continuous Live Location Tracking Engine -->
+              <div class="setup-check-item">
+                <div class="check-item-info">
+                  <div class="check-item-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><polygon points="12 6 12 12 16 14"/></svg>
+                    <strong>Live Location Session Engine</strong>
+                  </div>
+                  <span class="check-item-desc">Continuous high-accuracy GPS breadcrumb updates with secure expiring link.</span>
+                </div>
+                <div class="check-item-action">
+                  <span class="check-status-tag success">✓ Ready</span>
+                </div>
+              </div>
+
+              <!-- Notification Permission (Optional) -->
+              <div class="setup-check-item" id="checkItemNotifications">
+                <div class="check-item-info">
+                  <div class="check-item-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    <strong>Emergency Alerts & Notifications</strong>
+                  </div>
+                  <span class="check-item-desc" id="notifCheckDesc">System notifications for live route updates and SOS status changes.</span>
+                </div>
+                <div class="check-item-action">
+                  <span class="check-status-tag" id="notifStatusTag">Optional</span>
+                  <button type="button" id="btnGrantNotifications" class="btn-setup-action">Enable</button>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="modal-actions-row">
+            <button type="button" id="btnDoneSosSetup" class="btn-primary-action">Done</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. CENTRAL 5-SECOND SOS COUNTDOWN MODAL -->
       <div id="centralSosCountdownModal" class="modal-backdrop-clean hidden">
         <div class="modal-box-clean countdown-box">
           <div class="modal-clean-header center">
@@ -523,7 +680,7 @@
           
           <div class="detected-phrase-box-clean">
             <span>Activation Trigger:</span>
-            <strong id="countdownTriggerSourceName">Manual Emergency Button</strong>
+            <strong id="countdownTriggerSourceName">ONE-TAP EMERGENCY BUTTON</strong>
           </div>
 
           <div class="countdown-circle-clean">
@@ -532,7 +689,7 @@
           </div>
 
           <p class="countdown-explainer">
-            Calling primary emergency contact and preparing live GPS emergency alert in <strong><span id="centralCountdownNoticeSecs">5</span>s</strong>.
+            Calling primary emergency contact and starting live GPS transmission in <strong><span id="centralCountdownNoticeSecs">5</span>s</strong>.
           </p>
 
           <button type="button" id="btnCancelCentralCountdown" class="btn-cancel-countdown-clean">
@@ -541,12 +698,12 @@
         </div>
       </div>
 
-      <!-- 2. REAL EMERGENCY SOS ACTIVE SCREEN MODAL -->
+      <!-- 3. REAL EMERGENCY SOS ACTIVE SCREEN MODAL WITH LIVE TRACKING -->
       <div id="sosModal" class="modal-backdrop-clean hidden">
         <div class="modal-box-clean sos-active-box">
           <div class="modal-clean-header sos-header">
             <div class="header-with-icon">
-              <svg class="sos-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span class="pulse-ring-emergency"></span>
               <h3>SOS ACTIVE</h3>
             </div>
             <button id="closeSosModalBtn" class="btn-close-modal">✕</button>
@@ -557,19 +714,37 @@
             <!-- Trigger Banner -->
             <div class="sos-trigger-banner" id="sosTriggerSourceTag">
               <span>Trigger Source:</span>
-              <strong id="sosTriggerSourceName">MANUAL EMERGENCY BUTTON</strong>
+              <strong id="sosTriggerSourceName">ONE-TAP EMERGENCY BUTTON</strong>
             </div>
 
-            <!-- Location Detected Card -->
+            <!-- Continuous Live Location Detected Card -->
             <div class="sos-gps-card" id="sosLocationStatusCard">
               <div class="flex-justify-between align-center mb-1">
-                <span class="gps-label">CURRENT GPS LOCATION</span>
-                <span id="sosGpsStatusBadge" class="status-indicator-pill off">Locating...</span>
+                <div class="flex-align-center gap-2">
+                  <span class="status-indicator-dot live-pulse"></span>
+                  <span class="gps-label">CONTINUOUS LIVE GPS TRACKING</span>
+                </div>
+                <span id="sosGpsStatusBadge" class="status-indicator-pill listening">
+                  <span class="status-dot"></span>
+                  <span class="status-label">Live Active</span>
+                </span>
               </div>
-              <strong id="sosGpsCoords" class="gps-value">Fetching live GPS coordinates...</strong>
+              <strong id="sosGpsCoords" class="gps-value">Tracking live coordinates...</strong>
               <div class="flex-justify-between align-center mt-1">
                 <span id="sosGpsTimestamp" class="text-xs text-muted">Time: --:--:--</span>
-                <a id="linkOpenMapLocation" href="#" target="_blank" class="text-xs text-primary hidden">Open Map Location ↗</a>
+                <span id="sosGpsBreadcrumbsCount" class="text-xs text-muted">1 fix recorded</span>
+              </div>
+            </div>
+
+            <!-- Secure Live Tracking URL Box -->
+            <div class="live-url-share-card" id="liveUrlShareCard">
+              <div class="flex-justify-between align-center mb-1">
+                <span class="clean-label">SECURE LIVE LOCATION LINK (FOR CONTACTS)</span>
+                <button type="button" id="btnCopyLiveUrl" class="btn-link-sm">Copy Link</button>
+              </div>
+              <div class="live-url-display-wrap">
+                <input type="text" id="inputLiveUrlDisplay" class="clean-text-input-sm" readonly value="Generating live session..." />
+                <a id="btnTestOpenLiveUrl" href="#" target="_blank" class="btn-secondary-action-sm">Open View ↗</a>
               </div>
             </div>
 
@@ -577,12 +752,12 @@
             <div class="emergency-quick-actions-grid">
               <button type="button" id="btnCallPrimaryContactNow" class="btn-call-primary-lg">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                <span>CALL EMERGENCY CONTACT</span>
+                <span>CALL PRIMARY CONTACT</span>
               </button>
 
               <button type="button" id="btnSendEmergencyMessageNow" class="btn-msg-primary-lg">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                <span>SEND EMERGENCY MESSAGE</span>
+                <span>SEND LIVE ALERT SMS</span>
               </button>
             </div>
 
@@ -626,7 +801,66 @@
         </div>
       </div>
 
-      <!-- 3. EMERGENCY CONTACTS MANAGER MODAL -->
+      <!-- 4. EMERGENCY CONTACT LIVE LOCATION VIEWER OVERLAY (Opened via ?sos_session=...) -->
+      <div id="contactLiveViewerModal" class="modal-backdrop-clean hidden">
+        <div class="modal-box-clean contact-viewer-box">
+          <div class="modal-clean-header viewer-header">
+            <div class="header-with-icon">
+              <span class="status-indicator-dot live-pulse"></span>
+              <div>
+                <h3>Live Emergency Tracking Feed</h3>
+                <span class="text-xs text-muted" id="viewerSessionIdTag">Session: sos_live_...</span>
+              </div>
+            </div>
+            <button id="closeViewerModalBtn" class="btn-close-modal">✕</button>
+          </div>
+
+          <div class="contact-viewer-content">
+            <div class="viewer-alert-banner" id="viewerStatusBanner">
+              <strong>🚨 EMERGENCY SOS TRANSMISSION IN PROGRESS</strong>
+              <p>You are viewing real-time GPS location coordinates sent by the user.</p>
+            </div>
+
+            <div class="viewer-metrics-grid">
+              <div class="viewer-metric-card">
+                <span class="metric-lbl">CURRENT COORDINATES</span>
+                <strong id="viewerCoordinates">17.443500° N, 78.377200° E</strong>
+              </div>
+              <div class="viewer-metric-card">
+                <span class="metric-lbl">ACCURACY</span>
+                <strong id="viewerAccuracy">±10 meters</strong>
+              </div>
+              <div class="viewer-metric-card">
+                <span class="metric-lbl">LAST UPDATED</span>
+                <strong id="viewerLastUpdated">Just now</strong>
+              </div>
+              <div class="viewer-metric-card">
+                <span class="metric-lbl">STATUS</span>
+                <strong id="viewerSessionState" class="text-success">ACTIVE</strong>
+              </div>
+            </div>
+
+            <!-- Embedded Live Map -->
+            <div class="viewer-map-frame">
+              <div id="viewerLeafletMap" class="viewer-map-canvas"></div>
+            </div>
+
+            <div class="viewer-actions-row">
+              <a href="tel:100" class="btn-call-primary-lg flex-1">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                <span>Call Police (100)</span>
+              </a>
+              <a href="tel:112" class="btn-msg-primary-lg flex-1">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                <span>Call Helpline (112)</span>
+              </a>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. EMERGENCY CONTACTS MANAGER MODAL -->
       <div id="contactsManagerModal" class="modal-backdrop-clean hidden">
         <div class="modal-box-clean contacts-manager-box">
           <div class="modal-clean-header">
@@ -639,7 +873,7 @@
 
           <div class="contacts-manager-content">
             <p class="contacts-intro-text">
-              Configure your trusted emergency circle. When SOS activates, SafeRoute provides one-tap direct calling and pre-filled emergency SMS with your live GPS location.
+              Configure your trusted emergency circle. When SOS activates, SafeRoute provides one-tap direct calling and pre-filled emergency SMS with your live GPS location and live tracking link.
             </p>
 
             <div class="contacts-toolbar-row">
@@ -684,7 +918,7 @@
         </div>
       </div>
 
-      <!-- 4. MULTILINGUAL VOICE SOS SETTINGS MODAL -->
+      <!-- 6. MULTILINGUAL VOICE SOS SETTINGS MODAL -->
       <div id="voiceSettingsModal" class="modal-backdrop-clean hidden">
         <div class="modal-box-clean voice-settings-modal-box">
           <div class="modal-clean-header">
@@ -760,7 +994,7 @@
         </div>
       </div>
 
-      <!-- 5. ADD / EDIT EMERGENCY PHRASE MODAL -->
+      <!-- 7. ADD / EDIT EMERGENCY PHRASE MODAL -->
       <div id="addPhraseModal" class="modal-backdrop-clean hidden">
         <div class="modal-box-clean add-phrase-box">
           <div class="modal-clean-header">
@@ -808,7 +1042,7 @@
         </div>
       </div>
 
-      <!-- 6. REPORT HAZARD MODAL (Exact Coordinates) -->
+      <!-- 8. REPORT HAZARD MODAL (Exact Coordinates) -->
       <div id="reportModal" class="modal-backdrop-clean hidden">
         <div class="modal-box-clean">
           <div class="modal-clean-header">
@@ -900,7 +1134,7 @@
         </div>
       </div>
 
-      <!-- 7. COMMUNITY REPORTS DRAWER -->
+      <!-- 9. COMMUNITY REPORTS DRAWER -->
       <div id="reportsDrawer" class="drawer-backdrop-clean hidden">
         <div class="drawer-box-clean">
           <div class="drawer-header-clean">

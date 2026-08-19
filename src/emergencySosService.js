@@ -1,5 +1,7 @@
 // SafeRoute: Central Emergency SOS Call & Message System
-// Manages Emergency Contacts, 5-Second Countdown, Live GPS Location, and Native Call/SMS Dispatch
+// With Pre-Authorized Permissions, 1-Tap SOS Execution, and Continuous Live Location Tracking
+
+import { liveSosSessionStore } from './liveSosSessionStore.js';
 
 export const SOS_STATUS = {
   INACTIVE: 'SOS INACTIVE',
@@ -25,6 +27,7 @@ export class EmergencySosService {
     this.onCountdownTick = options.onCountdownTick || (() => {});
     this.onLocationUpdate = options.onLocationUpdate || (() => {});
     this.onContactsChange = options.onContactsChange || (() => {});
+    this.onReadinessChange = options.onReadinessChange || (() => {});
 
     this.state = SOS_STATUS.INACTIVE;
     this.triggerSource = 'Manual Button';
@@ -34,8 +37,21 @@ export class EmergencySosService {
     this.currentLocation = null;
     this.locationError = null;
     this.sosTimestamp = null;
+    this.activeLiveSession = null;
+    this.watchPositionId = null;
 
     this.contacts = this.loadContacts();
+
+    // Permissions State Cache
+    this.permissionState = {
+      location: 'unknown', // 'granted' | 'prompt' | 'denied' | 'unsupported'
+      microphone: 'unknown',
+      notifications: 'unknown',
+      contactsConfigured: this.contacts.length > 0,
+      hasPrimaryContact: this.contacts.some(c => c.isPrimary)
+    };
+
+    this.initPermissionMonitoring();
   }
 
   /**
@@ -68,7 +84,10 @@ export class EmergencySosService {
       localStorage.setItem('saferoute_emergency_contacts_v3', JSON.stringify(this.contacts.map(({ id, name, phone, relation, isPrimary }) => ({
         id, name, phone, relation, isPrimary
       }))));
+      this.permissionState.contactsConfigured = this.contacts.length > 0;
+      this.permissionState.hasPrimaryContact = this.contacts.some(c => c.isPrimary);
       this.onContactsChange(this.contacts);
+      this.checkReadiness();
     } catch (e) {
       console.warn('Failed to save emergency contacts', e);
     }
@@ -141,6 +160,170 @@ export class EmergencySosService {
     return false;
   }
 
+  // ================= PERMISSION PRE-AUTHORIZATION & MONITORING =================
+
+  /**
+   * Initializes periodic permission checking
+   */
+  async initPermissionMonitoring() {
+    await this.checkPermissionStatus();
+
+    // Check on visibility change (e.g. user returns from browser/phone settings)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        this.checkPermissionStatus();
+      }
+    });
+
+    // Background interval check every 12 seconds
+    setInterval(() => {
+      this.checkPermissionStatus();
+    }, 12000);
+  }
+
+  /**
+   * Checks current permission states via Permissions API and device capabilities
+   */
+  async checkPermissionStatus() {
+    // 1. Check Geolocation
+    if (!navigator.geolocation) {
+      this.permissionState.location = 'unsupported';
+    } else if (navigator.permissions && navigator.permissions.query) {
+      try {
+        const geoStatus = await navigator.permissions.query({ name: 'geolocation' });
+        this.permissionState.location = geoStatus.state; // 'granted' | 'prompt' | 'denied'
+        geoStatus.onchange = () => this.checkPermissionStatus();
+      } catch (e) {
+        // Fallback
+        if (this.permissionState.location === 'unknown') {
+          this.permissionState.location = 'prompt';
+        }
+      }
+    }
+
+    // 2. Check Microphone
+    if (navigator.permissions && navigator.permissions.query) {
+      try {
+        const micStatus = await navigator.permissions.query({ name: 'microphone' });
+        this.permissionState.microphone = micStatus.state;
+        micStatus.onchange = () => this.checkPermissionStatus();
+      } catch (e) {
+        // Ignore if query not supported for microphone
+      }
+    }
+
+    // 3. Check Notifications
+    if ('Notification' in window) {
+      this.permissionState.notifications = Notification.permission; // 'granted' | 'default' | 'denied'
+    } else {
+      this.permissionState.notifications = 'unsupported';
+    }
+
+    this.permissionState.contactsConfigured = this.contacts.length > 0;
+    this.permissionState.hasPrimaryContact = this.contacts.some(c => c.isPrimary);
+
+    return this.checkReadiness();
+  }
+
+  /**
+   * Evaluates if Emergency SOS is fully configured and READY
+   */
+  checkReadiness() {
+    const isLocationReady = this.permissionState.location === 'granted';
+    const isContactsReady = this.permissionState.contactsConfigured && this.permissionState.hasPrimaryContact;
+    const isReady = isLocationReady && isContactsReady;
+
+    const report = {
+      isReady,
+      location: this.permissionState.location,
+      microphone: this.permissionState.microphone,
+      notifications: this.permissionState.notifications,
+      contactsCount: this.contacts.length,
+      primaryContact: this.getPrimaryContact(),
+      phoneSupport: true,
+      smsSupport: true,
+      liveTrackingSupport: true
+    };
+
+    this.onReadinessChange(isReady, report);
+    return report;
+  }
+
+  /**
+   * Requests Location Pre-Authorization during Setup
+   */
+  async requestLocationPreAuthorization() {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        this.permissionState.location = 'unsupported';
+        resolve({ success: false, error: 'Geolocation unsupported on this device.' });
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          this.permissionState.location = 'granted';
+          this.currentLocation = {
+            latitude: Number(pos.coords.latitude.toFixed(6)),
+            longitude: Number(pos.coords.longitude.toFixed(6)),
+            accuracy: Math.round(pos.coords.accuracy || 10),
+            timestamp: new Date(pos.timestamp).toLocaleTimeString()
+          };
+          this.checkReadiness();
+          resolve({ success: true, coords: this.currentLocation });
+        },
+        (err) => {
+          this.permissionState.location = (err.code === 1) ? 'denied' : 'prompt';
+          this.checkReadiness();
+          resolve({ success: false, error: err.message });
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+      );
+    });
+  }
+
+  /**
+   * Requests Microphone Pre-Authorization during Setup
+   */
+  async requestMicrophonePreAuthorization() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      return { success: false, error: 'Microphone access is not supported by your browser.' };
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Release tracks immediately
+      stream.getTracks().forEach(track => track.stop());
+      this.permissionState.microphone = 'granted';
+      this.checkReadiness();
+      return { success: true };
+    } catch (err) {
+      this.permissionState.microphone = 'denied';
+      this.checkReadiness();
+      return { success: false, error: err.message };
+    }
+  }
+
+  /**
+   * Requests Notification Pre-Authorization during Setup
+   */
+  async requestNotificationPreAuthorization() {
+    if (!('Notification' in window)) {
+      return { success: false, error: 'Notifications not supported on this device.' };
+    }
+
+    try {
+      const perm = await Notification.requestPermission();
+      this.permissionState.notifications = perm;
+      this.checkReadiness();
+      return { success: perm === 'granted' };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  }
+
+  // ================= 1-TAP EMERGENCY SOS EXECUTION =================
+
   /**
    * Initiates 5-Second False-Activation-Prevention Countdown
    * Triggered by Manual SOS Button OR Voice Trigger
@@ -180,8 +363,8 @@ export class EmergencySosService {
   }
 
   /**
-   * ONE CENTRAL SOS FUNCTION
-   * Activates emergency state, fetches real-time GPS coordinates, and prepares contact actions
+   * ONE CENTRAL ONE-TAP SOS FUNCTION
+   * Immediate activation: Real-time GPS, Live Tracking Session, Call & SMS flow with zero permission interruptions
    */
   async activateSOS(source = this.triggerSource) {
     if (this.countdownTimer) {
@@ -192,7 +375,6 @@ export class EmergencySosService {
     this.state = SOS_STATUS.ACTIVE;
     this.triggerSource = source;
     this.sosTimestamp = new Date().toLocaleString();
-    this.currentLocation = null;
     this.locationError = null;
 
     // Reset per-contact action statuses for this SOS session
@@ -201,18 +383,26 @@ export class EmergencySosService {
       c.messageStatus = 'Not Started';
     });
 
+    // 1. Obtain Instant GPS Fix
+    const initialCoords = await this.fetchCurrentLocation();
+
+    // 2. Initialize Secure Live Location Tracking Session
+    this.activeLiveSession = liveSosSessionStore.createSession(initialCoords, this.triggerSource);
+
+    // 3. Start Continuous Background/Live Location Tracking
+    this.startLiveLocationTracking();
+
     this.onStateChange(this.state, {
       source: this.triggerSource,
       timestamp: this.sosTimestamp,
-      contacts: this.contacts
+      contacts: this.contacts,
+      session: this.activeLiveSession,
+      liveUrl: liveSosSessionStore.getLiveTrackingUrl(this.activeLiveSession.id)
     });
-
-    // Obtain Genuine Live GPS Location
-    await this.fetchCurrentLocation();
   }
 
   /**
-   * Queries real browser/device Geolocation API
+   * Queries real browser/device Geolocation API (Pre-authorized, instant)
    */
   async fetchCurrentLocation() {
     return new Promise((resolve) => {
@@ -238,7 +428,7 @@ export class EmergencySosService {
         (err) => {
           console.warn('Geolocation error during SOS:', err);
           let errMsg = 'Unable to access your current location.';
-          if (err.code === 1) errMsg = 'Location permission denied by user.';
+          if (err.code === 1) errMsg = 'Location permission denied. Please enable location in browser settings.';
           else if (err.code === 2) errMsg = 'Current location could not be determined.';
           else if (err.code === 3) errMsg = 'Location request timed out.';
           
@@ -246,23 +436,66 @@ export class EmergencySosService {
           this.onLocationUpdate(null, this.locationError);
           resolve(null);
         },
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
       );
     });
   }
 
   /**
-   * Generates standard plain-text emergency message payload
+   * Continuous Live Location Watcher
+   * Updates breadcrumb coordinates in the active SOS session as the user moves
+   */
+  startLiveLocationTracking() {
+    if (this.watchPositionId !== null) {
+      navigator.geolocation.clearWatch(this.watchPositionId);
+      this.watchPositionId = null;
+    }
+
+    if (!navigator.geolocation || !this.activeLiveSession) return;
+
+    this.watchPositionId = navigator.geolocation.watchPosition(
+      (pos) => {
+        if (this.state !== SOS_STATUS.ACTIVE || !this.activeLiveSession) return;
+
+        const latestCoords = {
+          latitude: Number(pos.coords.latitude.toFixed(6)),
+          longitude: Number(pos.coords.longitude.toFixed(6)),
+          accuracy: Math.round(pos.coords.accuracy || 10),
+          heading: pos.coords.heading || null,
+          speed: pos.coords.speed ? Number(pos.coords.speed.toFixed(1)) : null,
+          timestamp: new Date(pos.timestamp).toLocaleTimeString()
+        };
+
+        this.currentLocation = latestCoords;
+        liveSosSessionStore.appendLiveCoordinate(this.activeLiveSession.id, latestCoords);
+        this.onLocationUpdate(this.currentLocation, null);
+      },
+      (err) => {
+        console.warn('Live location watch error:', err);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 2000 }
+    );
+  }
+
+  /**
+   * Generates standard plain-text emergency message payload with Secure Live Tracking URL
    */
   getEmergencyMessageText() {
     let locStr = 'Current location could not be determined.';
+    let liveUrlStr = '';
+
     if (this.currentLocation) {
       const lat = this.currentLocation.latitude;
       const lng = this.currentLocation.longitude;
       locStr = `Lat: ${lat}, Lng: ${lng}\nMap: https://maps.google.com/?q=${lat},${lng}`;
     }
 
-    return `SafeRoute Emergency Alert\n\nI may be in an emergency situation.\nPlease contact me immediately.\n\nCurrent location:\n${locStr}\n\nTime:\n${this.sosTimestamp || new Date().toLocaleString()}`;
+    if (this.activeLiveSession) {
+      const liveUrl = liveSosSessionStore.getLiveTrackingUrl(this.activeLiveSession.id);
+      liveUrlStr = `\n\nLive GPS Tracking:\n${liveUrl}`;
+    }
+
+    return `SafeRoute Emergency Alert\n\nI may be in an emergency situation.\nPlease contact me immediately.\n\nCurrent Location:\n${locStr}${liveUrlStr}\n\nTime:\n${this.sosTimestamp || new Date().toLocaleString()}`;
   }
 
   /**
@@ -308,14 +541,13 @@ export class EmergencySosService {
 
     try {
       const encodedBody = encodeURIComponent(messageText);
-      // Standard mobile SMS uri format (handles Android & iOS parameter variations)
       const smsUri = `sms:${cleanNumber}?body=${encodedBody}`;
       
       contact.messageStatus = 'Prepared (SMS App Opened)';
       this.onContactsChange(this.contacts);
 
       window.location.href = smsUri;
-      return { success: true, status: 'SMS application opened with pre-filled emergency alert' };
+      return { success: true, status: 'SMS application opened with pre-filled emergency alert & live tracking link' };
     } catch (err) {
       console.warn('SMS dispatch error:', err);
       contact.messageStatus = 'Failed';
@@ -333,12 +565,12 @@ export class EmergencySosService {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: '🚨 SafeRoute Emergency Alert',
+          title: '🚨 SafeRoute Emergency Alert & Live Location',
           text: messageText
         });
         this.contacts.forEach(c => c.messageStatus = 'Shared');
         this.onContactsChange(this.contacts);
-        return { success: true, status: 'Emergency alert shared via system share menu.' };
+        return { success: true, status: 'Emergency alert & live tracking shared via system share menu.' };
       } catch (err) {
         if (err.name !== 'AbortError') {
           console.warn('Web share error:', err);
@@ -355,9 +587,19 @@ export class EmergencySosService {
   }
 
   /**
-   * Dismisses active SOS and returns to normal state
+   * Dismisses active SOS and terminates live location session
    */
   stopSOS() {
+    if (this.watchPositionId !== null) {
+      navigator.geolocation.clearWatch(this.watchPositionId);
+      this.watchPositionId = null;
+    }
+
+    if (this.activeLiveSession) {
+      liveSosSessionStore.terminateSession(this.activeLiveSession.id);
+      this.activeLiveSession = null;
+    }
+
     this.state = SOS_STATUS.INACTIVE;
     this.onStateChange(this.state, { stopped: true });
   }
