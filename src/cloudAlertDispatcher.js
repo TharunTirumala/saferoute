@@ -19,6 +19,8 @@ export class CloudAlertDispatcher {
         timestamp: location.timestamp
       } : null,
       liveTrackingUrl,
+      googleMapsUrl: location ? `https://www.google.com/maps?q=${location.latitude},${location.longitude}` : (liveTrackingUrl || ''),
+      message: location ? `Emergency Alert: I need help. My SOS has been activated. My current location: https://www.google.com/maps?q=${location.latitude},${location.longitude}` : `Emergency Alert: I need help. My SOS has been activated. My live tracking link: ${liveTrackingUrl}`,
       timestamp: timestamp || new Date().toISOString(),
       recipients: (contacts || []).map(c => ({
         id: c.id,

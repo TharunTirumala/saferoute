@@ -113,7 +113,8 @@ export class PlatformEmergencyBridge {
     // 1. Android Native Direct SMS via SmsManager
     if (this.isNativeAndroid()) {
       let anySent = false;
-      const messageText = `SAFEROUTE EMERGENCY ALERT\n\nI may be in an emergency situation.\n\nMy current live location:\n${liveTrackingUrl}\n\nTime:\n${timestamp}\n\nPlease contact me immediately.`;
+      const gmapsLink = location ? `https://www.google.com/maps?q=${location.latitude},${location.longitude}` : (liveTrackingUrl || 'Live location active');
+      const messageText = `Emergency Alert: I need help. My SOS has been activated. My current location: ${gmapsLink}`;
 
       for (const contact of contacts) {
         if (contact.phone) {

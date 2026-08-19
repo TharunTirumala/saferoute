@@ -27,7 +27,7 @@ export class EmergencySosService {
     this.state = SOS_STATUS.INACTIVE;
     this.triggerSource = 'Manual Button';
     this.countdownTimer = null;
-    this.countdownSeconds = 5;
+    this.countdownSeconds = 3;
     
     this.currentLocation = null;
     this.locationError = null;
@@ -326,7 +326,7 @@ export class EmergencySosService {
 
     this.state = SOS_STATUS.COUNTDOWN;
     this.triggerSource = source;
-    this.countdownSeconds = 5;
+    this.countdownSeconds = 3;
     this.onStateChange(this.state, { seconds: this.countdownSeconds, source: this.triggerSource });
 
     if (this.countdownTimer) clearInterval(this.countdownTimer);

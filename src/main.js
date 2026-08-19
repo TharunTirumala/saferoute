@@ -423,8 +423,8 @@ btnSetupManageContacts.addEventListener('click', () => {
 function handleSosStateChange(state, data = {}) {
   if (state === SOS_STATUS.COUNTDOWN) {
     countdownTriggerSourceName.textContent = (data.source || 'Emergency Trigger').toUpperCase();
-    centralCountdownNumber.textContent = data.seconds || 5;
-    centralCountdownNoticeSecs.textContent = data.seconds || 5;
+    centralCountdownNumber.textContent = data.seconds || 3;
+    centralCountdownNoticeSecs.textContent = data.seconds || 3;
     centralSosCountdownModal.classList.remove('hidden');
     sosModal.classList.add('hidden');
   } else if (state === SOS_STATUS.INACTIVE) {
@@ -456,7 +456,7 @@ function renderSosLocation(loc, error) {
   if (loc) {
     sosGpsStatusBadge.className = 'status-indicator-pill listening';
     sosGpsStatusBadge.innerHTML = '<span class="status-dot"></span><span class="status-label">Live Active</span>';
-    sosGpsCoords.textContent = `${loc.latitude}° N, ${loc.longitude}° E (±${loc.accuracy}m)`;
+    sosGpsCoords.innerHTML = `<a href="https://www.google.com/maps?q=${loc.latitude},${loc.longitude}" target="_blank" class="live-gmaps-link" style="color: #2563eb; text-decoration: underline; font-weight: 700;">View Live Location on Google Maps ↗</a>`;
     sosGpsTimestamp.textContent = `Time: ${loc.timestamp}`;
     
     if (emergencySos.activeLiveSession) {
