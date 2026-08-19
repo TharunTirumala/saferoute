@@ -23,6 +23,7 @@ export class LeafletMapRenderer {
     this.onMapClickCallback = options.onMapClick || null;
     this.onSelectRouteCallback = options.onSelectRoute || null;
     this.onReportActionCallback = options.onReportAction || null;
+    this.onMapMoveEndCallback = options.onMapMoveEnd || null;
 
     this.initMap();
   }
@@ -58,6 +59,15 @@ export class LeafletMapRenderer {
       const lng = Number(e.latlng.lng.toFixed(6));
       if (this.onMapClickCallback) {
         this.onMapClickCallback(lat, lng, this.pickingMode);
+      }
+    });
+
+    // Map moveend handler for dynamic pan/drag discovery across any location in India
+    this.map.on('moveend', () => {
+      if (!this.map) return;
+      const center = this.map.getCenter();
+      if (this.onMapMoveEndCallback && center) {
+        this.onMapMoveEndCallback(Number(center.lat.toFixed(6)), Number(center.lng.toFixed(6)));
       }
     });
 

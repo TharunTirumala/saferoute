@@ -60,6 +60,9 @@ const safeRouteMapRenderer = new LeafletMapRenderer('safeRouteLeafletMap', {
   onReportAction: () => {
     renderSafeRouteUI();
     renderCommunityReportsDrawer();
+  },
+  onMapMoveEnd: (lat, lng) => {
+    syncNearbyPlacesLocation(lat, lng);
   }
 });
 
@@ -1488,6 +1491,10 @@ async function handleFindSafeRoutes() {
       }
       renderSafeRouteUI();
     }, 100);
+
+    if (safeRouteEngine.origin && safeRouteEngine.origin.lat && safeRouteEngine.origin.lng) {
+      syncNearbyPlacesLocation(safeRouteEngine.origin.lat, safeRouteEngine.origin.lng);
+    }
 
     sound.playBeep(880, 0.1);
   } catch (err) {
