@@ -101,6 +101,13 @@ export class SafeRouteEngine {
     this.googleApiKey = import.meta.env?.VITE_GOOGLE_MAPS_API_KEY || "";
   }
 
+  getSelectedRoute() {
+    if (this.routes && this.routes.length > 0) {
+      return this.routes[this.selectedRouteIndex] || this.routes[0];
+    }
+    return null;
+  }
+
   /**
    * Geocodes arbitrary address to exact latitude and longitude via OSM Nominatim
    */
@@ -159,8 +166,27 @@ export class SafeRouteEngine {
    */
   getRoutingProfile() {
     if (this.travelMode === 'walking') return 'foot';
-    if (this.travelMode === 'bike') return 'driving'; // OSRM two-wheeler/driving road network
-    return 'driving'; // default for car and auto
+    if (this.travelMode === 'bike') return 'driving';
+    if (this.travelMode === 'bus') return 'driving';
+    if (this.travelMode === 'auto') return 'driving';
+    return 'driving';
+  }
+
+  getModeAverageSpeedKmh() {
+    switch (this.travelMode) {
+      case 'walking': return 4.8;
+      case 'bus': return 20.0;
+      case 'car': return 32.0;
+      case 'bike': return 26.0;
+      case 'auto': return 24.0;
+      default: return 30.0;
+    }
+  }
+
+  calculateEstimatedDurationMin(distanceKm) {
+    const dist = Number(distanceKm) || 1;
+    const speed = this.getModeAverageSpeedKmh();
+    return Math.max(1, Math.round((dist / speed) * 60));
   }
 
   /**

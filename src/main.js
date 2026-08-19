@@ -1176,7 +1176,7 @@ function updateFirstPageRoutePreview() {
   }
 
   if (origin && dest && !isNaN(origin.lat) && !isNaN(dest.lat)) {
-    // Haversine direct distance with urban curvature factor (1.25)
+    // Mode-specific route distance calculation based on urban road curvature
     const R = 6371;
     const dLat = ((dest.lat - origin.lat) * Math.PI) / 180;
     const dLon = ((dest.lng - origin.lng) * Math.PI) / 180;
@@ -1188,7 +1188,8 @@ function updateFirstPageRoutePreview() {
         Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const rawDist = R * c;
-    const distKm = Math.max(0.8, Math.round(rawDist * 1.25 * 10) / 10);
+    const curvatureFactor = modeKey === 'walking' ? 1.18 : modeKey === 'bus' ? 1.32 : 1.25;
+    const distKm = Math.max(0.5, Math.round(rawDist * curvatureFactor * 10) / 10);
     const durMin = (distKm / modeInfo.speed) * 60;
 
     if (previewDistanceValue) previewDistanceValue.textContent = `${distKm} km`;
