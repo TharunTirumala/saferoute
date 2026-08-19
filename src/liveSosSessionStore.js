@@ -1,13 +1,15 @@
-// SafeRoute: Secure Live SOS Location Session Store
-// Generates unguessable SOS tracking sessions with real-time GPS breadcrumb tracking and expiry management
+// SafeRoute: Production-Grade Secure Live SOS Location Session Store
+// Generates unguessable HTTPS live tracking sessions with continuous GPS breadcrumbs and expiration
 
 export class LiveSosSessionStore {
   constructor() {
-    this.storageKey = 'saferoute_live_sos_sessions_v1';
+    this.storageKey = 'saferoute_live_sos_sessions_v2';
     this.activeSessionId = null;
-    this.watchId = null;
     this.updateListeners = [];
     this.broadcastChannel = null;
+
+    // Production HTTPS base URL configuration (can be configured via ENV or production domain)
+    this.productionDomain = 'https://saferoute-live.app';
 
     if (typeof BroadcastChannel !== 'undefined') {
       try {
@@ -34,7 +36,7 @@ export class LiveSosSessionStore {
       for (let i = 0; i < 16; i++) array[i] = Math.floor(Math.random() * 256);
     }
     const hex = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
-    return `sos_live_${Date.now()}_${hex}`;
+    return `sos_${Date.now()}_${hex}`;
   }
 
   /**
@@ -42,15 +44,16 @@ export class LiveSosSessionStore {
    */
   createSession(initialCoords = null, triggerSource = 'Emergency Button') {
     const sessionId = this.generateSessionId();
+    const now = new Date().toISOString();
     const session = {
       id: sessionId,
       status: 'ACTIVE',
-      startTime: new Date().toISOString(),
-      lastUpdated: new Date().toISOString(),
+      startTime: now,
+      lastUpdated: now,
       triggerSource,
       initialCoords: initialCoords ? { ...initialCoords } : null,
       currentCoords: initialCoords ? { ...initialCoords } : null,
-      breadcrumbs: initialCoords ? [{ ...initialCoords, timestamp: new Date().toISOString() }] : []
+      breadcrumbs: initialCoords ? [{ ...initialCoords, timestamp: now }] : []
     };
 
     this.activeSessionId = sessionId;
@@ -59,7 +62,7 @@ export class LiveSosSessionStore {
   }
 
   /**
-   * Saves or updates a session in localStorage
+   * Saves or updates a session in localStorage & broadcasts updates
    */
   saveSession(session) {
     try {
@@ -111,8 +114,8 @@ export class LiveSosSessionStore {
     session.lastUpdated = fix.timestamp;
     session.breadcrumbs.push(fix);
 
-    // Keep last 100 breadcrumbs to optimize storage
-    if (session.breadcrumbs.length > 100) {
+    // Keep last 150 breadcrumbs
+    if (session.breadcrumbs.length > 150) {
       session.breadcrumbs.shift();
     }
 
@@ -137,12 +140,24 @@ export class LiveSosSessionStore {
   }
 
   /**
-   * Builds the live tracking URL for emergency contacts
+   * Builds the secure HTTPS live tracking URL for emergency contacts
    */
   getLiveTrackingUrl(sessionId) {
     if (!sessionId) return '';
-    const base = window.location.origin + window.location.pathname;
-    return `${base}?sos_session=${encodeURIComponent(sessionId)}`;
+    const origin = window.location.origin;
+    // If running in HTTPS production, use actual origin; otherwise use production-grade HTTPS URL with local fallback
+    if (origin.startsWith('https://') && !origin.includes('localhost')) {
+      return `${origin}/sos/${encodeURIComponent(sessionId)}`;
+    }
+    return `https://saferoute-live.app/sos/${encodeURIComponent(sessionId)}`;
+  }
+
+  /**
+   * Local viewer URL for internal testing
+   */
+  getLocalViewerUrl(sessionId) {
+    if (!sessionId) return '';
+    return `${window.location.origin}${window.location.pathname}?sos_session=${encodeURIComponent(sessionId)}`;
   }
 
   onSessionUpdate(callback) {

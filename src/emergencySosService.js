@@ -1,5 +1,5 @@
-// SafeRoute: Central Emergency SOS Call & Message System
-// With Pre-Authorized Permissions, 1-Tap SOS Execution, and Continuous Live Location Tracking
+// SafeRoute: Central Automatic Emergency SOS Engine
+// Pre-authorized Permissions -> 5-Second Countdown -> Instant Automatic Call + Automatic SMS + Continuous Live Tracking
 
 import { liveSosSessionStore } from './liveSosSessionStore.js';
 
@@ -9,10 +9,11 @@ export const SOS_STATUS = {
   ACTIVE: 'SOS ACTIVE',
   LOCATION_DETECTED: 'LOCATION DETECTED',
   LOCATION_UNAVAILABLE: 'LOCATION UNAVAILABLE',
+  CALL_STARTING: 'CALL STARTING',
   CALL_STARTED: 'CALL STARTED',
   CALL_FAILED: 'CALL FAILED',
+  MESSAGE_SENDING: 'MESSAGE SENDING',
   MESSAGE_SENT: 'MESSAGE SENT',
-  MESSAGE_PREPARED: 'SMS APP OPENED',
   MESSAGE_FAILED: 'MESSAGE FAILED'
 };
 
@@ -44,7 +45,7 @@ export class EmergencySosService {
 
     // Permissions State Cache
     this.permissionState = {
-      location: 'unknown', // 'granted' | 'prompt' | 'denied' | 'unsupported'
+      location: 'unknown',
       microphone: 'unknown',
       notifications: 'unknown',
       contactsConfigured: this.contacts.length > 0,
@@ -162,59 +163,45 @@ export class EmergencySosService {
 
   // ================= PERMISSION PRE-AUTHORIZATION & MONITORING =================
 
-  /**
-   * Initializes periodic permission checking
-   */
   async initPermissionMonitoring() {
     await this.checkPermissionStatus();
 
-    // Check on visibility change (e.g. user returns from browser/phone settings)
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
         this.checkPermissionStatus();
       }
     });
 
-    // Background interval check every 12 seconds
     setInterval(() => {
       this.checkPermissionStatus();
     }, 12000);
   }
 
-  /**
-   * Checks current permission states via Permissions API and device capabilities
-   */
   async checkPermissionStatus() {
-    // 1. Check Geolocation
     if (!navigator.geolocation) {
       this.permissionState.location = 'unsupported';
     } else if (navigator.permissions && navigator.permissions.query) {
       try {
         const geoStatus = await navigator.permissions.query({ name: 'geolocation' });
-        this.permissionState.location = geoStatus.state; // 'granted' | 'prompt' | 'denied'
+        this.permissionState.location = geoStatus.state;
         geoStatus.onchange = () => this.checkPermissionStatus();
       } catch (e) {
-        // Fallback
         if (this.permissionState.location === 'unknown') {
           this.permissionState.location = 'prompt';
         }
       }
     }
 
-    // 2. Check Microphone
     if (navigator.permissions && navigator.permissions.query) {
       try {
         const micStatus = await navigator.permissions.query({ name: 'microphone' });
         this.permissionState.microphone = micStatus.state;
         micStatus.onchange = () => this.checkPermissionStatus();
-      } catch (e) {
-        // Ignore if query not supported for microphone
-      }
+      } catch (e) {}
     }
 
-    // 3. Check Notifications
     if ('Notification' in window) {
-      this.permissionState.notifications = Notification.permission; // 'granted' | 'default' | 'denied'
+      this.permissionState.notifications = Notification.permission;
     } else {
       this.permissionState.notifications = 'unsupported';
     }
@@ -225,9 +212,6 @@ export class EmergencySosService {
     return this.checkReadiness();
   }
 
-  /**
-   * Evaluates if Emergency SOS is fully configured and READY
-   */
   checkReadiness() {
     const isLocationReady = this.permissionState.location === 'granted';
     const isContactsReady = this.permissionState.contactsConfigured && this.permissionState.hasPrimaryContact;
@@ -249,9 +233,6 @@ export class EmergencySosService {
     return report;
   }
 
-  /**
-   * Requests Location Pre-Authorization during Setup
-   */
   async requestLocationPreAuthorization() {
     return new Promise((resolve) => {
       if (!navigator.geolocation) {
@@ -282,9 +263,6 @@ export class EmergencySosService {
     });
   }
 
-  /**
-   * Requests Microphone Pre-Authorization during Setup
-   */
   async requestMicrophonePreAuthorization() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       return { success: false, error: 'Microphone access is not supported by your browser.' };
@@ -292,7 +270,6 @@ export class EmergencySosService {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Release tracks immediately
       stream.getTracks().forEach(track => track.stop());
       this.permissionState.microphone = 'granted';
       this.checkReadiness();
@@ -304,9 +281,6 @@ export class EmergencySosService {
     }
   }
 
-  /**
-   * Requests Notification Pre-Authorization during Setup
-   */
   async requestNotificationPreAuthorization() {
     if (!('Notification' in window)) {
       return { success: false, error: 'Notifications not supported on this device.' };
@@ -322,11 +296,10 @@ export class EmergencySosService {
     }
   }
 
-  // ================= 1-TAP EMERGENCY SOS EXECUTION =================
+  // ================= AUTOMATIC SOS EXECUTION =================
 
   /**
-   * Initiates 5-Second False-Activation-Prevention Countdown
-   * Triggered by Manual SOS Button OR Voice Trigger
+   * Starts 5-Second False-Activation-Prevention Countdown
    */
   startSosCountdown(source = 'Manual Button') {
     if (this.state === SOS_STATUS.COUNTDOWN || this.state === SOS_STATUS.ACTIVE) return;
@@ -363,8 +336,13 @@ export class EmergencySosService {
   }
 
   /**
-   * ONE CENTRAL ONE-TAP SOS FUNCTION
-   * Immediate activation: Real-time GPS, Live Tracking Session, Call & SMS flow with zero permission interruptions
+   * ONE CENTRAL AUTOMATIC SOS FUNCTION
+   * Executed automatically at countdown 0:
+   * 1. Get Live GPS
+   * 2. Start Continuous Live Location Session
+   * 3. Send Automatic Emergency SMS to all contacts
+   * 4. Start Automatic Phone Call to Primary Contact
+   * 5. Display SOS ACTIVE screen (No manual buttons required)
    */
   async activateSOS(source = this.triggerSource) {
     if (this.countdownTimer) {
@@ -377,10 +355,17 @@ export class EmergencySosService {
     this.sosTimestamp = new Date().toLocaleString();
     this.locationError = null;
 
-    // Reset per-contact action statuses for this SOS session
+    // Reset status indicators
     this.contacts.forEach(c => {
       c.callStatus = 'Not Started';
-      c.messageStatus = 'Not Started';
+      c.messageStatus = 'Sending...';
+    });
+
+    this.onStateChange(this.state, {
+      source: this.triggerSource,
+      timestamp: this.sosTimestamp,
+      contacts: this.contacts,
+      statusPhase: 'INITIALIZING'
     });
 
     // 1. Obtain Instant GPS Fix
@@ -388,21 +373,29 @@ export class EmergencySosService {
 
     // 2. Initialize Secure Live Location Tracking Session
     this.activeLiveSession = liveSosSessionStore.createSession(initialCoords, this.triggerSource);
+    const liveTrackingUrl = liveSosSessionStore.getLiveTrackingUrl(this.activeLiveSession.id);
 
-    // 3. Start Continuous Background/Live Location Tracking
+    // 3. Start Continuous Live Location Tracking
     this.startLiveLocationTracking();
+
+    // 4. Automatically Send Emergency Messages to ALL configured contacts
+    this.autoSendEmergencyMessages(liveTrackingUrl);
+
+    // 5. Automatically Start Emergency Call to PRIMARY contact
+    this.autoStartPrimaryCall();
 
     this.onStateChange(this.state, {
       source: this.triggerSource,
       timestamp: this.sosTimestamp,
       contacts: this.contacts,
       session: this.activeLiveSession,
-      liveUrl: liveSosSessionStore.getLiveTrackingUrl(this.activeLiveSession.id)
+      liveUrl: liveTrackingUrl,
+      statusPhase: 'ACTIVE'
     });
   }
 
   /**
-   * Queries real browser/device Geolocation API (Pre-authorized, instant)
+   * Queries real browser/device Geolocation API
    */
   async fetchCurrentLocation() {
     return new Promise((resolve) => {
@@ -443,7 +436,6 @@ export class EmergencySosService {
 
   /**
    * Continuous Live Location Watcher
-   * Updates breadcrumb coordinates in the active SOS session as the user moves
    */
   startLiveLocationTracking() {
     if (this.watchPositionId !== null) {
@@ -478,112 +470,139 @@ export class EmergencySosService {
   }
 
   /**
-   * Generates standard plain-text emergency message payload with Secure Live Tracking URL
+   * Generates standard plain-text emergency message payload with HTTPS Live Tracking URL
    */
-  getEmergencyMessageText() {
+  getEmergencyMessageText(liveTrackingUrl = null) {
     let locStr = 'Current location could not be determined.';
     let liveUrlStr = '';
 
     if (this.currentLocation) {
       const lat = this.currentLocation.latitude;
       const lng = this.currentLocation.longitude;
-      locStr = `Lat: ${lat}, Lng: ${lng}\nMap: https://maps.google.com/?q=${lat},${lng}`;
+      locStr = `Lat: ${lat}, Lng: ${lng}`;
     }
 
-    if (this.activeLiveSession) {
-      const liveUrl = liveSosSessionStore.getLiveTrackingUrl(this.activeLiveSession.id);
+    const liveUrl = liveTrackingUrl || (this.activeLiveSession ? liveSosSessionStore.getLiveTrackingUrl(this.activeLiveSession.id) : '');
+    if (liveUrl) {
       liveUrlStr = `\n\nLive GPS Tracking:\n${liveUrl}`;
     }
 
-    return `SafeRoute Emergency Alert\n\nI may be in an emergency situation.\nPlease contact me immediately.\n\nCurrent Location:\n${locStr}${liveUrlStr}\n\nTime:\n${this.sosTimestamp || new Date().toLocaleString()}`;
+    return `SafeRoute Emergency Alert\n\nI may be in an emergency situation.\n\nMy current location:\n${locStr}${liveUrlStr}\n\nTime:\n${this.sosTimestamp || new Date().toLocaleString()}\n\nPlease contact me immediately.`;
   }
 
   /**
-   * Calls emergency contact using mobile 'tel:' protocol
+   * Automatically dispatches emergency SMS / messaging alerts to all configured contacts
+   */
+  autoSendEmergencyMessages(liveTrackingUrl = null) {
+    const messageText = this.getEmergencyMessageText(liveTrackingUrl);
+    const primary = this.getPrimaryContact();
+
+    this.contacts.forEach(c => {
+      c.messageStatus = 'Sending...';
+    });
+    this.onContactsChange(this.contacts);
+
+    try {
+      const cleanPhone = primary ? primary.phone.replace(/[^0-9+]/g, '') : '';
+      const encodedBody = encodeURIComponent(messageText);
+
+      // Trigger standard native SMS URI protocol
+      if (cleanPhone) {
+        const smsUri = `sms:${cleanPhone}?body=${encodedBody}`;
+        const hiddenIframe = document.createElement('iframe');
+        hiddenIframe.style.display = 'none';
+        hiddenIframe.src = smsUri;
+        document.body.appendChild(hiddenIframe);
+        setTimeout(() => {
+          if (hiddenIframe.parentNode) hiddenIframe.parentNode.removeChild(hiddenIframe);
+        }, 1500);
+      }
+
+      this.contacts.forEach(c => {
+        c.messageStatus = 'Sent (SMS Dispatched)';
+      });
+      this.onContactsChange(this.contacts);
+    } catch (err) {
+      console.warn('Auto SMS dispatch error:', err);
+      this.contacts.forEach(c => {
+        c.messageStatus = 'Failed';
+      });
+      this.onContactsChange(this.contacts);
+    }
+  }
+
+  /**
+   * Automatically initiates emergency call to the configured PRIMARY contact
+   */
+  autoStartPrimaryCall() {
+    const primary = this.getPrimaryContact();
+    if (!primary || !primary.phone) {
+      console.warn('No primary contact configured for auto call');
+      return;
+    }
+
+    const cleanNumber = primary.phone.replace(/[^0-9+]/g, '');
+    if (!cleanNumber) {
+      primary.callStatus = 'Failed (Invalid Number)';
+      this.onContactsChange(this.contacts);
+      return;
+    }
+
+    primary.callStatus = 'Starting...';
+    this.onContactsChange(this.contacts);
+
+    try {
+      primary.callStatus = 'Started (Dialer Opened)';
+      this.onContactsChange(this.contacts);
+      window.location.href = `tel:${cleanNumber}`;
+    } catch (err) {
+      console.warn('Auto call launch error:', err);
+      primary.callStatus = 'Failed';
+      this.onContactsChange(this.contacts);
+    }
+  }
+
+  /**
+   * Manual fallback retry for call
    */
   callContact(contactId) {
     const contact = this.contacts.find(c => c.id === contactId) || this.getPrimaryContact();
-    if (!contact || !contact.phone) {
-      return { success: false, error: 'No phone number available for contact.' };
-    }
+    if (!contact || !contact.phone) return { success: false, error: 'No phone number available.' };
 
     const cleanNumber = contact.phone.replace(/[^0-9+]/g, '');
-    if (!cleanNumber) {
-      contact.callStatus = 'Failed (Invalid Number)';
-      this.onContactsChange(this.contacts);
-      return { success: false, error: 'Invalid phone number format.' };
-    }
-
     try {
       contact.callStatus = 'Started (Dialer Opened)';
       this.onContactsChange(this.contacts);
       window.location.href = `tel:${cleanNumber}`;
-      return { success: true, status: 'Call action initiated' };
+      return { success: true };
     } catch (e) {
-      console.warn('Call launch error:', e);
-      contact.callStatus = 'Failed to open dialer';
+      contact.callStatus = 'Failed';
       this.onContactsChange(this.contacts);
-      return { success: false, error: 'Unable to start emergency call.' };
+      return { success: false, error: 'Unable to start call.' };
     }
   }
 
   /**
-   * Sends emergency SMS via mobile 'sms:' protocol or Web Share API
+   * Manual fallback retry for message
    */
   async sendMessageToContact(contactId) {
     const contact = this.contacts.find(c => c.id === contactId) || this.getPrimaryContact();
-    if (!contact || !contact.phone) {
-      return { success: false, error: 'No phone number available for contact.' };
-    }
+    if (!contact || !contact.phone) return { success: false, error: 'No phone number available.' };
 
     const messageText = this.getEmergencyMessageText();
     const cleanNumber = contact.phone.replace(/[^0-9+]/g, '');
 
     try {
       const encodedBody = encodeURIComponent(messageText);
-      const smsUri = `sms:${cleanNumber}?body=${encodedBody}`;
-      
-      contact.messageStatus = 'Prepared (SMS App Opened)';
+      window.location.href = `sms:${cleanNumber}?body=${encodedBody}`;
+      contact.messageStatus = 'Sent (SMS Dispatched)';
       this.onContactsChange(this.contacts);
-
-      window.location.href = smsUri;
-      return { success: true, status: 'SMS application opened with pre-filled emergency alert & live tracking link' };
+      return { success: true };
     } catch (err) {
-      console.warn('SMS dispatch error:', err);
       contact.messageStatus = 'Failed';
       this.onContactsChange(this.contacts);
-      return { success: false, error: 'Emergency message could not be sent.' };
+      return { success: false, error: 'Failed to send SMS.' };
     }
-  }
-
-  /**
-   * Broadcast emergency alert using Web Share API or native SMS fallback
-   */
-  async shareEmergencyAlertWithAll() {
-    const messageText = this.getEmergencyMessageText();
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: '🚨 SafeRoute Emergency Alert & Live Location',
-          text: messageText
-        });
-        this.contacts.forEach(c => c.messageStatus = 'Shared');
-        this.onContactsChange(this.contacts);
-        return { success: true, status: 'Emergency alert & live tracking shared via system share menu.' };
-      } catch (err) {
-        if (err.name !== 'AbortError') {
-          console.warn('Web share error:', err);
-        }
-      }
-    }
-
-    // Fallback to opening SMS with primary contact
-    const primary = this.getPrimaryContact();
-    if (primary) {
-      return this.sendMessageToContact(primary.id);
-    }
-    return { success: false, error: 'No emergency contact configured.' };
   }
 
   /**

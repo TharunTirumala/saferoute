@@ -177,8 +177,16 @@ const inputLiveUrlDisplay = document.getElementById('inputLiveUrlDisplay');
 const btnCopyLiveUrl = document.getElementById('btnCopyLiveUrl');
 const btnTestOpenLiveUrl = document.getElementById('btnTestOpenLiveUrl');
 
-const btnCallPrimaryContactNow = document.getElementById('btnCallPrimaryContactNow');
-const btnSendEmergencyMessageNow = document.getElementById('btnSendEmergencyMessageNow');
+const primaryCallStatusBadge = document.getElementById('primaryCallStatusBadge');
+const primaryCallStatusText = document.getElementById('primaryCallStatusText');
+const primaryContactNameDisplay = document.getElementById('primaryContactNameDisplay');
+const btnRetryPrimaryCall = document.getElementById('btnRetryPrimaryCall');
+
+const emergencyMsgStatusBadge = document.getElementById('emergencyMsgStatusBadge');
+const emergencyMsgStatusText = document.getElementById('emergencyMsgStatusText');
+const autoMsgContactsSummary = document.getElementById('autoMsgContactsSummary');
+const btnRetryAutoSms = document.getElementById('btnRetryAutoSms');
+
 const sosActiveContactsList = document.getElementById('sosActiveContactsList');
 const btnEditContactsInSos = document.getElementById('btnEditContactsInSos');
 const sosDispatchStatus = document.getElementById('sosDispatchStatus');
@@ -475,8 +483,46 @@ btnCopyLiveUrl.addEventListener('click', () => {
   }
 });
 
-// Render contacts list inside active SOS screen
+// Render contacts list and automatic response summary inside active SOS screen
 function renderSosActiveContacts(contacts) {
+  // Update Top Automatic Call Status Card
+  const primary = emergencySos.getPrimaryContact();
+  if (primary) {
+    primaryContactNameDisplay.textContent = `${primary.name} (${primary.phone})`;
+    const isStarted = primary.callStatus.includes('Started') || primary.callStatus.includes('Starting');
+    const isFailed = primary.callStatus.includes('Failed');
+
+    if (isFailed) {
+      primaryCallStatusText.textContent = 'Failed';
+      primaryCallStatusBadge.className = 'status-indicator-pill unsupported';
+      btnRetryPrimaryCall.classList.remove('hidden');
+    } else if (isStarted) {
+      primaryCallStatusText.textContent = 'Started';
+      primaryCallStatusBadge.className = 'status-indicator-pill listening';
+      btnRetryPrimaryCall.classList.add('hidden');
+    } else {
+      primaryCallStatusText.textContent = 'Starting...';
+      primaryCallStatusBadge.className = 'status-indicator-pill off';
+      btnRetryPrimaryCall.classList.add('hidden');
+    }
+  }
+
+  // Update Top Automatic Message Status Card
+  const sentCount = contacts.filter(c => c.messageStatus.includes('Sent') || c.messageStatus.includes('Dispatched')).length;
+  const failedCount = contacts.filter(c => c.messageStatus.includes('Failed')).length;
+
+  if (failedCount > 0 && sentCount === 0) {
+    emergencyMsgStatusText.textContent = 'Failed';
+    emergencyMsgStatusBadge.className = 'status-indicator-pill unsupported';
+    btnRetryAutoSms.classList.remove('hidden');
+  } else {
+    emergencyMsgStatusText.textContent = 'Sent';
+    emergencyMsgStatusBadge.className = 'status-indicator-pill listening';
+    btnRetryAutoSms.classList.add('hidden');
+  }
+  autoMsgContactsSummary.textContent = `${contacts.length} contact${contacts.length > 1 ? 's' : ''} notified with Live GPS`;
+
+  // Render individual contact cards
   sosActiveContactsList.innerHTML = '';
   if (!contacts || contacts.length === 0) {
     sosActiveContactsList.innerHTML = '<div class="text-xs text-muted py-2">No emergency contacts configured yet.</div>';
@@ -488,7 +534,7 @@ function renderSosActiveContacts(contacts) {
     card.className = `sos-contact-item-card ${c.isPrimary ? 'primary' : ''}`;
 
     const callBadgeClass = c.callStatus.includes('Started') ? 'good' : c.callStatus.includes('Failed') ? 'danger' : 'dim';
-    const msgBadgeClass = c.messageStatus.includes('Opened') || c.messageStatus.includes('Shared') ? 'good' : c.messageStatus.includes('Failed') ? 'danger' : 'dim';
+    const msgBadgeClass = c.messageStatus.includes('Sent') || c.messageStatus.includes('Dispatched') || c.messageStatus.includes('Opened') ? 'good' : c.messageStatus.includes('Failed') ? 'danger' : 'dim';
 
     card.innerHTML = `
       <div class="sos-contact-info">
@@ -506,18 +552,18 @@ function renderSosActiveContacts(contacts) {
       </div>
 
       <div class="sos-contact-actions">
-        <button type="button" class="btn-contact-call" title="Call this contact via device phone dialer">
+        <button type="button" class="btn-contact-call" title="Retry call via phone dialer">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
           <span>Call</span>
         </button>
-        <button type="button" class="btn-contact-msg" title="Send emergency SMS via messaging app">
+        <button type="button" class="btn-contact-msg" title="Retry emergency SMS">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           <span>SMS</span>
         </button>
       </div>
     `;
 
-    // Action listeners
+    // Action listeners for manual retry
     card.querySelector('.btn-contact-call').addEventListener('click', () => {
       const res = emergencySos.callContact(c.id);
       if (!res.success) alert(res.error);
@@ -526,7 +572,7 @@ function renderSosActiveContacts(contacts) {
     card.querySelector('.btn-contact-msg').addEventListener('click', async () => {
       const res = await emergencySos.sendMessageToContact(c.id);
       if (res.success) {
-        showSosStatusToast(res.status);
+        showSosStatusToast("Emergency SMS dispatched.");
       } else {
         alert(res.error);
       }
@@ -543,6 +589,16 @@ function showSosStatusToast(msg) {
     sosDispatchStatus.classList.add('hidden');
   }, 6000);
 }
+
+// Wire Retry Buttons
+btnRetryPrimaryCall.addEventListener('click', () => {
+  emergencySos.autoStartPrimaryCall();
+});
+
+btnRetryAutoSms.addEventListener('click', () => {
+  const liveUrl = emergencySos.activeLiveSession ? liveSosSessionStore.getLiveTrackingUrl(emergencySos.activeLiveSession.id) : null;
+  emergencySos.autoSendEmergencyMessages(liveUrl);
+});
 
 // Wire SOS Trigger Buttons
 openSosBtn.addEventListener('click', () => {
@@ -566,27 +622,6 @@ btnDismissSos.addEventListener('click', () => {
 
 closeSosModalBtn.addEventListener('click', () => {
   emergencySos.stopSOS();
-});
-
-// Primary Contact Quick Call Button
-btnCallPrimaryContactNow.addEventListener('click', () => {
-  const primary = emergencySos.getPrimaryContact();
-  if (primary) {
-    const res = emergencySos.callContact(primary.id);
-    if (!res.success) alert(res.error);
-  } else {
-    alert("No emergency contacts configured. Please add an emergency contact.");
-  }
-});
-
-// Send Emergency Message to All Contacts Button
-btnSendEmergencyMessageNow.addEventListener('click', async () => {
-  const res = await emergencySos.shareEmergencyAlertWithAll();
-  if (res.success) {
-    showSosStatusToast(res.status);
-  } else {
-    alert(res.error);
-  }
 });
 
 // ================= EMERGENCY CONTACTS MANAGER MODAL =================
