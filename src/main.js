@@ -1,3 +1,4 @@
+import { authService } from './authService.js';
 import './style.css';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -1985,3 +1986,180 @@ if (formSmartNewsNLP) {
 setTimeout(() => {
   updateFirstPageRoutePreview();
 }, 200);
+
+// ================= USER AUTHENTICATION & LOGIN WORKFLOW =================
+const viewAuthLogin = document.getElementById('viewAuthLogin');
+// viewSafeRoute already declaredconst headerUserStatus = document.getElementById('headerUserStatus');
+const headerUserPhoneText = document.getElementById('headerUserPhoneText');
+const btnHeaderLogout = document.getElementById('btnHeaderLogout');
+
+const authStepMobile = document.getElementById('authStepMobile');
+const authStepOtp = document.getElementById('authStepOtp');
+const formSendOtp = document.getElementById('formSendOtp');
+const formVerifyOtp = document.getElementById('formVerifyOtp');
+const inputAuthMobile = document.getElementById('inputAuthMobile');
+const btnSendOtp = document.getElementById('btnSendOtp');
+const sendOtpBtnText = document.getElementById('sendOtpBtnText');
+const btnVerifyOtp = document.getElementById('btnVerifyOtp');
+const verifyOtpBtnText = document.getElementById('verifyOtpBtnText');
+const displayAuthTargetMobile = document.getElementById('displayAuthTargetMobile');
+const btnChangeMobileNumber = document.getElementById('btnChangeMobileNumber');
+const btnResendOtp = document.getElementById('btnResendOtp');
+const authMobileError = document.getElementById('authMobileError');
+const authOtpError = document.getElementById('authOtpError');
+const authDevOtpToast = document.getElementById('authDevOtpToast');
+const authDevOtpCode = document.getElementById('authDevOtpCode');
+const otpDigitInputs = document.querySelectorAll('.otp-digit-input');
+
+let currentAuthMobileNumber = '';
+
+function updateAuthUIState() {
+  const isAuth = authService.isAuthenticated();
+  if (isAuth) {
+    viewAuthLogin && viewAuthLogin.classList.add('hidden');
+    viewSafeRoute && viewSafeRoute.classList.remove('hidden');
+    if (headerUserStatus) headerUserStatus.classList.remove('hidden');
+    if (headerUserPhoneText) headerUserPhoneText.textContent = authService.getFormattedPhone();
+  } else {
+    viewAuthLogin && viewAuthLogin.classList.remove('hidden');
+    viewSafeRoute && viewSafeRoute.classList.add('hidden');
+    if (headerUserStatus) headerUserStatus.classList.add('hidden');
+    showAuthStepMobile();
+  }
+}
+
+function showAuthStepMobile() {
+  if (authStepMobile) authStepMobile.classList.remove('hidden');
+  if (authStepOtp) authStepOtp.classList.add('hidden');
+  if (authMobileError) authMobileError.classList.add('hidden');
+  if (authOtpError) authOtpError.classList.add('hidden');
+  if (authDevOtpToast) authDevOtpToast.classList.add('hidden');
+  if (inputAuthMobile) {
+    inputAuthMobile.value = '';
+    setTimeout(() => inputAuthMobile.focus(), 150);
+  }
+}
+
+function showAuthStepOtp(phone, devOtp) {
+  if (authStepMobile) authStepMobile.classList.add('hidden');
+  if (authStepOtp) authStepOtp.classList.remove('hidden');
+  if (authOtpError) authOtpError.classList.add('hidden');
+  if (displayAuthTargetMobile) displayAuthTargetMobile.textContent = phone;
+  
+  if (devOtp && authDevOtpToast && authDevOtpCode) {
+    authDevOtpCode.textContent = devOtp;
+    authDevOtpToast.classList.remove('hidden');
+  } else if (authDevOtpToast) {
+    authDevOtpToast.classList.add('hidden');
+  }
+
+  otpDigitInputs.forEach(i => i.value = '');
+  if (otpDigitInputs[0]) setTimeout(() => otpDigitInputs[0].focus(), 150);
+}
+
+// 1. Send OTP Handler
+formSendOtp && formSendOtp.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const phoneVal = (inputAuthMobile?.value || '').trim();
+  if (authMobileError) authMobileError.classList.add('hidden');
+
+  if (sendOtpBtnText) sendOtpBtnText.textContent = 'Sending OTP...';
+  if (btnSendOtp) btnSendOtp.disabled = true;
+
+  const res = await authService.sendOtp(phoneVal);
+
+  if (sendOtpBtnText) sendOtpBtnText.textContent = 'Send OTP';
+  if (btnSendOtp) btnSendOtp.disabled = false;
+
+  if (res.success) {
+    currentAuthMobileNumber = res.phone;
+    showAuthStepOtp(res.phone, res.devOtp);
+  } else {
+    if (authMobileError) {
+      authMobileError.textContent = res.error || 'Failed to send OTP.';
+      authMobileError.classList.remove('hidden');
+    }
+  }
+});
+
+// 2. Change Mobile Number Button
+btnChangeMobileNumber && btnChangeMobileNumber.addEventListener('click', () => {
+  showAuthStepMobile();
+});
+
+// 3. Resend OTP Button
+btnResendOtp && btnResendOtp.addEventListener('click', async () => {
+  if (!currentAuthMobileNumber) return;
+  btnResendOtp.textContent = 'Resending...';
+  btnResendOtp.disabled = true;
+  const res = await authService.sendOtp(currentAuthMobileNumber);
+  btnResendOtp.textContent = 'Resend OTP';
+  btnResendOtp.disabled = false;
+
+  if (res.success && res.devOtp && authDevOtpCode) {
+    authDevOtpCode.textContent = res.devOtp;
+    authDevOtpToast && authDevOtpToast.classList.remove('hidden');
+  }
+});
+
+// 4. OTP Inputs Auto-Advancement & Paste Support
+otpDigitInputs.forEach((input, index) => {
+  input.addEventListener('input', (e) => {
+    const val = e.target.value;
+    if (val.length === 1 && index < otpDigitInputs.length - 1) {
+      otpDigitInputs[index + 1].focus();
+    }
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Backspace' && !input.value && index > 0) {
+      otpDigitInputs[index - 1].focus();
+    }
+  });
+
+  input.addEventListener('paste', (e) => {
+    e.preventDefault();
+    const paste = (e.clipboardData || window.clipboardData).getData('text');
+    const digits = paste.replace(/[^0-9]/g, '').slice(0, 6);
+    digits.split('').forEach((d, i) => {
+      if (otpDigitInputs[i]) otpDigitInputs[i].value = d;
+    });
+    const lastIdx = Math.min(digits.length, otpDigitInputs.length - 1);
+    if (otpDigitInputs[lastIdx]) otpDigitInputs[lastIdx].focus();
+  });
+});
+
+// 5. Verify OTP Handler
+formVerifyOtp && formVerifyOtp.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const enteredOtp = Array.from(otpDigitInputs).map(i => i.value).join('');
+  if (authOtpError) authOtpError.classList.add('hidden');
+
+  if (verifyOtpBtnText) verifyOtpBtnText.textContent = 'Verifying...';
+  if (btnVerifyOtp) btnVerifyOtp.disabled = true;
+
+  const res = await authService.verifyOtp(currentAuthMobileNumber, enteredOtp);
+
+  if (verifyOtpBtnText) verifyOtpBtnText.textContent = 'Verify & Continue';
+  if (btnVerifyOtp) btnVerifyOtp.disabled = false;
+
+  if (res.success) {
+    updateAuthUIState();
+  } else {
+    if (authOtpError) {
+      authOtpError.textContent = res.error || 'Incorrect OTP code.';
+      authOtpError.classList.remove('hidden');
+    }
+  }
+});
+
+// 6. Header Logout Button
+btnHeaderLogout && btnHeaderLogout.addEventListener('click', () => {
+  if (confirm('Are you sure you want to log out of SafeRoute?')) {
+    authService.logout();
+    updateAuthUIState();
+  }
+});
+
+// Initialize Authentication State on Load
+updateAuthUIState();

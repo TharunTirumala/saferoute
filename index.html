@@ -33,6 +33,93 @@
         </div>
       </header>
 
+      <!-- ================= AUTHENTICATION / LOGIN SCREEN ================= -->
+      <div id="viewAuthLogin" class="auth-screen-view hidden">
+        <div class="auth-card-container">
+          <div class="auth-brand-header">
+            <div class="auth-brand-badge">
+              <svg class="auth-brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <path d="m9 12 2 2 4-4"/>
+              </svg>
+            </div>
+            <h2>Welcome to SafeRoute</h2>
+            <p class="auth-subtitle">Verify your mobile number for emergency SOS protection &amp; live tracking</p>
+          </div>
+
+          <!-- Step 1: Mobile Number Input -->
+          <div id="authStepMobile" class="auth-step-panel">
+            <form id="formSendOtp" class="auth-form" onsubmit="return false;">
+              <div class="form-group-clean">
+                <label class="clean-label" for="inputAuthMobile">ENTER YOUR MOBILE NUMBER</label>
+                <div class="phone-input-wrap">
+                  <span class="country-prefix-pill">+91</span>
+                  <input
+                    type="tel"
+                    id="inputAuthMobile"
+                    class="clean-text-input auth-phone-input"
+                    placeholder="98765 43210"
+                    maxlength="10"
+                    pattern="[0-9]{10}"
+                    autocomplete="tel"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div id="authMobileError" class="auth-error-msg hidden"></div>
+
+              <button type="submit" id="btnSendOtp" class="btn-primary-action w-full mt-2">
+                <span id="sendOtpBtnText">Send OTP</span>
+              </button>
+            </form>
+          </div>
+
+          <!-- Step 2: OTP Verification Input -->
+          <div id="authStepOtp" class="auth-step-panel hidden">
+            <form id="formVerifyOtp" class="auth-form" onsubmit="return false;">
+              <div class="otp-header-summary">
+                <span class="clean-label">OTP SENT TO</span>
+                <div class="otp-number-row">
+                  <strong id="displayAuthTargetMobile">+91 98765 43210</strong>
+                  <button type="button" id="btnChangeMobileNumber" class="btn-link-sm">Change</button>
+                </div>
+              </div>
+
+              <div class="form-group-clean mt-2">
+                <label class="clean-label">ENTER 6-DIGIT OTP</label>
+                <div class="otp-inputs-row" id="otpDigitsContainer">
+                  <input type="text" class="otp-digit-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="0" />
+                  <input type="text" class="otp-digit-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="1" />
+                  <input type="text" class="otp-digit-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="2" />
+                  <input type="text" class="otp-digit-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="3" />
+                  <input type="text" class="otp-digit-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="4" />
+                  <input type="text" class="otp-digit-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="5" />
+                </div>
+              </div>
+
+              <!-- Dev Mode OTP Notification Toast -->
+              <div id="authDevOtpToast" class="auth-dev-otp-toast hidden">
+                <span class="dev-otp-badge">DEV TEST OTP</span>
+                <span id="authDevOtpCode" class="dev-otp-code">------</span>
+              </div>
+
+              <div id="authOtpError" class="auth-error-msg hidden"></div>
+
+              <button type="submit" id="btnVerifyOtp" class="btn-primary-action w-full mt-2">
+                <span id="verifyOtpBtnText">Verify &amp; Continue</span>
+              </button>
+
+              <div class="auth-resend-row mt-2">
+                <span class="text-xs text-muted">Didn't receive code?</span>
+                <button type="button" id="btnResendOtp" class="btn-link-sm">Resend OTP</button>
+              </div>
+            </form>
+          </div>
+
+        </div>
+      </div>
+
       <!-- ================= SAFEROUTE PLATFORM VIEW ================= -->
       <div id="viewSafeRoute" class="platform-view active">
         

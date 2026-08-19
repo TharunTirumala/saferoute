@@ -9,7 +9,7 @@ export class CloudAlertDispatcher {
   /**
    * Dispatches emergency alert message with live location link to all configured emergency contacts via backend
    */
-  async dispatchEmergencyAlert({ sessionId, location, contacts, timestamp, liveTrackingUrl }) {
+  async dispatchEmergencyAlert({ sessionId, location, contacts, timestamp, liveTrackingUrl, userPhone }) {
     const payload = {
       sessionId,
       location: location ? {
@@ -19,7 +19,9 @@ export class CloudAlertDispatcher {
         timestamp: location.timestamp
       } : null,
       liveTrackingUrl,
+      userPhone: userPhone || '+91 User (SafeRoute)',
       googleMapsUrl: location ? `https://www.google.com/maps?q=${location.latitude},${location.longitude}` : (liveTrackingUrl || ''),
+      message: `🚨 EMERGENCY ALERT\n\nSOS has been activated.\n\nUser: ${userPhone || 'Registered User'}\nI may need help.\n\n📍 Current Location:\n${location ? `https://www.google.com/maps?q=${location.latitude},${location.longitude}` : (liveTrackingUrl || 'Live location active')}\n\nPlease contact me immediately.`,
       message: location ? `Emergency Alert: I need help. My SOS has been activated. My current location: https://www.google.com/maps?q=${location.latitude},${location.longitude}` : `Emergency Alert: I need help. My SOS has been activated. My live tracking link: ${liveTrackingUrl}`,
       timestamp: timestamp || new Date().toISOString(),
       recipients: (contacts || []).map(c => ({
