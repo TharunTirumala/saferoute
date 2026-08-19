@@ -422,9 +422,7 @@ body {
 }
 
 .coord-label {
-  font-size: 10px;
-  font-family: var(--font-mono);
-  color: var(--text-muted);
+  display: none !important;
 }
 
 .input-wrapper-clean {
