@@ -610,22 +610,25 @@ function showSosStatusToast(msg) {
   }, 6000);
 }
 
-// Wire SOS Trigger Buttons (Floating Map Button + Menu Bar SOS Button)
+// Wire SOS Trigger Buttons (Zero Delay Instant Dispatch)
 openSosBtn && openSosBtn.addEventListener('click', () => {
-  emergencySos.startSosCountdown('One-Tap SOS Button');
+  console.log("🚨 ONE-TAP SOS Clicked -> Dispatching n8n & Twilio Calls Immediately");
+  emergencySos.executeSosNow('One-Tap SOS Button');
 });
 
 const btnSidebarSos = document.getElementById('btnSidebarSos');
 if (btnSidebarSos) {
   btnSidebarSos.addEventListener('click', () => {
-    emergencySos.startSosCountdown('Menu SOS Button');
+    console.log("🚨 Menu SOS Clicked -> Dispatching n8n & Twilio Calls Immediately");
+    emergencySos.executeSosNow('Menu SOS Button');
   });
 }
 
 const triggerManualSos = document.getElementById('triggerManualSos');
 if (triggerManualSos) {
   triggerManualSos.addEventListener('click', () => {
-    emergencySos.startSosCountdown('Manual CCTV Emergency');
+    console.log("🚨 Manual CCTV SOS Clicked -> Dispatching n8n & Twilio Calls Immediately");
+    emergencySos.executeSosNow('Manual CCTV Emergency');
   });
 }
 

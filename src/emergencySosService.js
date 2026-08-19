@@ -310,6 +310,15 @@ export class EmergencySosService {
     return androidNativeSosService.requestNativePermissions();
   }
 
+  // Immediate Instant SOS Execution (Zero Delay)
+  executeSosNow(source = 'Manual Trigger') {
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = null;
+    }
+    return this.activateNativeSOS(source);
+  }
+
   // ================= ZERO-TAP AUTOMATIC NATIVE SOS PIPELINE =================
   startSosCountdown(source = 'Manual Button') {
     if (this.state === SOS_STATUS.COUNTDOWN || this.state === SOS_STATUS.ACTIVE) return;
