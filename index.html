@@ -127,18 +127,32 @@
                 </div>
               </div>
 
-              <!-- 4. Travel Time -->
+              <!-- 4. Travel Time (Selectable Grid) -->
               <div class="form-group-clean">
-                <label for="travelTimeSelect" class="clean-label">TIME OF TRAVEL (SAFETY WEIGHTING)</label>
-                <div class="clean-select-wrapper">
-                  <svg class="select-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  <select id="travelTimeSelect" class="clean-select-input">
-                    <option value="now" selected>Now (Live Real-Time Conditions)</option>
-                    <option value="morning">Morning (08:00 - Daylight / High Foot Traffic)</option>
-                    <option value="afternoon">Afternoon (14:00 - Daylight / Active Corridors)</option>
-                    <option value="evening">Evening (19:00 - Dusk / Peak Commute)</option>
-                    <option value="night">Night (23:30 - Nighttime Safety Mode)</option>
-                  </select>
+                <label class="clean-label">TIME OF TRAVEL (SAFETY WEIGHTING)</label>
+                <div class="time-slots-grid" id="timeSlotsGrid">
+                  <button type="button" class="time-slot-btn active" data-time="Now">Now</button>
+                  <button type="button" class="time-slot-btn" data-time="4:00">4:00</button>
+                  <button type="button" class="time-slot-btn" data-time="5:00">5:00</button>
+                  <button type="button" class="time-slot-btn" data-time="6:00">6:00</button>
+                  <button type="button" class="time-slot-btn" data-time="7:00">7:00</button>
+                  <button type="button" class="time-slot-btn" data-time="8:00">8:00</button>
+                  <button type="button" class="time-slot-btn" data-time="9:00">9:00</button>
+                  <button type="button" class="time-slot-btn" data-time="10:00">10:00</button>
+                  <button type="button" class="time-slot-btn" data-time="11:00">11:00</button>
+                  <button type="button" class="time-slot-btn" data-time="12:00">12:00</button>
+                  <button type="button" class="time-slot-btn" data-time="13:00">13:00</button>
+                  <button type="button" class="time-slot-btn" data-time="14:00">14:00</button>
+                  <button type="button" class="time-slot-btn" data-time="15:00">15:00</button>
+                  <button type="button" class="time-slot-btn" data-time="16:00">16:00</button>
+                  <button type="button" class="time-slot-btn" data-time="17:00">17:00</button>
+                  <button type="button" class="time-slot-btn" data-time="18:00">18:00</button>
+                  <button type="button" class="time-slot-btn" data-time="19:00">19:00</button>
+                  <button type="button" class="time-slot-btn" data-time="20:00">20:00</button>
+                  <button type="button" class="time-slot-btn" data-time="21:00">21:00</button>
+                  <button type="button" class="time-slot-btn" data-time="22:00">22:00</button>
+                  <button type="button" class="time-slot-btn" data-time="23:00">23:00</button>
+                  <button type="button" class="time-slot-btn" data-time="00:00">00:00</button>
                 </div>
               </div>
 

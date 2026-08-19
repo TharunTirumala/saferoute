@@ -321,11 +321,15 @@ export class SafeRouteEngine {
     this.allHighRiskWarning = null;
 
     // Determine day vs night based on travelTime selection
-    if (this.travelTime === 'night') {
+    const t = (this.travelTime || 'now').toLowerCase();
+    if (t === 'night') {
       this.isNightMode = true;
-    } else if (this.travelTime === 'now') {
+    } else if (t === 'now') {
       const h = new Date().getHours();
-      this.isNightMode = (h >= 21 || h <= 5);
+      this.isNightMode = (h >= 20 || h <= 5);
+    } else if (t.includes(':')) {
+      const hour = parseInt(t.split(':')[0], 10);
+      this.isNightMode = (hour >= 20 || hour <= 5);
     } else {
       this.isNightMode = false;
     }

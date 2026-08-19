@@ -1150,8 +1150,14 @@ travelModeButtons.forEach((btn) => {
 });
 
 // ================= TRAVEL TIME SELECTION =================
-travelTimeSelect.addEventListener('change', () => {
-  safeRouteEngine.travelTime = travelTimeSelect.value || 'now';
+// Time Slot Selection (Grid)
+document.querySelectorAll('.time-slot-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.time-slot-btn').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    const selectedTime = btn.getAttribute('data-time') || 'Now';
+    safeRouteEngine.travelTime = selectedTime;
+  });
 });
 
 // ================= PRESETS HANDLER =================
@@ -1242,7 +1248,7 @@ async function handleFindSafeRoutes() {
       evening: 'Evening',
       night: 'Night'
     };
-    summaryTimeChip.textContent = timeLabels[safeRouteEngine.travelTime] || 'Now';
+    summaryTimeChip.textContent = safeRouteEngine.travelTime || 'Now';
 
     setTimeout(() => {
       if (safeRouteMapRenderer && safeRouteMapRenderer.map) {
