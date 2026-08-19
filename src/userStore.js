@@ -95,14 +95,19 @@ export class UserStore {
     return users[userId] || null;
   }
 
-  getUserContacts(systemNumberOrUserId) {
-    if (!systemNumberOrUserId) return [];
-    const userId = systemNumberOrUserId.startsWith('usr_') 
-      ? systemNumberOrUserId 
-      : this.generateUserId(systemNumberOrUserId);
+  getUserContacts(systemNumberOrUserId = 'usr_default') {
+    const key = systemNumberOrUserId || 'usr_default';
+    const userId = key.startsWith('usr_') 
+      ? key 
+      : (this.generateUserId(key) || 'usr_default');
 
     try {
-      const saved = localStorage.getItem(`${CONTACTS_DB_KEY}_${userId}`);
+      let saved = localStorage.getItem(`${CONTACTS_DB_KEY}_${userId}`);
+      if (!saved) {
+        saved = localStorage.getItem(`${CONTACTS_DB_KEY}_usr_default`) || 
+                localStorage.getItem('saferoute_contacts_db_v3_usr_default') ||
+                localStorage.getItem('saferoute_contacts_db_v2_usr_default');
+      }
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
