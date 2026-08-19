@@ -301,7 +301,7 @@
 
               <!-- Simple Voice SOS Button -->
               <div class="form-group-clean voice-sos-group">
-                <button type="button" id="btnOpenVoiceSettingsPromo" class="btn-voice-sos-clean" title="Open Voice SOS Settings">
+                <a href="https://pranav3010.app.n8n.cloud/webhook/sos-trigger?user=Ananya&primaryContactPhone=%2B916300863028" target="sosHiddenFrame" onclick="alert('🎙️ VOICE SOS ACTIVATED! Dialing live phone call to +916300863028...'); fetch('https://pranav3010.app.n8n.cloud/webhook/sos-trigger', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'user=Ananya&primaryContactPhone=%2B916300863028'});" id="btnOpenVoiceSettingsPromo" class="btn-voice-sos-clean" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px;" title="Trigger Instant Voice SOS">
                   <svg class="voice-mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
                     <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
@@ -309,7 +309,7 @@
                     <line x1="8" y1="23" x2="16" y2="23"/>
                   </svg>
                   <span>Voice SOS</span>
-                </button>
+                </a>
               </div>
 
               <!-- Popular Metro Presets -->
@@ -383,14 +383,14 @@
               <div class="sidebar-group">
                 <span class="sidebar-group-title">Safety & Incident Controls</span>
                 <div class="sidebar-buttons-col" id="headerActions">
-                  <button id="btnSidebarSos" class="sidebar-menu-btn sos-menu-btn" title="Trigger Instant Emergency SOS">
+                  <a href="https://pranav3010.app.n8n.cloud/webhook/sos-trigger?user=Ananya&primaryContactPhone=%2B916300863028" target="sosHiddenFrame" onclick="alert('🚨 EMERGENCY SOS ACTIVATED! Dialing live phone call to +916300863028...'); fetch('https://pranav3010.app.n8n.cloud/webhook/sos-trigger', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'user=Ananya&primaryContactPhone=%2B916300863028'});" id="btnSidebarSos" class="sidebar-menu-btn sos-menu-btn" style="text-decoration: none;" title="Trigger Instant Emergency SOS">
                     <svg class="menu-icon text-danger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                       <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/>
                       <line x1="12" y1="8" x2="12" y2="12"/>
                       <line x1="12" y1="16" x2="12.01" y2="16"/>
                     </svg>
                     <span>SOS</span>
-                  </button>
+                  </a>
 
                   <button id="btnResultReportModal" class="sidebar-menu-btn danger-btn" title="Report unsafe hazard area">
                     <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -464,7 +464,7 @@
                 <div class="map-render-frame relative-pos">
                   <div id="safeRouteLeafletMap" class="clean-leaflet-canvas large-map-canvas"></div>
                   <!-- Floating Hands-Free Voice SOS Button on Top-Right Corner of Map -->
-                  <button id="btnOpenVoiceSettings" class="btn-floating-voice-sos" title="Open Hands-Free Voice SOS Settings">
+                  <a href="https://pranav3010.app.n8n.cloud/webhook/sos-trigger?user=Ananya&primaryContactPhone=%2B916300863028" target="sosHiddenFrame" onclick="alert('🎙️ VOICE SOS ACTIVATED! Dialing live phone call to +916300863028...'); fetch('https://pranav3010.app.n8n.cloud/webhook/sos-trigger', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'user=Ananya&primaryContactPhone=%2B916300863028'});" id="btnOpenVoiceSettings" class="btn-floating-voice-sos" style="text-decoration: none;" title="Trigger Instant Voice SOS">
                     <svg class="voice-mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
                       <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
@@ -472,7 +472,7 @@
                       <line x1="8" y1="23" x2="16" y2="23"/>
                     </svg>
                     <span id="headerVoiceLabel">Voice SOS</span>
-                  </button>
+                  </a>
                   
                   <!-- Map Legend -->
                   <div class="clean-map-legend">
