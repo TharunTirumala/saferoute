@@ -114,7 +114,7 @@ export class PlatformEmergencyBridge {
       let anySent = false;
       const gmapsLink = location ? `https://www.google.com/maps?q=${location.latitude},${location.longitude}` : (liveTrackingUrl || 'Location tracking active');
       const userNum = userPhone || 'SafeRoute User';
-      const messageText = `🚨 EMERGENCY ALERT\n\nSOS has been activated.\n\nUser: ${userNum}\nThe user may need immediate assistance.\n\n📍 Current location:\n${gmapsLink}\n\nPlease contact the user immediately.`;
+      const messageText = `🚨 EMERGENCY ALERT\n\nSOS has been activated.\n\nVerified user: ${userNum}\nI may need help.\n\n📍 Current location:\n${gmapsLink}\n\nPlease contact me immediately.`;
 
       for (const contact of contacts) {
         if (contact.phone) {

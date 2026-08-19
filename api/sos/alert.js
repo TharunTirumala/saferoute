@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     const formattedUserPhone = normalizePhone(userPhone || '+91 User');
 
     // Exact WhatsApp Emergency Message Structure
-    const messageBody = `🚨 *EMERGENCY ALERT*\n\nSOS has been activated.\n\n*User:* ${formattedUserPhone}\nThe user may need immediate assistance.\n\n📍 *Current location:*\n${gmapsUrl}\n\nPlease contact the user immediately.`;
+    const messageBody = `🚨 *EMERGENCY ALERT*\n\nSOS has been activated.\n\n*Verified user:* ${formattedUserPhone}\nI may need help.\n\n📍 *Current location:*\n${gmapsUrl}\n\nPlease contact me immediately.`;
 
     const recipients = (contacts || []).map(c => ({
       ...c,

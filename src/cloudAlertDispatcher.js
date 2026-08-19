@@ -26,7 +26,7 @@ export class CloudAlertDispatcher {
       ? `https://www.google.com/maps?q=${location.latitude},${location.longitude}`
       : (liveTrackingUrl || 'Location tracking active');
 
-    const message = `🚨 EMERGENCY ALERT\n\nSOS has been activated.\n\nUser: ${normUserPhone}\nThe user may need immediate assistance.\n\n📍 Current location:\n${gmapsUrl}\n\nPlease contact the user immediately.`;
+    const message = `🚨 EMERGENCY ALERT\n\nSOS has been activated.\n\nVerified user: ${normUserPhone}\nI may need help.\n\n📍 Current location:\n${gmapsUrl}\n\nPlease contact me immediately.`;
 
     const payload = {
       sessionId,
