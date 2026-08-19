@@ -14,8 +14,7 @@
   </head>
   <body class="page-first">
     <div id="app" class="app-root">
-      
-      <!-- Clean Top Navbar -->
+            <!-- Clean Top Navbar -->
       <header class="app-header">
         <div class="header-container">
           
@@ -30,61 +29,7 @@
                 <span class="brand-tag">ONE-TAP SOS &amp; LIVE TRACKING</span>
               </div>
             </div>
-
-            <!-- Main Tabs (Visible on Second Page, Hidden on First Page) -->
-            <nav class="header-nav-tabs" id="headerNavTabs">
-              <button id="tabSafeRoute" class="nav-tab active">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
-                <span>Navigation</span>
-              </button>
-              <button id="tabGuardianEye" class="nav-tab">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-                <span>Guardian Eye CCTV</span>
-              </button>
-            </nav>
           </div>
-
-          <!-- Header Actions (Visible on Second Page, Hidden on First Page) -->
-          <div class="header-actions" id="headerActions">
-            <!-- Pre-Authorized SOS Readiness Indicator -->
-            <button id="btnOpenSosSetup" class="status-indicator-pill-btn" title="Click to view Emergency SOS Setup &amp; Permissions">
-              <span id="headerSosReadinessPill" class="status-indicator-pill not-ready">
-                <span class="status-dot"></span>
-                <span id="headerSosReadinessLabel" class="status-label">SOS Setup</span>
-              </span>
-            </button>
-
-            <!-- Hands-Free Voice SOS Settings Button -->
-            <button id="btnOpenVoiceSettings" class="btn-voice-toggle" title="Open Hands-Free Voice SOS Settings">
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-              <span id="headerVoiceLabel">Voice SOS</span>
-            </button>
-
-            <!-- Emergency Contacts Manager -->
-            <button id="btnOpenContactsManager" class="btn-outline-sm" title="Configure Emergency Contacts">
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              <span>Contacts (<span id="contactsCountBadge">2</span>)</span>
-            </button>
-
-            <!-- Community Reports Drawer -->
-            <button id="openReportsDrawerBtn" class="btn-outline-sm">
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-              <span>Reports (<span id="reportsCountBadge">5</span>)</span>
-            </button>
-
-            <!-- Report Unsafe Area -->
-            <button id="btnHeaderReportModal" class="btn-secondary-action">
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              <span>Report Hazard</span>
-            </button>
-
-            <!-- One-Tap Emergency SOS Trigger Button -->
-            <button id="openSosBtn" class="btn-emergency-sos" title="One-Tap Emergency SOS (Zero Permission Delay)">
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <span>ONE-TAP SOS</span>
-            </button>
-          </div>
-
         </div>
       </header>
 
@@ -237,149 +182,203 @@
              ============================================================ -->
         <section id="interfaceRouteResult" class="route-result-screen hidden">
           
-          <!-- Result Summary Bar -->
-          <div class="result-summary-bar">
+          <div class="second-interface-layout">
             
-            <div class="summary-left-group">
-              <button id="btnBackToInput" class="btn-back-clean">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-                <span>Change Trip</span>
-              </button>
+            <!-- 1. LEFT-SIDE VERTICAL MENU BAR -->
+            <aside class="second-interface-sidebar" id="secondInterfaceSidebar">
               
-              <div class="trip-locations-display" id="summaryLocations">
-                <span class="loc-text origin">Hitech City</span>
-                <svg class="arrow-sep" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                <span class="loc-text destination">Banjara Hills</span>
+              <!-- Back / Change Trip Button -->
+              <div class="sidebar-top-action">
+                <button id="btnBackToInput" class="btn-sidebar-back" title="Return to trip inputs">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                  <span>Change Trip</span>
+                </button>
               </div>
 
-              <div class="meta-tag-pills">
-                <span class="meta-tag" id="summaryModeChip">Car</span>
-                <span class="meta-tag" id="summaryTimeChip">Now</span>
+              <!-- View Modes Section -->
+              <div class="sidebar-group">
+                <span class="sidebar-group-title">Navigation Views</span>
+                <nav class="sidebar-nav-tabs" id="headerNavTabs">
+                  <button id="tabSafeRoute" class="sidebar-menu-btn active">
+                    <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                    <span>Route Map</span>
+                  </button>
+                  <button id="tabGuardianEye" class="sidebar-menu-btn">
+                    <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                    <span>Guardian Eye CCTV</span>
+                  </button>
+                </nav>
               </div>
-            </div>
 
-            <div class="summary-right-group">
-              <!-- Heatmap Toggle -->
-              <button id="heatmapToggleBtn" class="btn-toggle-sm active" title="Toggle Safety Heatmap Concentration">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
-                <span>Heatmap: ON</span>
-              </button>
+              <!-- Map Overlays Section -->
+              <div class="sidebar-group">
+                <span class="sidebar-group-title">Map Overlays</span>
+                <div class="sidebar-buttons-col">
+                  <button id="heatmapToggleBtn" class="sidebar-menu-btn active" title="Toggle Safety Heatmap Concentration">
+                    <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+                    <span>Heatmap: ON</span>
+                  </button>
 
-              <!-- Facilities Toggle -->
-              <button id="facilitiesToggleBtn" class="btn-toggle-sm active" title="Toggle Police & Hospital Pins">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                <span>Facilities: ON</span>
-              </button>
-
-              <!-- Report Hazard -->
-              <button id="btnResultReportModal" class="btn-danger-outline-sm">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                <span>Report Hazard</span>
-              </button>
-            </div>
-
-          </div>
-
-          <!-- Off-Route Deviation Banner -->
-          <div id="deviationAlertBanner" class="deviation-banner-clean hidden">
-            <div class="deviation-left">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <div>
-                <strong>Route Deviation Detected</strong>
-                <span>You have moved away from your planned route corridor.</span>
-              </div>
-            </div>
-            <button id="btnRecalculateOffRoute" class="btn-recalculate-clean">
-              Recalculate Safest Route
-            </button>
-          </div>
-
-          <!-- Main Result Layout -->
-          <main class="results-main-layout">
-            
-            <!-- Leaflet Map Section -->
-            <section class="map-card-wrapper">
-              <div class="map-toolbar-header">
-                <div class="map-title-wrap">
-                  <span class="badge-live-status">LIVE ROAD NETWORK</span>
-                  <h2>Multi-Route Safety Evaluation</h2>
-                </div>
-                <div class="map-status-chip">
-                  <span class="dot-active"></span>
-                  <span>Authoritative Road Geometry</span>
+                  <button id="facilitiesToggleBtn" class="sidebar-menu-btn active" title="Toggle Police & Hospital Pins">
+                    <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <span>Facilities: ON</span>
+                  </button>
                 </div>
               </div>
 
-              <!-- Map Frame -->
-              <div class="map-render-frame relative-pos">
-                <div id="safeRouteLeafletMap" class="clean-leaflet-canvas"></div>
-                
-                <!-- Map Legend -->
-                <div class="clean-map-legend">
-                  <div class="legend-item"><span class="legend-line green"></span> Safest Route</div>
-                  <div class="legend-item"><span class="legend-line blue"></span> Alternative</div>
-                  <div class="legend-item"><span class="legend-line red"></span> High Risk</div>
-                  <div class="legend-item"><span class="legend-symbol hazard">●</span> Reported Hazard</div>
-                  <div class="legend-item"><span class="legend-symbol police">●</span> Police</div>
-                  <div class="legend-item"><span class="legend-symbol hospital">●</span> Hospital</div>
+              <!-- Safety Actions Section -->
+              <div class="sidebar-group">
+                <span class="sidebar-group-title">Safety & Incident Controls</span>
+                <div class="sidebar-buttons-col" id="headerActions">
+                  <button id="btnResultReportModal" class="sidebar-menu-btn danger-btn" title="Report unsafe hazard area">
+                    <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <span>Report Hazard</span>
+                  </button>
+
+                  <button id="btnOpenContactsManager" class="sidebar-menu-btn" title="Configure Emergency Contacts">
+                    <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span>Contacts (<span id="contactsCountBadge">2</span>)</span>
+                  </button>
+
+                  <button id="openReportsDrawerBtn" class="sidebar-menu-btn" title="View Community Incident Reports">
+                    <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    <span>Reports (<span id="reportsCountBadge">5</span>)</span>
+                  </button>
+
+                  <button id="btnOpenVoiceSettings" class="sidebar-menu-btn" title="Open Hands-Free Voice SOS Settings">
+                    <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                    <span id="headerVoiceLabel">Voice SOS</span>
+                  </button>
+
+                  <button id="btnOpenSosSetup" class="sidebar-menu-btn status-btn" title="Click to view Emergency SOS Setup & Permissions">
+                    <span id="headerSosReadinessPill" class="status-indicator-pill not-ready">
+                      <span class="status-dot"></span>
+                      <span id="headerSosReadinessLabel" class="status-label">SOS Setup</span>
+                    </span>
+                  </button>
                 </div>
               </div>
-            </section>
 
-            <!-- Sidebar: Route Rankings & Explainability -->
-            <aside class="results-sidebar-clean">
-              
-              <!-- Route Options Card -->
-              <div class="clean-card">
-                <div class="clean-card-header">
-                  <h3>Alternative Route Options</h3>
-                  <span class="card-subtitle">Safety-Ranked</span>
-                </div>
-
-                <div class="routes-cards-stack" id="routesListContainer">
-                  <!-- Injected via JavaScript -->
-                </div>
-              </div>
-
-              <!-- "Why: Safest Route" Simple Card -->
-              <div class="clean-card why-route-clean-card" id="whyRouteCard">
-                
-                <div class="clean-card-header">
-                  <div class="header-with-icon">
-                    <svg class="header-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                      <path d="m9 12 2 2 4-4"/>
-                    </svg>
-                    <h3 id="whyCardTitle">Why: Safest Route</h3>
-                  </div>
-                  <span id="whyScoreBadge" class="score-pill-clean safe">84/100 Safe</span>
-                </div>
-
-                <div class="clean-card-body" id="whyBody">
-                  <ul class="why-route-points-list" id="whyRoutePointsList">
-                    <!-- 2-3 short comparative points injected via JS -->
-                  </ul>
-
-                  <!-- Navigation Action Buttons -->
-                  <div class="navigation-actions-row">
-                    <button id="btnStartNavigation" class="btn-primary-action w-full">
-                      Start GPS Navigation Simulation
-                    </button>
-                    <button id="btnShareRoute" class="btn-icon-outline" title="Share Route">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                    </button>
-                  </div>
-
-                </div>
+              <!-- Emergency One-Tap SOS Button at Bottom of Left Sidebar -->
+              <div class="sidebar-bottom-sos">
+                <button id="openSosBtn" class="btn-sidebar-emergency-sos" title="One-Tap Emergency SOS (Zero Delay)">
+                  <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <span>ONE-TAP SOS</span>
+                </button>
               </div>
 
             </aside>
 
-          </main>
+            <!-- 2. MAIN CENTER & LOWER WORKSPACE -->
+            <div class="second-interface-main">
+              
+              <!-- Result Summary Bar (Above Large Map) -->
+              <div class="result-summary-bar">
+                <div class="summary-left-group">
+                  <div class="trip-locations-display" id="summaryLocations">
+                    <span class="loc-text origin">Hitech City</span>
+                    <svg class="arrow-sep" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    <span class="loc-text destination">Banjara Hills</span>
+                  </div>
+
+                  <div class="meta-tag-pills">
+                    <span class="meta-tag" id="summaryModeChip">Car</span>
+                    <span class="meta-tag" id="summaryTimeChip">Now</span>
+                  </div>
+                </div>
+
+                <div class="summary-right-group">
+                  <div class="map-status-chip">
+                    <span class="dot-active"></span>
+                    <span>Live Road Network</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Off-Route Deviation Banner -->
+              <div id="deviationAlertBanner" class="deviation-banner-clean hidden">
+                <div class="deviation-left">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <div>
+                    <strong>Route Deviation Detected</strong>
+                    <span>You have moved away from your planned route corridor.</span>
+                  </div>
+                </div>
+                <button id="btnRecalculateOffRoute" class="btn-recalculate-clean">
+                  Recalculate Safest Route
+                </button>
+              </div>
+
+              <!-- LARGE FULL DESKTOP MAP -->
+              <section class="large-map-section">
+                <div class="map-render-frame relative-pos">
+                  <div id="safeRouteLeafletMap" class="clean-leaflet-canvas large-map-canvas"></div>
+                  
+                  <!-- Map Legend -->
+                  <div class="clean-map-legend">
+                    <div class="legend-item"><span class="legend-line green"></span> Safest Route</div>
+                    <div class="legend-item"><span class="legend-line blue"></span> Alternative</div>
+                    <div class="legend-item"><span class="legend-line red"></span> High Risk</div>
+                    <div class="legend-item"><span class="legend-symbol hazard">●</span> Reported Hazard</div>
+                    <div class="legend-item"><span class="legend-symbol police">●</span> Police</div>
+                    <div class="legend-item"><span class="legend-symbol hospital">●</span> Hospital</div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- LOWER AREA: ROUTE OPTIONS (LEFT) + WHY: SAFEST ROUTE (RIGHT) -->
+              <div class="lower-info-split-layout">
+                
+                <!-- Left Lower Card: Alternative Route Options -->
+                <div class="clean-card lower-card-panel">
+                  <div class="clean-card-header">
+                    <h3>Alternative Route Options</h3>
+                    <span class="card-subtitle">Safety-Ranked</span>
+                  </div>
+                  <div class="routes-cards-stack" id="routesListContainer">
+                    <!-- Injected via JavaScript -->
+                  </div>
+                </div>
+
+                <!-- Right Lower Card: "Why: Safest Route" Card -->
+                <div class="clean-card why-route-clean-card lower-card-panel" id="whyRouteCard">
+                  
+                  <div class="clean-card-header">
+                    <div class="header-with-icon">
+                      <svg class="header-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        <path d="m9 12 2 2 4-4"/>
+                      </svg>
+                      <h3 id="whyCardTitle">Why: Safest Route</h3>
+                    </div>
+                    <span id="whyScoreBadge" class="score-pill-clean safe">84/100 Safe</span>
+                  </div>
+
+                  <div class="clean-card-body" id="whyBody">
+                    <ul class="why-route-points-list" id="whyRoutePointsList">
+                      <!-- 2-3 short comparative points injected via JS -->
+                    </ul>
+
+                    <!-- Navigation Action Buttons -->
+                    <div class="navigation-actions-row">
+                      <button id="btnStartNavigation" class="btn-primary-action w-full">
+                        Start GPS Navigation Simulation
+                      </button>
+                      <button id="btnShareRoute" class="btn-icon-outline" title="Share Route">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                      </button>
+                    </div>
+
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
 
         </section>
-
-      </div>
 
       <!-- ================= GUARDIAN EYE CCTV VIEW (PRESERVED) ================= -->
       <div id="viewGuardianEye" class="platform-view">
