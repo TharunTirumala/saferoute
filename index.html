@@ -290,66 +290,127 @@
 
               <!-- "Why This Route Is Safer" Deep-Dive Card -->
               <div class="clean-card why-route-clean-card" id="whyRouteCard">
+                
                 <div class="clean-card-header">
                   <div class="header-with-icon">
-                    <svg class="header-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                    <h3 id="whyCardTitle">Why This Route?</h3>
+                    <svg class="header-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                      <path d="m9 12 2 2 4-4"/>
+                    </svg>
+                    <h3 id="whyCardTitle">Why: Safest Route</h3>
                   </div>
-                  <span id="whyScoreBadge" class="score-pill-clean safe">92/100 Safe</span>
+                  <span id="whyScoreBadge" class="score-pill-clean safe">82/100 LOW RISK</span>
                 </div>
 
                 <div class="clean-card-body" id="whyBody">
-                  <div class="factors-grid-clean" id="factorsMatrix">
-                    <!-- Factor chips injected via JS -->
-                  </div>
-
-                  <!-- Generative LLM Safety Intelligence & Explainability Box -->
-                  <div id="llmSafetyIntelligenceBox" class="clean-card" style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); padding: 14px; border-radius: 12px; margin: 12px 0;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                      <span style="font-size: 0.75rem; color: #818cf8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;">
-                        🤖 Gemini AI Safety Reasoning
-                      </span>
-                      <span id="llmConfidenceTag" style="font-size: 0.7rem; background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 2px 8px; border-radius: 10px; font-weight: 700;">
-                        96% Confidence
-                      </span>
+                  
+                  <!-- 1. Route Decision Summary & Score Explanation -->
+                  <div class="explain-summary-card" id="explainSummaryBox">
+                    <div class="decision-header-tag" id="decisionHeadlineTag">WHY THIS ROUTE WAS SELECTED</div>
+                    
+                    <div class="score-explain-row">
+                      <div class="score-large-badge" id="scoreLargeBadge">
+                        <span class="score-large-num" id="scoreLargeNum">82</span>
+                        <span class="score-large-max">/100</span>
+                      </div>
+                      <div class="score-explain-content">
+                        <div class="risk-level-pill" id="scoreRiskPill">LOW RISK</div>
+                        <p class="score-explain-text" id="scoreExplainText">
+                          This route received a safety score of 82/100 because it has good street-lighting coverage, nearby police and medical facilities, relatively high public activity and low exposure to reported hazards.
+                        </p>
+                      </div>
                     </div>
 
-                    <strong id="llmHeadlineText" style="font-size: 0.88rem; color: #ffffff; display: block; margin-bottom: 4px;">
-                      Prioritized Arterial Lighting & CCTV Footprint
-                    </strong>
-
-                    <p id="llmReasoningText" style="font-size: 0.8rem; color: #cbd5e1; line-height: 1.45; margin-bottom: 8px;">
-                      SafeRoute routed you via Arterial Main Road to ensure 95% streetlamp coverage and proximity to 2 emergency kiosks, avoiding dark underpasses and unmonitored side-alleys.
+                    <p class="decision-lead-text" id="decisionSummaryText">
+                      SafeRoute selected this route because it provides the best overall safety balance among the available routes. It has better lighting, more nearby emergency facilities, lower hazard exposure and higher public activity than the other available routes.
                     </p>
+                  </div>
 
-                    <div style="font-size: 0.75rem; color: #94a3b8; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 6px;">
-                      🛡️ <strong>Avoided Threat:</strong> <span id="llmAvoidedThreat" style="color: #fca5a5;">Unlit Underpass & Low Surveillance Zone</span>
+                  <!-- 2. Detailed Safety Factors Grid -->
+                  <div class="explain-section">
+                    <h4 class="explain-section-title">Safety Factors Breakdown</h4>
+                    <div class="factors-detailed-grid" id="factorsDetailedGrid">
+                      <!-- Injected via JavaScript -->
                     </div>
                   </div>
 
-                  <div class="factors-list-section positive">
-                    <h4>Positive Safety Factors:</h4>
-                    <ul id="positiveReasonsList" class="reasons-bullet-list"></ul>
+                  <!-- 3. Specific Hazard Breakdown -->
+                  <div class="explain-section" id="hazardSpecificsSection">
+                    <h4 class="explain-section-title text-danger">Hazard & Risk Breakdown</h4>
+                    <div class="hazard-details-box" id="hazardDetailsBox">
+                      <ul id="hazardSpecificsList" class="hazard-bullet-list"></ul>
+                    </div>
                   </div>
 
-                  <div class="factors-list-section warnings">
-                    <h4>Risk & Caution Factors:</h4>
-                    <ul id="riskWarningsList" class="reasons-bullet-list"></ul>
+                  <!-- 4. Positive Safety Factors List -->
+                  <div class="explain-section positive">
+                    <h4 class="explain-section-title text-success">Positive Safety Factors</h4>
+                    <ul id="positiveReasonsList" class="reasons-bullet-list positive-list"></ul>
+                    <span class="factor-footnote-text">These factors collectively make this route safer than the available alternatives.</span>
                   </div>
 
+                  <!-- 5. Risk & Caution Factors List -->
+                  <div class="explain-section warnings">
+                    <h4 class="explain-section-title text-warning">Risk & Caution Factors</h4>
+                    <ul id="riskWarningsList" class="reasons-bullet-list warning-list"></ul>
+                    <span class="factor-footnote-text">These risks were factored into the route score. The route was still selected because its overall safety profile is superior to the alternatives.</span>
+                  </div>
+
+                  <!-- 6. Comparison with Alternatives Table/Cards -->
+                  <div class="explain-section">
+                    <h4 class="explain-section-title">Comparison with Alternative Routes</h4>
+                    <div class="route-comparison-table-wrapper" id="comparisonCardsContainer">
+                      <!-- Comparison table injected via JS -->
+                    </div>
+                    <p class="comparison-conclusion-text" id="comparisonConclusionText"></p>
+                  </div>
+
+                  <!-- 7. Route Distance Trade-Off -->
+                  <div class="tradeoff-card" id="tradeoffBox">
+                    <div class="tradeoff-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                    <div class="tradeoff-content">
+                      <strong class="tradeoff-title">Route Trade-Off</strong>
+                      <p id="tradeoffText" class="tradeoff-body"></p>
+                    </div>
+                  </div>
+
+                  <!-- 8. Gemini AI Safety Reasoning -->
+                  <div id="llmSafetyIntelligenceBox" class="llm-intelligence-card">
+                    <div class="llm-header">
+                      <span class="llm-badge">🤖 Gemini AI Safety Reasoning</span>
+                      <span id="llmConfidenceTag" class="llm-conf">96% Confidence</span>
+                    </div>
+                    <strong id="llmHeadlineText" class="llm-headline">Prioritized Arterial Lighting & CCTV Footprint</strong>
+                    <p id="llmReasoningText" class="llm-body">SafeRoute routed you via Arterial Main Road to ensure 95% streetlamp coverage and proximity to emergency kiosks, avoiding dark underpasses.</p>
+                    <div class="llm-threat">
+                      🛡️ <strong>Avoided Threat:</strong> <span id="llmAvoidedThreat">Unlit Underpass & Low Surveillance Zone</span>
+                    </div>
+                  </div>
+
+                  <!-- 9. Final Decision & Recommendation -->
+                  <div class="final-recommendation-card" id="finalRecommendationBox">
+                    <h4 id="finalRecTitle" class="final-rec-title">WHY WE RECOMMEND THIS ROUTE</h4>
+                    <ul class="rec-metrics-list" id="finalRecMetricsList"></ul>
+                    <p id="finalRecParagraph" class="rec-paragraph"></p>
+                  </div>
+
+                  <!-- Algorithm Weights Transparency -->
                   <div class="weights-transparency-box">
-                    <span class="weights-caption">Algorithm Weights:</span>
+                    <span class="weights-caption">Algorithm Safety Weights:</span>
                     <div class="weights-items">
                       <span>Lighting: 25%</span>
-                      <span>Avoidance: 30%</span>
+                      <span>Hazard Avoidance: 30%</span>
                       <span>Police: 15%</span>
                       <span>Medical: 10%</span>
                       <span>Activity: 10%</span>
-                      <span>Road: 5%</span>
-                      <span>Time: 5%</span>
+                      <span>Road Quality: 5%</span>
+                      <span>Time Decay: 5%</span>
                     </div>
                   </div>
 
+                  <!-- Navigation Action Buttons -->
                   <div class="navigation-actions-row">
                     <button id="btnStartNavigation" class="btn-primary-action w-full">
                       Start GPS Navigation Simulation
@@ -358,6 +419,7 @@
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                     </button>
                   </div>
+
                 </div>
               </div>
 
