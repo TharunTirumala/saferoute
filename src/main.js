@@ -1183,6 +1183,8 @@ document.querySelectorAll('.preset-pill-clean').forEach((btn) => {
 });
 
 // ================= FIND SAFEST ROUTE (INTERFACE 1 -> INTERFACE 2) =================
+let isCalculatingRoute = false;
+
 tripInputForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   await handleFindSafeRoutes();
@@ -1194,21 +1196,33 @@ btnFindSafestRoute.addEventListener('click', async (e) => {
 });
 
 async function handleFindSafeRoutes() {
+  if (isCalculatingRoute) return;
+  isCalculatingRoute = true;
   findBtnText.textContent = 'Calculating Safe Routes...';
   btnFindSafestRoute.disabled = true;
 
   try {
     if (sourceInput.value && (!safeRouteEngine.origin || safeRouteEngine.origin.name !== sourceInput.value)) {
-      const s = await safeRouteEngine.geocode(sourceInput.value);
-      if (s[0]) safeRouteEngine.origin = { name: s[0].name, lat: s[0].lat, lng: s[0].lng };
+      try {
+        const s = await safeRouteEngine.geocode(sourceInput.value);
+        if (s[0]) safeRouteEngine.origin = { name: s[0].name, lat: s[0].lat, lng: s[0].lng };
+      } catch (e) {
+        if (!safeRouteEngine.origin) safeRouteEngine.origin = { name: sourceInput.value, lat: 17.4435, lng: 78.3772 };
+      }
     }
     if (destInput.value && (!safeRouteEngine.destination || safeRouteEngine.destination.name !== destInput.value)) {
-      const d = await safeRouteEngine.geocode(destInput.value);
-      if (d[0]) safeRouteEngine.destination = { name: d[0].name, lat: d[0].lat, lng: d[0].lng };
+      try {
+        const d = await safeRouteEngine.geocode(destInput.value);
+        if (d[0]) safeRouteEngine.destination = { name: d[0].name, lat: d[0].lat, lng: d[0].lng };
+      } catch (e) {
+        if (!safeRouteEngine.destination) safeRouteEngine.destination = { name: destInput.value, lat: 17.4150, lng: 78.4350 };
+      }
     }
 
     await safeRouteEngine.calculateRoutes();
 
+    document.body.classList.remove('page-first');
+    document.body.classList.add('page-second');
     interfaceTripInput.classList.add('hidden');
     interfaceRouteResult.classList.remove('hidden');
 
@@ -1243,11 +1257,14 @@ async function handleFindSafeRoutes() {
   } finally {
     findBtnText.textContent = 'Find Safest Route';
     btnFindSafestRoute.disabled = false;
+    isCalculatingRoute = false;
   }
 }
 
 // ================= BACK TO INTERFACE 1 =================
 btnBackToInput.addEventListener('click', () => {
+  document.body.classList.remove('page-second');
+  document.body.classList.add('page-first');
   interfaceRouteResult.classList.add('hidden');
   interfaceTripInput.classList.remove('hidden');
 });
@@ -1657,4 +1674,6 @@ function cctvLoop() {
 requestAnimationFrame(cctvLoop);
 
 // Initial setup checks & drawer counts
+document.body.classList.add('page-first');
+document.body.classList.remove('page-second');
 renderCommunityReportsDrawer();

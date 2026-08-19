@@ -4035,3 +4035,21 @@ body {
   margin: 0;
   font-weight: 500;
 }
+
+/* ============================================================
+   PAGE-SPECIFIC VISIBILITY CONTROL
+   First Page: Hide top navigation and top header action buttons.
+   Second Page: Show all top navigation, actions, and controls.
+   ============================================================ */
+body.page-first .header-nav-tabs,
+body.page-first .header-actions {
+  display: none !important;
+}
+
+body.page-second .header-nav-tabs {
+  display: flex !important;
+}
+
+body.page-second .header-actions {
+  display: flex !important;
+}
