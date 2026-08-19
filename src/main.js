@@ -1,6 +1,7 @@
 import './style.css';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { nearbyPlacesService } from './nearbyPlacesService.js';
 import { ScenarioRunner } from './cvEngine.js';
 import { renderCCTV } from './canvasRenderer.js';
 import { telegramDispatcher } from './telegram.js';
@@ -2027,3 +2028,77 @@ if (formSmartNewsNLP) {
 setTimeout(() => {
   updateFirstPageRoutePreview();
 }, 200);
+
+// ================= NEARBY SAFETY PLACES CONTROLLER =================
+const checkNearbyPolice = document.getElementById('checkNearbyPolice');
+const checkNearbyHospitals = document.getElementById('checkNearbyHospitals');
+const checkNearbyPublic = document.getElementById('checkNearbyPublic');
+const badgeCountPolice = document.getElementById('badgeCountPolice');
+const badgeCountHospitals = document.getElementById('badgeCountHospitals');
+const badgeCountPublic = document.getElementById('badgeCountPublic');
+const nearbyPlacesLoadingIndicator = document.getElementById('nearbyPlacesLoadingIndicator');
+const nearbyPlacesStatusMsg = document.getElementById('nearbyPlacesStatusMsg');
+
+// Register nearbyPlacesService update callbacks
+nearbyPlacesService.onUpdateCallback = (placesByCategory, activeCategories, userLocation) => {
+  // 1. Update map markers on Leaflet map
+  if (safeRouteMapRenderer) {
+    safeRouteMapRenderer.renderNearbySafetyPlaces(placesByCategory, activeCategories, userLocation);
+  }
+
+  // 2. Update count badges
+  if (badgeCountPolice) badgeCountPolice.textContent = (placesByCategory.police || []).length;
+  if (badgeCountHospitals) badgeCountHospitals.textContent = (placesByCategory.hospital || []).length;
+  if (badgeCountPublic) badgeCountPublic.textContent = (placesByCategory.public || []).length;
+};
+
+nearbyPlacesService.onStatusCallback = (statusText, isLoading) => {
+  if (nearbyPlacesLoadingIndicator) {
+    if (isLoading) nearbyPlacesLoadingIndicator.classList.remove('hidden');
+    else nearbyPlacesLoadingIndicator.classList.add('hidden');
+  }
+
+  if (nearbyPlacesStatusMsg) {
+    if (statusText) {
+      nearbyPlacesStatusMsg.textContent = statusText;
+      nearbyPlacesStatusMsg.classList.remove('hidden');
+    } else {
+      nearbyPlacesStatusMsg.classList.add('hidden');
+    }
+  }
+};
+
+// Checkbox change handlers
+checkNearbyPolice && checkNearbyPolice.addEventListener('change', (e) => {
+  nearbyPlacesService.setCategory('police', e.target.checked);
+});
+
+checkNearbyHospitals && checkNearbyHospitals.addEventListener('change', (e) => {
+  nearbyPlacesService.setCategory('hospital', e.target.checked);
+});
+
+checkNearbyPublic && checkNearbyPublic.addEventListener('change', (e) => {
+  nearbyPlacesService.setCategory('public', e.target.checked);
+});
+
+// Update user location in nearbyPlacesService when GPS fix arrives
+function syncNearbyPlacesLocation(lat, lng) {
+  if (lat && lng) {
+    nearbyPlacesService.updateUserLocation(lat, lng);
+  }
+}
+
+// Initial center sync with default / geolocation
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      syncNearbyPlacesLocation(pos.coords.latitude, pos.coords.longitude);
+    },
+    () => {
+      syncNearbyPlacesLocation(17.4435, 78.3772);
+    },
+    { timeout: 5000, enableHighAccuracy: true }
+  );
+} else {
+  syncNearbyPlacesLocation(17.4435, 78.3772);
+}

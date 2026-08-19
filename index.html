@@ -376,6 +376,48 @@
               <section class="large-map-section">
                 <div class="map-render-frame relative-pos">
                   <div id="safeRouteLeafletMap" class="clean-leaflet-canvas large-map-canvas"></div>
+
+                  <!-- Floating Nearby Safety Places Control -->
+                  <div id="nearbySafetyPlacesControl" class="nearby-places-floating-card" role="region" aria-label="Nearby Safety Places Filter">
+                    <div class="nearby-card-header">
+                      <div class="nearby-title-wrap">
+                        <svg class="nearby-shield-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                        <span class="nearby-title">Nearby Safety Places</span>
+                      </div>
+                      <span id="nearbyPlacesLoadingIndicator" class="nearby-spinner hidden" title="Finding nearby safety places..."></span>
+                    </div>
+
+                    <div class="nearby-options-list">
+                      <label class="nearby-checkbox-row">
+                        <input type="checkbox" id="checkNearbyPolice" checked />
+                        <span class="checkbox-custom"></span>
+                        <span class="option-icon">🚓</span>
+                        <span class="option-label">Police Stations</span>
+                        <span id="badgeCountPolice" class="option-count">0</span>
+                      </label>
+
+                      <label class="nearby-checkbox-row">
+                        <input type="checkbox" id="checkNearbyHospitals" checked />
+                        <span class="checkbox-custom"></span>
+                        <span class="option-icon">🏥</span>
+                        <span class="option-label">Hospitals</span>
+                        <span id="badgeCountHospitals" class="option-count">0</span>
+                      </label>
+
+                      <label class="nearby-checkbox-row">
+                        <input type="checkbox" id="checkNearbyPublic" checked />
+                        <span class="checkbox-custom"></span>
+                        <span class="option-icon">🏫</span>
+                        <span class="option-label">Public Places</span>
+                        <span id="badgeCountPublic" class="option-count">0</span>
+                      </label>
+                    </div>
+
+                    <div id="nearbyPlacesStatusMsg" class="nearby-status-note hidden"></div>
+                  </div>
+
                   <!-- Floating Hands-Free Voice SOS Button on Top-Right Corner of Map -->
                   <a href="https://pranav3010.app.n8n.cloud/webhook/sos-trigger?user=Ananya&primaryContactPhone=%2B916300863028" target="sosHiddenFrame" onclick="alert('🎙️ VOICE SOS ACTIVATED! Dialing live phone call to +916300863028...'); fetch('https://pranav3010.app.n8n.cloud/webhook/sos-trigger', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'user=Ananya&primaryContactPhone=%2B916300863028'});" id="btnOpenVoiceSettings" class="btn-floating-voice-sos" style="text-decoration: none;" title="Trigger Instant Voice SOS">
                     <svg class="voice-mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

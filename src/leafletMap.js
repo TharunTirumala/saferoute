@@ -11,6 +11,9 @@ export class LeafletMapRenderer {
     this.routesLayer = null;
     this.reportsLayer = null;
     this.facilitiesLayer = null;
+    this.policePlacesLayer = null;
+    this.hospitalPlacesLayer = null;
+    this.publicPlacesLayer = null;
     this.heatmapLayer = null;
     this.userLocationMarker = null;
 
@@ -44,6 +47,9 @@ export class LeafletMapRenderer {
     this.routesLayer = L.layerGroup().addTo(this.map);
     this.reportsLayer = L.layerGroup().addTo(this.map);
     this.facilitiesLayer = L.layerGroup().addTo(this.map);
+    this.policePlacesLayer = L.layerGroup().addTo(this.map);
+    this.hospitalPlacesLayer = L.layerGroup().addTo(this.map);
+    this.publicPlacesLayer = L.layerGroup().addTo(this.map);
     this.heatmapLayer = L.layerGroup().addTo(this.map);
 
     // Map click handler for interactive picking
@@ -298,6 +304,124 @@ export class LeafletMapRenderer {
       this.userLocationMarker = L.marker([lat, lng], { icon: uIcon })
         .bindPopup('<b>Your Current GPS Position</b>')
         .addTo(this.map);
+    }
+  }
+
+  renderNearbySafetyPlaces(placesByCategory, activeCategories = { police: true, hospital: true, public: true }, userLocation = null) {
+    if (!this.map) return;
+
+    if (this.policePlacesLayer) this.policePlacesLayer.clearLayers();
+    if (this.hospitalPlacesLayer) this.hospitalPlacesLayer.clearLayers();
+    if (this.publicPlacesLayer) this.publicPlacesLayer.clearLayers();
+
+    if (!placesByCategory) return;
+
+    // 1. Police Stations Layer
+    if (activeCategories.police && this.policePlacesLayer) {
+      (placesByCategory.police || []).forEach(place => {
+        const icon = L.divIcon({
+          className: 'nearby-place-pin police-pin',
+          html: `<div class="nearby-marker-bubble police" title="${place.name}">
+            <span class="marker-emoji">🚓</span>
+          </div>`,
+          iconSize: [30, 30],
+          iconAnchor: [15, 15],
+          popupAnchor: [0, -15]
+        });
+
+        const popupContent = `
+          <div class="safety-place-popup police">
+            <div class="place-popup-header">
+              <span class="place-type-badge police">🚓 Police Station</span>
+              <span class="place-dist-tag">${place.distanceText || 'Nearby'}</span>
+            </div>
+            <h4 class="place-name">${place.name}</h4>
+            <p class="place-address">${place.address}</p>
+            <div class="place-popup-actions">
+              <a href="${place.googleMapsUri}" target="_blank" rel="noopener noreferrer" class="btn-gmaps-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                <span>View on Google Maps</span>
+              </a>
+            </div>
+          </div>
+        `;
+
+        L.marker([place.lat, place.lng], { icon })
+          .bindPopup(popupContent, { maxWidth: 280, className: 'clean-safety-popup' })
+          .addTo(this.policePlacesLayer);
+      });
+    }
+
+    // 2. Hospitals Layer
+    if (activeCategories.hospital && this.hospitalPlacesLayer) {
+      (placesByCategory.hospital || []).forEach(place => {
+        const icon = L.divIcon({
+          className: 'nearby-place-pin hospital-pin',
+          html: `<div class="nearby-marker-bubble hospital" title="${place.name}">
+            <span class="marker-emoji">🏥</span>
+          </div>`,
+          iconSize: [30, 30],
+          iconAnchor: [15, 15],
+          popupAnchor: [0, -15]
+        });
+
+        const popupContent = `
+          <div class="safety-place-popup hospital">
+            <div class="place-popup-header">
+              <span class="place-type-badge hospital">🏥 Hospital / Medical</span>
+              <span class="place-dist-tag">${place.distanceText || 'Nearby'}</span>
+            </div>
+            <h4 class="place-name">${place.name}</h4>
+            <p class="place-address">${place.address}</p>
+            <div class="place-popup-actions">
+              <a href="${place.googleMapsUri}" target="_blank" rel="noopener noreferrer" class="btn-gmaps-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                <span>View on Google Maps</span>
+              </a>
+            </div>
+          </div>
+        `;
+
+        L.marker([place.lat, place.lng], { icon })
+          .bindPopup(popupContent, { maxWidth: 280, className: 'clean-safety-popup' })
+          .addTo(this.hospitalPlacesLayer);
+      });
+    }
+
+    // 3. Public Places Layer
+    if (activeCategories.public && this.publicPlacesLayer) {
+      (placesByCategory.public || []).forEach(place => {
+        const icon = L.divIcon({
+          className: 'nearby-place-pin public-pin',
+          html: `<div class="nearby-marker-bubble public" title="${place.name}">
+            <span class="marker-emoji">🏫</span>
+          </div>`,
+          iconSize: [30, 30],
+          iconAnchor: [15, 15],
+          popupAnchor: [0, -15]
+        });
+
+        const popupContent = `
+          <div class="safety-place-popup public">
+            <div class="place-popup-header">
+              <span class="place-type-badge public">🏫 Public / Safety Hub</span>
+              <span class="place-dist-tag">${place.distanceText || 'Nearby'}</span>
+            </div>
+            <h4 class="place-name">${place.name}</h4>
+            <p class="place-address">${place.address}</p>
+            <div class="place-popup-actions">
+              <a href="${place.googleMapsUri}" target="_blank" rel="noopener noreferrer" class="btn-gmaps-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                <span>View on Google Maps</span>
+              </a>
+            </div>
+          </div>
+        `;
+
+        L.marker([place.lat, place.lng], { icon })
+          .bindPopup(popupContent, { maxWidth: 280, className: 'clean-safety-popup' })
+          .addTo(this.publicPlacesLayer);
+      });
     }
   }
 }
