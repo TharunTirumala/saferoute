@@ -1382,189 +1382,33 @@ function renderSafeRouteUI() {
 
   const selected = routes[safeRouteEngine.selectedRouteIndex] || routes[0];
   if (selected) {
-    const tripContext = {
-      origin: typeof sourceInput !== 'undefined' && sourceInput && sourceInput.value ? sourceInput.value : 'Starting Location',
-      destination: typeof destInput !== 'undefined' && destInput && destInput.value ? destInput.value : 'Destination',
-      travelMode: safeRouteEngine.travelMode || 'car',
-      timeOfDay: safeRouteEngine.travelTime || 'now'
-    };
+    const exp = generateRouteExplanation(selected, routes);
 
-    const exp = generateRouteExplanation(selected, routes, tripContext);
-
-    // 1. Title & Top Score Badge
     const whyCardTitleEl = document.getElementById('whyCardTitle');
     const whyScoreBadgeEl = document.getElementById('whyScoreBadge');
+    const whyRoutePointsList = document.getElementById('whyRoutePointsList');
+
     if (whyCardTitleEl) whyCardTitleEl.textContent = exp.cardTitle;
     if (whyScoreBadgeEl) {
-      whyScoreBadgeEl.textContent = `${exp.safetyScore}/100 ${exp.riskLevel}`;
-      whyScoreBadgeEl.className = `score-pill-clean ${selected.badgeClass || 'safe'}`;
+      whyScoreBadgeEl.textContent = `${exp.safetyScore}/100 ${exp.scoreLabel}`;
+      whyScoreBadgeEl.className = `score-pill-clean ${exp.badgeClass}`;
     }
 
-    // 2. Decision Summary Card (Top)
-    const decisionHeadlineTag = document.getElementById('decisionHeadlineTag');
-    const scoreLargeNum = document.getElementById('scoreLargeNum');
-    const scoreRiskPill = document.getElementById('scoreRiskPill');
-    const scoreExplainText = document.getElementById('scoreExplainText');
-    const decisionSummaryText = document.getElementById('decisionSummaryText');
-
-    if (decisionHeadlineTag) decisionHeadlineTag.textContent = exp.sectionHeadline;
-    if (scoreLargeNum) scoreLargeNum.textContent = exp.safetyScore;
-    if (scoreRiskPill) {
-      scoreRiskPill.textContent = exp.riskLevel;
-      scoreRiskPill.className = `risk-level-pill ${selected.badgeClass || 'safe'}`;
-    }
-    if (scoreExplainText) scoreExplainText.textContent = exp.scoreExplanation;
-    if (decisionSummaryText) decisionSummaryText.textContent = exp.decisionSummary;
-
-    // 3. Safety Factors Detailed Breakdown
-    const factorsDetailedGrid = document.getElementById('factorsDetailedGrid');
-    if (factorsDetailedGrid) {
-      factorsDetailedGrid.innerHTML = `
-        <div class="factor-detailed-card">
-          <div class="factor-detailed-header">
-            <span class="factor-detailed-title">💡 Street Lighting</span>
-            <span class="factor-detailed-val ${exp.factors.lighting.status}">${exp.factors.lighting.value}</span>
-          </div>
-          <p class="factor-detailed-desc">${exp.factors.lighting.text}</p>
-        </div>
-
-        <div class="factor-detailed-card">
-          <div class="factor-detailed-header">
-            <span class="factor-detailed-title">👮 Police Proximity</span>
-            <span class="factor-detailed-val ${exp.factors.police.status}">${exp.factors.police.value}</span>
-          </div>
-          <p class="factor-detailed-desc">${exp.factors.police.text}</p>
-        </div>
-
-        <div class="factor-detailed-card">
-          <div class="factor-detailed-header">
-            <span class="factor-detailed-title">🏥 Medical Facilities</span>
-            <span class="factor-detailed-val ${exp.factors.medical.status}">${exp.factors.medical.value}</span>
-          </div>
-          <p class="factor-detailed-desc">${exp.factors.medical.text}</p>
-        </div>
-
-        <div class="factor-detailed-card">
-          <div class="factor-detailed-header">
-            <span class="factor-detailed-title">👥 Public Activity</span>
-            <span class="factor-detailed-val ${exp.factors.activity.status}">${exp.factors.activity.value}</span>
-          </div>
-          <p class="factor-detailed-desc">${exp.factors.activity.text}</p>
-        </div>
-
-        <div class="factor-detailed-card">
-          <div class="factor-detailed-header">
-            <span class="factor-detailed-title">⚠️ Hazard Exposure</span>
-            <span class="factor-detailed-val ${exp.factors.hazards.status}">${exp.factors.hazards.value}</span>
-          </div>
-          <p class="factor-detailed-desc">${exp.factors.hazards.details}. ${exp.factors.hazards.text}</p>
-        </div>
-      `;
-    }
-
-    // 4. Specific Hazard Breakdown
-    const hazardSpecificsList = document.getElementById('hazardSpecificsList');
-    if (hazardSpecificsList) {
-      hazardSpecificsList.innerHTML = '';
-      exp.hazardSpecifics.forEach(h => {
+    if (whyRoutePointsList) {
+      whyRoutePointsList.innerHTML = '';
+      exp.points.forEach(pointText => {
         const li = document.createElement('li');
-        li.textContent = h;
-        hazardSpecificsList.appendChild(li);
+        li.className = 'why-point-item';
+        
+        const isWarn = pointText.includes('lower than Safest Route') || pointText.includes('higher exposure');
+        
+        li.innerHTML = `
+          <span class="why-point-check ${isWarn ? 'warn' : ''}">${isWarn ? '⚠' : '✓'}</span>
+          <p class="why-point-text">${pointText}</p>
+        `;
+        whyRoutePointsList.appendChild(li);
       });
     }
-
-    // 5. Positive Safety Factors List
-    const positiveReasonsListEl = document.getElementById('positiveReasonsList');
-    if (positiveReasonsListEl) {
-      positiveReasonsListEl.innerHTML = '';
-      exp.positiveFactors.forEach(p => {
-        const li = document.createElement('li');
-        li.textContent = p;
-        positiveReasonsListEl.appendChild(li);
-      });
-    }
-
-    // 6. Risk & Caution Factors List
-    const riskWarningsListEl = document.getElementById('riskWarningsList');
-    if (riskWarningsListEl) {
-      riskWarningsListEl.innerHTML = '';
-      exp.riskFactors.forEach(r => {
-        const li = document.createElement('li');
-        li.textContent = r;
-        riskWarningsListEl.appendChild(li);
-      });
-    }
-
-    // 7. Route Comparison Cards / Table
-    const comparisonCardsContainer = document.getElementById('comparisonCardsContainer');
-    const comparisonConclusionText = document.getElementById('comparisonConclusionText');
-    if (comparisonCardsContainer) {
-      comparisonCardsContainer.innerHTML = `
-        <div class="comp-routes-list">
-          ${exp.comparisons.map(c => `
-            <div class="comp-route-item ${c.isSelected ? 'selected' : ''}">
-              <div class="comp-route-info">
-                <span class="comp-route-name">${c.name} ${c.isSelected ? '(Viewing)' : ''}</span>
-                <span class="comp-route-metrics">
-                  <span>Hazards: ${c.hazardExposure}%</span>
-                  <span>Lighting: ${c.lightingPercent}%</span>
-                  <span>${c.distanceKm} km</span>
-                </span>
-              </div>
-              <span class="comp-route-score-badge ${c.safetyScore >= 80 ? 'safe' : c.safetyScore >= 60 ? 'alternative' : 'danger'}">
-                ${c.safetyScore}/100
-              </span>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    }
-    if (comparisonConclusionText) {
-      comparisonConclusionText.textContent = exp.comparisonConclusion;
-    }
-
-    // 8. Distance Trade-off
-    const tradeoffTextEl = document.getElementById('tradeoffText');
-    if (tradeoffTextEl) {
-      tradeoffTextEl.textContent = exp.tradeOffText;
-    }
-
-    // 9. Final Decision Recommendation
-    const finalRecTitle = document.getElementById('finalRecTitle');
-    const finalRecMetricsList = document.getElementById('finalRecMetricsList');
-    const finalRecParagraph = document.getElementById('finalRecParagraph');
-    const finalRecommendationBox = document.getElementById('finalRecommendationBox');
-
-    if (finalRecTitle) finalRecTitle.textContent = exp.finalRecommendationTitle;
-    if (finalRecommendationBox) {
-      finalRecommendationBox.className = `final-recommendation-card ${selected.safetyScore < 40 ? 'danger' : ''}`;
-    }
-    if (finalRecMetricsList) {
-      finalRecMetricsList.innerHTML = `
-        <li>• <strong>${exp.safetyScore}/100</strong> safety score (${exp.riskLevel})</li>
-        <li>• <strong>${exp.factors.hazards.value}</strong> (${exp.factors.hazards.details})</li>
-        <li>• <strong>${exp.factors.lighting.value}</strong> street lighting</li>
-        <li>• <strong>${exp.factors.police.value}</strong> emergency police access</li>
-        <li>• <strong>${exp.factors.medical.value}</strong> emergency medical access</li>
-        <li>• <strong>${exp.factors.activity.value}</strong></li>
-      `;
-    }
-    if (finalRecParagraph) {
-      finalRecParagraph.textContent = exp.finalRecommendationBody;
-    }
-
-    // 10. Generative Gemini AI Reasoning (Asynchronous enhancement)
-    generateLLMSafetyReasoning(selected, tripContext).then((llmResult) => {
-      const headlineEl = document.getElementById('llmHeadlineText');
-      const reasoningEl = document.getElementById('llmReasoningText');
-      const threatEl = document.getElementById('llmAvoidedThreat');
-      const confEl = document.getElementById('llmConfidenceTag');
-
-      if (headlineEl) headlineEl.textContent = llmResult.headline;
-      if (reasoningEl) reasoningEl.textContent = llmResult.reasoning;
-      if (threatEl) threatEl.textContent = llmResult.avoidedThreat;
-      if (confEl) confEl.textContent = `${llmResult.confidenceScore}% Confidence`;
-    }).catch((err) => console.warn('LLM reasoning update error:', err));
   }
 
   safeRouteMapRenderer.render(safeRouteEngine);
