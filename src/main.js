@@ -2041,6 +2041,25 @@ function processHeadlineNLP(headlineText) {
       `).openPopup();
     });
   }
+
+  // Update Ticker Card Text
+  const tickerHeadlineText = document.getElementById('tickerHeadlineText');
+  const tickerMetaText = document.getElementById('tickerMetaText');
+  if (tickerHeadlineText) tickerHeadlineText.textContent = headlineText;
+  if (tickerMetaText) tickerMetaText.innerHTML = `📍 Location: <strong style="color: #f87171;">${result.locationsFound.join(', ')}</strong> | Risk Score: <strong style="color: #ef4444;">${result.newLocationRisk} (${result.riskDelta})</strong>`;
+}
+
+const btnTickerViewMap = document.getElementById('btnTickerViewMap');
+if (btnTickerViewMap) {
+  btnTickerViewMap.addEventListener('click', async () => {
+    switchToSafeRoute();
+    if (safeRouteEngine && !safeRouteEngine.routes.length) {
+      await safeRouteEngine.calculateRoutes();
+      renderSafeRouteUI();
+    }
+    const tickerText = document.getElementById('tickerHeadlineText')?.textContent || '';
+    if (tickerText) processHeadlineNLP(tickerText);
+  });
 }
 
 if (selectSampleHeadline) {
