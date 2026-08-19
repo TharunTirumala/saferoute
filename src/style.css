@@ -4439,3 +4439,235 @@ body.page-second .header-actions {
     font-size: 11.5px;
   }
 }
+
+/* ============================================================
+   FIRST INTERFACE — TIME OF TRAVEL DROPDOWN POPOVER
+   ============================================================ */
+.time-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 11px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.time-dropdown-trigger:hover {
+  border-color: #93c5fd;
+  background: #f8fafc;
+}
+
+.time-dropdown-trigger[aria-expanded="true"] {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.time-trigger-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.time-trigger-icon {
+  width: 18px;
+  height: 18px;
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.selected-time-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.time-trigger-arrow {
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+}
+
+.time-dropdown-trigger[aria-expanded="true"] .time-trigger-arrow {
+  transform: rotate(180deg);
+}
+
+.time-picker-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 1050;
+  background: #ffffff;
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.time-picker-popover.hidden {
+  display: none !important;
+}
+
+.time-now-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.time-now-option:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+.time-now-option.active {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+  box-shadow: 0 0 0 1.5px rgba(59, 130, 246, 0.2);
+}
+
+.now-check-icon {
+  font-weight: 900;
+  color: #16a34a;
+  font-size: 13px;
+}
+
+.now-label {
+  font-weight: 800;
+}
+
+.now-sub {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-left: auto;
+  font-weight: 500;
+}
+
+.time-picker-divider {
+  height: 1px;
+  background: var(--border-light);
+  margin: 0 -2px;
+}
+
+.time-picker-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.time-picker-subtitle {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  display: block;
+}
+
+.time-hours-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .time-hours-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .time-hours-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.hour-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 8px 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.hour-btn:hover {
+  border-color: #93c5fd;
+  background: #f8fafc;
+  color: #1d4ed8;
+}
+
+.hour-btn.active {
+  background: #3b82f6;
+  border-color: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
+  font-weight: 800;
+}
+
+.period-select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.clean-period-select {
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  cursor: pointer;
+  appearance: none;
+  padding-right: 32px;
+  transition: all 0.15s ease;
+}
+
+.clean-period-select:hover,
+.clean-period-select:focus {
+  border-color: #3b82f6;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.period-arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  color: var(--text-secondary);
+}

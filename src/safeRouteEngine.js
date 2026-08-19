@@ -322,13 +322,17 @@ export class SafeRouteEngine {
 
     // Determine day vs night based on travelTime selection
     const t = (this.travelTime || 'now').toLowerCase();
-    if (t === 'night') {
+    if (t.includes('night')) {
       this.isNightMode = true;
-    } else if (t === 'now') {
+    } else if (t.includes('now') || t === 'live') {
       const h = new Date().getHours();
       this.isNightMode = (h >= 20 || h <= 5);
     } else if (t.includes(':')) {
-      const hour = parseInt(t.split(':')[0], 10);
+      let hour = parseInt(t.split(':')[0], 10);
+      const isPM = t.includes('pm');
+      const isAM = t.includes('am');
+      if (isPM && hour < 12) hour += 12;
+      if (isAM && hour === 12) hour = 0;
       this.isNightMode = (hour >= 20 || hour <= 5);
     } else {
       this.isNightMode = false;

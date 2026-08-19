@@ -127,32 +127,69 @@
                 </div>
               </div>
 
-              <!-- 4. Travel Time (Selectable Grid) -->
-              <div class="form-group-clean">
-                <label class="clean-label">TIME OF TRAVEL (SAFETY WEIGHTING)</label>
-                <div class="time-slots-grid" id="timeSlotsGrid">
-                  <button type="button" class="time-slot-btn active" data-time="Now">Now</button>
-                  <button type="button" class="time-slot-btn" data-time="4:00">4:00</button>
-                  <button type="button" class="time-slot-btn" data-time="5:00">5:00</button>
-                  <button type="button" class="time-slot-btn" data-time="6:00">6:00</button>
-                  <button type="button" class="time-slot-btn" data-time="7:00">7:00</button>
-                  <button type="button" class="time-slot-btn" data-time="8:00">8:00</button>
-                  <button type="button" class="time-slot-btn" data-time="9:00">9:00</button>
-                  <button type="button" class="time-slot-btn" data-time="10:00">10:00</button>
-                  <button type="button" class="time-slot-btn" data-time="11:00">11:00</button>
-                  <button type="button" class="time-slot-btn" data-time="12:00">12:00</button>
-                  <button type="button" class="time-slot-btn" data-time="13:00">13:00</button>
-                  <button type="button" class="time-slot-btn" data-time="14:00">14:00</button>
-                  <button type="button" class="time-slot-btn" data-time="15:00">15:00</button>
-                  <button type="button" class="time-slot-btn" data-time="16:00">16:00</button>
-                  <button type="button" class="time-slot-btn" data-time="17:00">17:00</button>
-                  <button type="button" class="time-slot-btn" data-time="18:00">18:00</button>
-                  <button type="button" class="time-slot-btn" data-time="19:00">19:00</button>
-                  <button type="button" class="time-slot-btn" data-time="20:00">20:00</button>
-                  <button type="button" class="time-slot-btn" data-time="21:00">21:00</button>
-                  <button type="button" class="time-slot-btn" data-time="22:00">22:00</button>
-                  <button type="button" class="time-slot-btn" data-time="23:00">23:00</button>
-                  <button type="button" class="time-slot-btn" data-time="00:00">00:00</button>
+              <!-- 4. Travel Time (Interactive Popover Dropdown) -->
+              <div class="form-group-clean relative-pos">
+                <label class="clean-label" for="btnTimeDropdownTrigger">TIME OF TRAVEL</label>
+                
+                <!-- Main Single Dropdown Trigger Button -->
+                <button type="button" id="btnTimeDropdownTrigger" class="time-dropdown-trigger" aria-haspopup="true" aria-expanded="false">
+                  <div class="time-trigger-left">
+                    <svg class="time-trigger-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <span id="selectedTimeDisplay" class="selected-time-text">Now — Live</span>
+                  </div>
+                  <svg class="time-trigger-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+
+                <!-- Floating Popover Dropdown Panel -->
+                <div id="timePickerPopover" class="time-picker-popover hidden" role="dialog" aria-label="Select Time of Travel">
+                  
+                  <!-- Top Live Option -->
+                  <button type="button" id="btnTimeNowLive" class="time-now-option active">
+                    <span class="now-check-icon">✓</span>
+                    <span class="now-label">Now — Live</span>
+                    <span class="now-sub">Real-Time Conditions</span>
+                  </button>
+
+                  <div class="time-picker-divider"></div>
+
+                  <!-- Select Hour Section -->
+                  <div class="time-picker-section">
+                    <span class="time-picker-subtitle">SELECT HOUR</span>
+                    <div class="time-hours-grid" id="timeHoursGrid">
+                      <button type="button" class="hour-btn" data-hour="1">1</button>
+                      <button type="button" class="hour-btn" data-hour="2">2</button>
+                      <button type="button" class="hour-btn" data-hour="3">3</button>
+                      <button type="button" class="hour-btn" data-hour="4">4</button>
+                      <button type="button" class="hour-btn" data-hour="5">5</button>
+                      <button type="button" class="hour-btn" data-hour="6">6</button>
+                      <button type="button" class="hour-btn" data-hour="7">7</button>
+                      <button type="button" class="hour-btn" data-hour="8">8</button>
+                      <button type="button" class="hour-btn" data-hour="9">9</button>
+                      <button type="button" class="hour-btn" data-hour="10">10</button>
+                      <button type="button" class="hour-btn" data-hour="11">11</button>
+                      <button type="button" class="hour-btn" data-hour="12">12</button>
+                    </div>
+                  </div>
+
+                  <!-- Select Period Section -->
+                  <div class="time-picker-section">
+                    <span class="time-picker-subtitle">SELECT PERIOD</span>
+                    <div class="period-select-wrapper">
+                      <select id="timePeriodSelect" class="clean-period-select">
+                        <option value="AM" selected>AM</option>
+                        <option value="PM">PM</option>
+                      </select>
+                      <svg class="period-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"/>
+                      </svg>
+                    </div>
+                  </div>
+
                 </div>
               </div>
 

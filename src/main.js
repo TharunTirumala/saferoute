@@ -1152,15 +1152,98 @@ travelModeButtons.forEach((btn) => {
 });
 
 // ================= TRAVEL TIME SELECTION =================
-// Time Slot Selection (Grid)
-document.querySelectorAll('.time-slot-btn').forEach((btn) => {
+// ================= TIME OF TRAVEL DROPDOWN / POPOVER =================
+let selectedHour = null;
+let selectedPeriod = 'AM';
+let selectedTimeMode = 'live';
+
+const btnTimeDropdownTrigger = document.getElementById('btnTimeDropdownTrigger');
+const timePickerPopover = document.getElementById('timePickerPopover');
+const selectedTimeDisplay = document.getElementById('selectedTimeDisplay');
+const btnTimeNowLive = document.getElementById('btnTimeNowLive');
+const timePeriodSelect = document.getElementById('timePeriodSelect');
+const hourButtons = document.querySelectorAll('.hour-btn');
+
+function toggleTimePopover(show) {
+  if (!timePickerPopover) return;
+  const isHidden = timePickerPopover.classList.contains('hidden');
+  const shouldShow = show !== undefined ? show : isHidden;
+  
+  if (shouldShow) {
+    timePickerPopover.classList.remove('hidden');
+    btnTimeDropdownTrigger && btnTimeDropdownTrigger.setAttribute('aria-expanded', 'true');
+  } else {
+    timePickerPopover.classList.add('hidden');
+    btnTimeDropdownTrigger && btnTimeDropdownTrigger.setAttribute('aria-expanded', 'false');
+  }
+}
+
+function updateFinalTime() {
+  if (selectedTimeMode === 'live') {
+    safeRouteEngine.travelTime = 'Now — Live';
+    if (selectedTimeDisplay) selectedTimeDisplay.textContent = 'Now — Live';
+    if (btnTimeNowLive) btnTimeNowLive.classList.add('active');
+    hourButtons.forEach(b => b.classList.remove('active'));
+    toggleTimePopover(false);
+  } else if (selectedHour) {
+    const finalTimeStr = `${selectedHour}:00 ${selectedPeriod}`;
+    safeRouteEngine.travelTime = finalTimeStr;
+    if (selectedTimeDisplay) selectedTimeDisplay.textContent = finalTimeStr;
+    if (btnTimeNowLive) btnTimeNowLive.classList.remove('active');
+    toggleTimePopover(false);
+  }
+}
+
+if (btnTimeDropdownTrigger) {
+  btnTimeDropdownTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleTimePopover();
+  });
+}
+
+if (timePickerPopover) {
+  timePickerPopover.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+}
+
+// Close popover when clicking outside
+document.addEventListener('click', (e) => {
+  if (timePickerPopover && !timePickerPopover.contains(e.target) && btnTimeDropdownTrigger && !btnTimeDropdownTrigger.contains(e.target)) {
+    toggleTimePopover(false);
+  }
+});
+
+// "Now — Live" Click
+if (btnTimeNowLive) {
+  btnTimeNowLive.addEventListener('click', () => {
+    selectedTimeMode = 'live';
+    selectedHour = null;
+    updateFinalTime();
+  });
+}
+
+// Hour Button Click
+hourButtons.forEach((btn) => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.time-slot-btn').forEach((b) => b.classList.remove('active'));
+    selectedTimeMode = 'specific';
+    selectedHour = btn.getAttribute('data-hour');
+    hourButtons.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    const selectedTime = btn.getAttribute('data-time') || 'Now';
-    safeRouteEngine.travelTime = selectedTime;
+    updateFinalTime();
   });
 });
+
+// Period (AM/PM) Change
+if (timePeriodSelect) {
+  timePeriodSelect.addEventListener('change', () => {
+    selectedPeriod = timePeriodSelect.value || 'AM';
+    if (selectedHour) {
+      selectedTimeMode = 'specific';
+      updateFinalTime();
+    }
+  });
+}
 
 // ================= PRESETS HANDLER =================
 document.querySelectorAll('.preset-pill-clean').forEach((btn) => {
