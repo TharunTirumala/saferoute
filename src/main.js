@@ -1460,18 +1460,19 @@ async function handleFindSafeRoutes() {
       }
     }
 
-    await safeRouteEngine.calculateRoutes();
-
+    // Transition to Interface 2 immediately with zero delay
     document.body.classList.remove('page-first');
     document.body.classList.add('page-second');
     interfaceTripInput.classList.add('hidden');
     interfaceRouteResult.classList.remove('hidden');
 
     summaryLocations.innerHTML = `
-      <span class="loc-text origin">${safeRouteEngine.origin.name}</span>
+      <span class="loc-text origin">${safeRouteEngine.origin ? safeRouteEngine.origin.name : sourceInput.value}</span>
       <svg class="arrow-sep" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-      <span class="loc-text destination">${safeRouteEngine.destination.name}</span>
+      <span class="loc-text destination">${safeRouteEngine.destination ? safeRouteEngine.destination.name : destInput.value}</span>
     `;
+
+    await safeRouteEngine.calculateRoutes();
 
     const modeLabels = { car: 'Car', bike: 'Bike', auto: 'Auto', walking: 'Walking' };
     summaryModeChip.textContent = modeLabels[safeRouteEngine.travelMode] || 'Car';
