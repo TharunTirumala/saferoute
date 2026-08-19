@@ -264,6 +264,11 @@
                     <span id="headerVoiceLabel">Voice SOS</span>
                   </button>
 
+                  <button id="btnOpenSmartNewsModal" class="sidebar-menu-btn" title="Open Smart News Reader NLP Sandbox">
+                    <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M18 18h-8"/><path d="M18 10h-8"/></svg>
+                    <span>Smart News NLP</span>
+                  </button>
+
                   <button id="btnOpenSosSetup" class="sidebar-menu-btn status-btn" title="Click to view Emergency SOS Setup & Permissions">
                     <span id="headerSosReadinessPill" class="status-indicator-pill not-ready">
                       <span class="status-dot"></span>
@@ -377,6 +382,50 @@
                       </button>
                     </div>
 
+                  </div>
+                </div>
+
+                <!-- FEATURE 1: SAFETY FORECAST (PREDICTIVE RISK CARD) -->
+                <div class="clean-card" id="safetyForecastCard" style="margin-top: 14px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(245, 158, 11, 0.3);">
+                  <div class="clean-card-header" style="padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.06);">
+                    <div class="header-with-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; color: #f59e0b;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      <h3 style="font-size: 0.95rem;">🔮 Safety Forecast (+3h Predictive Risk)</h3>
+                    </div>
+                    <span id="forecastTrendBadge" class="score-pill-clean warn" style="font-size: 0.7rem;">+3h Forecast</span>
+                  </div>
+
+                  <div class="clean-card-body" style="padding: 14px;">
+                    <!-- Side by Side Comparison Grid -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; font-size: 0.8rem;">
+                      <div style="background: rgba(255,255,255,0.04); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+                        <span style="color: #94a3b8; font-size: 0.7rem; display: block; margin-bottom: 2px;">NOW (LIVE RISK)</span>
+                        <strong id="forecastNowScore" style="font-size: 1.1rem; color: #38bdf8;">0.38</strong>
+                        <span style="display: block; font-size: 0.68rem; color: #cbd5e1;">Baseline Telemetry</span>
+                      </div>
+
+                      <div style="background: rgba(239, 68, 68, 0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.3);">
+                        <span style="color: #fca5a5; font-size: 0.7rem; display: block; margin-bottom: 2px;">IN +3 HOURS</span>
+                        <strong id="forecastFutureScore" style="font-size: 1.1rem; color: #ef4444;">0.52 ⬆️</strong>
+                        <span id="forecastDeltaTag" style="display: block; font-size: 0.68rem; color: #fca5a5; font-weight: 700;">+37% Increasing Risk</span>
+                      </div>
+                    </div>
+
+                    <!-- AI Drivers Breakdown -->
+                    <div style="margin-bottom: 12px;">
+                      <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 4px;">WHY AI PREDICTS RISK INCREASE:</span>
+                      <ul id="forecastDriversList" style="font-size: 0.75rem; color: #cbd5e1; padding-left: 16px; margin: 0; display: flex; flexDirection: column; gap: 4px;">
+                        <li>Time Shift: Nightfall (8 PM - 5 AM) (+35% risk)</li>
+                        <li>Weather: Rain Forecast (1.2mm/hr) (+25% risk)</li>
+                        <li>Commercial Footfall: Market closing reduces natural surveillance</li>
+                      </ul>
+                    </div>
+
+                    <!-- Forecast Hour Selector Bar -->
+                    <div style="display: flex; gap: 6px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px;">
+                      <button type="button" class="btn-toggle-sm active forecast-hour-btn" data-hours="3" style="flex: 1; justify-content: center; font-size: 0.75rem;">+3 Hours</button>
+                      <button type="button" class="btn-toggle-sm forecast-hour-btn" data-hours="6" style="flex: 1; justify-content: center; font-size: 0.75rem;">+6 Hours</button>
+                    </div>
                   </div>
                 </div>
 
@@ -501,6 +550,76 @@
       </div>
 
       <!-- ================= MODALS & DRAWERS ================= -->
+
+      <!-- SMART NEWS READER NLP SANDBOX MODAL (FEATURE 2) -->
+      <div id="smartNewsModal" class="modal-backdrop-clean hidden">
+        <div class="modal-box-clean" style="max-width: 580px;">
+          <div class="modal-clean-header">
+            <div class="header-with-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 22px; height: 22px; color: #818cf8;"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M18 18h-8"/><path d="M18 10h-8"/></svg>
+              <h3>📰 Smart News Reader NLP Sandbox</h3>
+            </div>
+            <button id="closeSmartNewsBtn" class="btn-close-modal">✕</button>
+          </div>
+
+          <div style="padding: 16px 0;">
+            <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 14px;">
+              Paste or select a news headline below. Our NLP Engine comprehends <strong>Location (WHERE)</strong>, <strong>Crime Type & Severity (WHAT)</strong>, <strong>Time Context (WHEN)</strong>, and <strong>Urgency Signals (SERIOUSNESS)</strong> to update location risk scores in real time.
+            </p>
+
+            <!-- Sample Preset Select -->
+            <div style="margin-bottom: 12px;">
+              <label style="font-size: 0.75rem; color: #cbd5e1; font-weight: 700; display: block; margin-bottom: 4px;">TEST WITH PRESET HEADLINES:</label>
+              <select id="selectSampleHeadline" class="clean-select-input" style="font-size: 0.8rem;">
+                <option value="">-- Choose a sample headline --</option>
+                <option value="Women avoid Charminar area after dark following multiple snatching incidents near Railway Station">1. High Threat: Charminar Snatching (After Dark)</option>
+                <option value="Police increase patrols in Banjara Hills after assault reports near commercial strip">2. Police Action: Banjara Hills Patrol Increase (Risk Decreased)</option>
+                <option value="Women feel unsafe walking alone in Gachibowli IT corridor late evenings due to unlit stretch">3. Environmental Concern: Gachibowli Unlit Corridor</option>
+                <option value="She Team Kiosk and CCTV cameras installed at Hitech City Metro Station to boost night safety">4. Safety Infrastructure: Hitech City Kiosk & CCTV</option>
+              </select>
+            </div>
+
+            <!-- Custom Input Form -->
+            <form id="formSmartNewsNLP" onsubmit="return false;" style="display: flex; gap: 8px; margin-bottom: 16px;">
+              <input type="text" id="inputNewsHeadline" class="clean-text-input" placeholder="Type or paste custom safety headline..." style="font-size: 0.85rem;" required />
+              <button type="submit" id="btnAnalyzeHeadline" class="btn-primary-action-sm">Analyze NLP</button>
+            </form>
+
+            <!-- Live Output Card -->
+            <div id="nlpOutputCard" style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(129, 140, 248, 0.3); padding: 16px; border-radius: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span style="font-size: 0.75rem; color: #818cf8; font-weight: 800; text-transform: uppercase;">🤖 AI COMPREHENSION OUTPUT</span>
+                <span id="nlpImpactBadge" class="badge-tag-clean success">POLICE RESPONSE</span>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.8rem; margin-bottom: 12px;">
+                <div style="background: rgba(255,255,255,0.04); padding: 8px 12px; border-radius: 8px;">
+                  <span style="color: #94a3b8; display: block; font-size: 0.7rem;">📍 LOCATION (WHERE)</span>
+                  <strong id="nlpLocationVal" style="color: #fff;">Charminar</strong>
+                </div>
+                <div style="background: rgba(255,255,255,0.04); padding: 8px 12px; border-radius: 8px;">
+                  <span style="color: #94a3b8; display: block; font-size: 0.7rem;">⚠️ CRIME TYPE & SEVERITY</span>
+                  <strong id="nlpCrimeVal" style="color: #fca5a5;">Snatching (0.50)</strong>
+                </div>
+                <div style="background: rgba(255,255,255,0.04); padding: 8px 12px; border-radius: 8px;">
+                  <span style="color: #94a3b8; display: block; font-size: 0.7rem;">🌙 TIME CONTEXT</span>
+                  <strong id="nlpTimeVal" style="color: #fca5a5;">After dark (1.3x)</strong>
+                </div>
+                <div style="background: rgba(255,255,255,0.04); padding: 8px 12px; border-radius: 8px;">
+                  <span style="color: #94a3b8; display: block; font-size: 0.7rem;">🚨 URGENCY SIGNALS</span>
+                  <strong id="nlpUrgencyVal" style="color: #fca5a5;">1.4x (High Concern)</strong>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 10px 14px; border-radius: 8px; font-size: 0.85rem;">
+                <span style="color: #cbd5e1;">Location News Risk Impact:</span>
+                <strong id="nlpScoreResult" style="color: #ef4444; font-size: 1rem;">0.15 ➔ 0.32 (+0.17)</strong>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
 
       <!-- 1. EMERGENCY SOS SETUP & PERMISSIONS PRE-AUTHORIZATION MODAL -->
       <div id="sosSetupModal" class="modal-backdrop-clean hidden">

@@ -15,6 +15,8 @@ import { EmergencySosService, SOS_STATUS } from './emergencySosService.js';
 import { liveSosSessionStore } from './liveSosSessionStore.js';
 import { generateLLMSafetyReasoning } from './llmService.js';
 import { generateRouteExplanation } from './explainabilityEngine.js';
+import { safetyForecastEngine } from './safetyForecastEngine.js';
+import { smartNewsReader } from './smartNewsReader.js';
 
 // ================= TAB SWITCHING =================
 const tabGuardianEye = document.getElementById('tabGuardianEye');
@@ -1432,6 +1434,33 @@ function renderSafeRouteUI() {
         whyRoutePointsList.appendChild(li);
       });
     }
+
+    // FEATURE 1: UPDATE SAFETY FORECAST PREDICTIVE RISK CARD
+    const currentRiskValue = parseFloat((1 - (selected.safetyScore / 100)).toFixed(2));
+    const forecast = safetyForecastEngine.predictRiskForecast({
+      currentRiskScore: currentRiskValue,
+      zoneName: selected.name || 'Selected Corridor'
+    }, selectedForecastHours);
+
+    const forecastNowScore = document.getElementById('forecastNowScore');
+    const forecastFutureScore = document.getElementById('forecastFutureScore');
+    const forecastDeltaTag = document.getElementById('forecastDeltaTag');
+    const forecastTrendBadge = document.getElementById('forecastTrendBadge');
+    const forecastDriversList = document.getElementById('forecastDriversList');
+
+    if (forecastNowScore) forecastNowScore.textContent = forecast.currentRiskScore;
+    if (forecastFutureScore) forecastFutureScore.textContent = `${forecast.predictedRiskScore} ${forecast.trendIcon}`;
+    if (forecastDeltaTag) {
+      forecastDeltaTag.textContent = `${forecast.percentChange} ${forecast.trendStatus}`;
+      forecastDeltaTag.style.color = forecast.trendColor;
+    }
+    if (forecastTrendBadge) {
+      forecastTrendBadge.textContent = `+${selectedForecastHours}h Forecast`;
+      forecastTrendBadge.style.color = forecast.trendColor;
+    }
+    if (forecastDriversList) {
+      forecastDriversList.innerHTML = forecast.forecastDrivers.map(d => `<li>${d}</li>`).join('');
+    }
   }
 
   safeRouteMapRenderer.render(safeRouteEngine);
@@ -1683,3 +1712,84 @@ requestAnimationFrame(cctvLoop);
 document.body.classList.add('page-first');
 document.body.classList.remove('page-second');
 renderCommunityReportsDrawer();
+
+// ================= FEATURE 1: SAFETY FORECAST CONTROLS =================
+let selectedForecastHours = 3;
+document.querySelectorAll('.forecast-hour-btn').forEach((btn) => {
+  btn.addEventListener('click', (e) => {
+    document.querySelectorAll('.forecast-hour-btn').forEach((b) => b.classList.remove('active'));
+    e.currentTarget.classList.add('active');
+    selectedForecastHours = parseInt(e.currentTarget.getAttribute('data-hours'), 10) || 3;
+    renderRouteResultsUI();
+  });
+});
+
+// ================= FEATURE 2: SMART NEWS READER NLP SANDBOX =================
+const smartNewsModal = document.getElementById('smartNewsModal');
+const btnOpenSmartNewsModal = document.getElementById('btnOpenSmartNewsModal');
+const closeSmartNewsBtn = document.getElementById('closeSmartNewsBtn');
+const selectSampleHeadline = document.getElementById('selectSampleHeadline');
+const inputNewsHeadline = document.getElementById('inputNewsHeadline');
+const formSmartNewsNLP = document.getElementById('formSmartNewsNLP');
+
+if (btnOpenSmartNewsModal && smartNewsModal) {
+  btnOpenSmartNewsModal.addEventListener('click', () => {
+    smartNewsModal.classList.remove('hidden');
+    // Process initial sample headline if input has text
+    if (selectSampleHeadline && selectSampleHeadline.options.length > 1) {
+      selectSampleHeadline.selectedIndex = 1;
+      const val = selectSampleHeadline.value;
+      if (inputNewsHeadline) inputNewsHeadline.value = val;
+      processHeadlineNLP(val);
+    }
+  });
+}
+
+if (closeSmartNewsBtn && smartNewsModal) {
+  closeSmartNewsBtn.addEventListener('click', () => {
+    smartNewsModal.classList.add('hidden');
+  });
+}
+
+function processHeadlineNLP(headlineText) {
+  if (!headlineText || !headlineText.trim()) return;
+
+  const result = smartNewsReader.analyzeHeadline(headlineText.trim());
+  if (!result) return;
+
+  const nlpLocationVal = document.getElementById('nlpLocationVal');
+  const nlpCrimeVal = document.getElementById('nlpCrimeVal');
+  const nlpTimeVal = document.getElementById('nlpTimeVal');
+  const nlpUrgencyVal = document.getElementById('nlpUrgencyVal');
+  const nlpScoreResult = document.getElementById('nlpScoreResult');
+  const nlpImpactBadge = document.getElementById('nlpImpactBadge');
+
+  if (nlpLocationVal) nlpLocationVal.textContent = result.locationsFound.join(', ');
+  if (nlpCrimeVal) nlpCrimeVal.textContent = `${result.crimesFound.join(', ')} (${result.maxCrimeSeverity})`;
+  if (nlpTimeVal) nlpTimeVal.textContent = `${result.detectedTimeContext} (${result.timeFactor}x)`;
+  if (nlpUrgencyVal) nlpUrgencyVal.textContent = `${result.urgencyFactor}x (${result.urgencyFactor > 1.2 ? 'High Concern' : 'Normal'})`;
+  if (nlpScoreResult) nlpScoreResult.textContent = `${result.initialNewsRisk} ➔ ${result.newLocationRisk} (${result.riskDelta})`;
+
+  if (nlpImpactBadge) {
+    nlpImpactBadge.textContent = result.impactTag;
+    nlpImpactBadge.className = `badge-tag-clean ${result.isPositiveAction ? 'success' : 'danger'}`;
+  }
+}
+
+if (selectSampleHeadline) {
+  selectSampleHeadline.addEventListener('change', (e) => {
+    const val = e.target.value;
+    if (val) {
+      if (inputNewsHeadline) inputNewsHeadline.value = val;
+      processHeadlineNLP(val);
+    }
+  });
+}
+
+if (formSmartNewsNLP) {
+  formSmartNewsNLP.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = inputNewsHeadline ? inputNewsHeadline.value : '';
+    processHeadlineNLP(text);
+  });
+}
