@@ -610,7 +610,7 @@ function showSosStatusToast(msg) {
   }, 6000);
 }
 
-// Wire SOS Trigger Buttons (Zero Delay Instant Dispatch)
+// Wire SOS Trigger Buttons (Universal Failproof Dispatcher)
 const triggerSosImmediately = (sourceName) => {
   console.log(`🚨 ${sourceName} Triggered -> Dispatching n8n & Twilio Calls Immediately`);
   emergencySos.executeSosNow(sourceName);
@@ -623,6 +623,15 @@ const triggerSosImmediately = (sourceName) => {
     userPhone: '+916300863028'
   });
 };
+
+// Universal event listener: catches clicks on ANY button/element related to SOS
+document.addEventListener('click', (e) => {
+  const target = e.target.closest('#btnHeaderGlobalSos, #openSosBtn, #btnSidebarSos, #triggerManualSos, .btn-emergency-sos-sm, .sos-menu-btn');
+  if (target) {
+    e.preventDefault();
+    triggerSosImmediately(target.id || target.textContent.trim() || 'Global SOS Click');
+  }
+});
 
 const btnHeaderGlobalSos = document.getElementById('btnHeaderGlobalSos');
 if (btnHeaderGlobalSos) {
