@@ -1,7 +1,7 @@
+import { authService } from './authService.js';
 import './style.css';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { nearbyPlacesService } from './nearbyPlacesService.js';
 import { ScenarioRunner } from './cvEngine.js';
 import { renderCCTV } from './canvasRenderer.js';
 import { telegramDispatcher } from './telegram.js';
@@ -60,9 +60,6 @@ const safeRouteMapRenderer = new LeafletMapRenderer('safeRouteLeafletMap', {
   onReportAction: () => {
     renderSafeRouteUI();
     renderCommunityReportsDrawer();
-  },
-  onMapMoveEnd: (lat, lng) => {
-    syncNearbyPlacesLocation(lat, lng);
   }
 });
 
@@ -1492,10 +1489,6 @@ async function handleFindSafeRoutes() {
       renderSafeRouteUI();
     }, 100);
 
-    if (safeRouteEngine.origin && safeRouteEngine.origin.lat && safeRouteEngine.origin.lng) {
-      syncNearbyPlacesLocation(safeRouteEngine.origin.lat, safeRouteEngine.origin.lng);
-    }
-
     sound.playBeep(880, 0.1);
   } catch (err) {
     alert(`Routing error: ${err.message}`);
@@ -1569,19 +1562,8 @@ function renderSafeRouteUI() {
     return;
   }
 
-  whyRouteCard.style.display = 'flex';
-
-  if (safeRouteEngine.allHighRiskWarning) {
-    const warnDiv = document.createElement('div');
-    warnDiv.className = 'clean-alert-box danger';
-    warnDiv.innerHTML = `<span>${safeRouteEngine.allHighRiskWarning}</span>`;
-    routesListContainer.appendChild(warnDiv);
-  } else if (safeRouteEngine.saferLongerNotice) {
-    const noticeDiv = document.createElement('div');
-    noticeDiv.className = 'clean-alert-box info';
-    noticeDiv.innerHTML = `<span>${safeRouteEngine.saferLongerNotice}</span>`;
-    routesListContainer.appendChild(noticeDiv);
-  }
+  // Clean trip results list without news hazard banner
+  routesListContainer.innerHTML = '';
 
   routes.forEach((route, idx) => {
     const isSelected = idx === safeRouteEngine.selectedRouteIndex;
@@ -2011,55 +1993,6 @@ function processHeadlineNLP(headlineText) {
     nlpImpactBadge.textContent = result.impactTag;
     nlpImpactBadge.className = `badge-tag-clean ${result.isPositiveAction ? 'success' : 'danger'}`;
   }
-
-  // Plot Scraped News Incident Location Marker on Leaflet Map
-  const locationCoordsMap = {
-    'Charminar': [17.3616, 78.4747],
-    'Banjara Hills': [17.4156, 78.4347],
-    'Hitech City': [17.4435, 78.3772],
-    'Gachibowli': [17.4401, 78.3489],
-    'Begumpet': [17.4447, 78.4664],
-    'Jubilee Hills': [17.4319, 78.4071],
-    'Hyderabad': [17.3850, 78.4867]
-  };
-
-  if (safeRouteMapRenderer && safeRouteMapRenderer.map) {
-    result.locationsFound.forEach(locName => {
-      const coords = locationCoordsMap[locName] || [17.4435, 78.3772];
-      const markerColor = result.isPositiveAction ? '#10b981' : '#ef4444';
-      const iconHtml = `<div style="background: ${markerColor}; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; border: 2px solid white; box-shadow: 0 0 10px ${markerColor};">${result.isPositiveAction ? '👮' : '🚨'}</div>`;
-      const customIcon = L.divIcon({ html: iconHtml, className: 'news-hazard-marker', iconSize: [28, 28] });
-      
-      const newsMarker = L.marker(coords, { icon: customIcon }).addTo(safeRouteMapRenderer.map);
-      newsMarker.bindPopup(`
-        <div style="font-family: sans-serif; padding: 4px;">
-          <strong style="color: ${markerColor};">${result.impactTag}</strong><br/>
-          <small><strong>Location:</strong> ${locName}</small><br/>
-          <small><strong>Headline:</strong> "${headlineText}"</small><br/>
-          <small><strong>New Risk Index:</strong> ${result.newLocationRisk} (${result.riskDelta})</small>
-        </div>
-      `).openPopup();
-    });
-  }
-
-  // Update Ticker Card Text
-  const tickerHeadlineText = document.getElementById('tickerHeadlineText');
-  const tickerMetaText = document.getElementById('tickerMetaText');
-  if (tickerHeadlineText) tickerHeadlineText.textContent = headlineText;
-  if (tickerMetaText) tickerMetaText.innerHTML = `📍 Location: <strong style="color: #f87171;">${result.locationsFound.join(', ')}</strong> | Risk Score: <strong style="color: #ef4444;">${result.newLocationRisk} (${result.riskDelta})</strong>`;
-}
-
-const btnTickerViewMap = document.getElementById('btnTickerViewMap');
-if (btnTickerViewMap) {
-  btnTickerViewMap.addEventListener('click', async () => {
-    switchToSafeRoute();
-    if (safeRouteEngine && !safeRouteEngine.routes.length) {
-      await safeRouteEngine.calculateRoutes();
-      renderSafeRouteUI();
-    }
-    const tickerText = document.getElementById('tickerHeadlineText')?.textContent || '';
-    if (tickerText) processHeadlineNLP(tickerText);
-  });
 }
 
 if (selectSampleHeadline) {
@@ -2085,76 +2018,203 @@ setTimeout(() => {
   updateFirstPageRoutePreview();
 }, 200);
 
-// ================= NEARBY SAFETY PLACES CONTROLLER =================
-const checkNearbyPolice = document.getElementById('checkNearbyPolice');
-const checkNearbyHospitals = document.getElementById('checkNearbyHospitals');
-const checkNearbyPublic = document.getElementById('checkNearbyPublic');
-const badgeCountPolice = document.getElementById('badgeCountPolice');
-const badgeCountHospitals = document.getElementById('badgeCountHospitals');
-const badgeCountPublic = document.getElementById('badgeCountPublic');
-const nearbyPlacesLoadingIndicator = document.getElementById('nearbyPlacesLoadingIndicator');
-const nearbyPlacesStatusMsg = document.getElementById('nearbyPlacesStatusMsg');
+// ================= USER AUTHENTICATION & LOGIN WORKFLOW =================
+const viewAuthLogin = document.getElementById('viewAuthLogin');
+// viewSafeRoute already declaredconst headerUserStatus = document.getElementById('headerUserStatus');
+const headerUserPhoneText = document.getElementById('headerUserPhoneText');
+const btnHeaderLogout = document.getElementById('btnHeaderLogout');
 
-// Register nearbyPlacesService update callbacks
-nearbyPlacesService.onUpdateCallback = (placesByCategory, activeCategories, userLocation) => {
-  // 1. Update map markers on Leaflet map
-  if (safeRouteMapRenderer) {
-    safeRouteMapRenderer.renderNearbySafetyPlaces(placesByCategory, activeCategories, userLocation);
+const authStepMobile = document.getElementById('authStepMobile');
+const authStepOtp = document.getElementById('authStepOtp');
+const formSendOtp = document.getElementById('formSendOtp');
+const formVerifyOtp = document.getElementById('formVerifyOtp');
+const inputAuthMobile = document.getElementById('inputAuthMobile');
+const btnSendOtp = document.getElementById('btnSendOtp');
+const sendOtpBtnText = document.getElementById('sendOtpBtnText');
+const btnVerifyOtp = document.getElementById('btnVerifyOtp');
+const verifyOtpBtnText = document.getElementById('verifyOtpBtnText');
+const displayAuthTargetMobile = document.getElementById('displayAuthTargetMobile');
+const btnChangeMobileNumber = document.getElementById('btnChangeMobileNumber');
+const btnResendOtp = document.getElementById('btnResendOtp');
+const authMobileError = document.getElementById('authMobileError');
+const authOtpError = document.getElementById('authOtpError');
+const authDevOtpToast = document.getElementById('authDevOtpToast');
+const authDevOtpCode = document.getElementById('authDevOtpCode');
+const otpDigitInputs = document.querySelectorAll('.otp-digit-input');
+
+let currentAuthMobileNumber = '';
+
+function updateAuthUIState() {
+  const isAuth = authService.isAuthenticated();
+  if (isAuth) {
+    viewAuthLogin && viewAuthLogin.classList.add('hidden');
+    viewSafeRoute && viewSafeRoute.classList.remove('hidden');
+    if (headerUserStatus) headerUserStatus.classList.remove('hidden');
+    if (headerUserPhoneText) headerUserPhoneText.textContent = authService.getFormattedPhone();
+    emergencySos.reloadUserContacts();
+  } else {
+    viewAuthLogin && viewAuthLogin.classList.remove('hidden');
+    viewSafeRoute && viewSafeRoute.classList.add('hidden');
+    if (headerUserStatus) headerUserStatus.classList.add('hidden');
+    showAuthStepMobile();
+  }
+}
+
+function showAuthStepMobile() {
+  if (authStepMobile) authStepMobile.classList.remove('hidden');
+  if (authStepOtp) authStepOtp.classList.add('hidden');
+  if (authMobileError) authMobileError.classList.add('hidden');
+  if (authOtpError) authOtpError.classList.add('hidden');
+  if (authDevOtpToast) authDevOtpToast.classList.add('hidden');
+  if (inputAuthMobile) {
+    inputAuthMobile.value = '';
+    setTimeout(() => inputAuthMobile.focus(), 150);
+  }
+}
+
+function showAuthStepOtp(phone, devOtp) {
+  if (authStepMobile) authStepMobile.classList.add('hidden');
+  if (authStepOtp) authStepOtp.classList.remove('hidden');
+  if (authOtpError) authOtpError.classList.add('hidden');
+  if (displayAuthTargetMobile) displayAuthTargetMobile.textContent = phone;
+  
+  if (devOtp && authDevOtpToast && authDevOtpCode) {
+    authDevOtpCode.textContent = devOtp;
+    authDevOtpToast.classList.remove('hidden');
+  } else if (authDevOtpToast) {
+    authDevOtpToast.classList.add('hidden');
   }
 
-  // 2. Update count badges
-  if (badgeCountPolice) badgeCountPolice.textContent = (placesByCategory.police || []).length;
-  if (badgeCountHospitals) badgeCountHospitals.textContent = (placesByCategory.hospital || []).length;
-  if (badgeCountPublic) badgeCountPublic.textContent = (placesByCategory.public || []).length;
-};
+  otpDigitInputs.forEach(i => i.value = '');
+  if (otpDigitInputs[0]) setTimeout(() => otpDigitInputs[0].focus(), 150);
+}
 
-nearbyPlacesService.onStatusCallback = (statusText, isLoading) => {
-  if (nearbyPlacesLoadingIndicator) {
-    if (isLoading) nearbyPlacesLoadingIndicator.classList.remove('hidden');
-    else nearbyPlacesLoadingIndicator.classList.add('hidden');
+// 1. Mobile Number Submit Handler (OTP required ONLY ONCE per number)
+formSendOtp && formSendOtp.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const phoneVal = (inputAuthMobile?.value || '').trim();
+  if (authMobileError) authMobileError.classList.add('hidden');
+
+  if (sendOtpBtnText) sendOtpBtnText.textContent = 'Checking...';
+  if (btnSendOtp) btnSendOtp.disabled = true;
+
+  // Check if number is already verified previously
+  const checkRes = await authService.checkOrLoginUser(phoneVal);
+
+  if (!checkRes.success) {
+    if (sendOtpBtnText) sendOtpBtnText.textContent = 'Continue';
+    if (btnSendOtp) btnSendOtp.disabled = false;
+    if (authMobileError) {
+      authMobileError.textContent = checkRes.error || 'Invalid mobile number.';
+      authMobileError.classList.remove('hidden');
+    }
+    return;
   }
 
-  if (nearbyPlacesStatusMsg) {
-    if (statusText) {
-      nearbyPlacesStatusMsg.textContent = statusText;
-      nearbyPlacesStatusMsg.classList.remove('hidden');
-    } else {
-      nearbyPlacesStatusMsg.classList.add('hidden');
+  // RETURNING VERIFIED USER -> DO NOT SEND OTP, DO NOT ASK FOR OTP
+  if (checkRes.isReturningUser) {
+    if (sendOtpBtnText) sendOtpBtnText.textContent = 'Continue';
+    if (btnSendOtp) btnSendOtp.disabled = false;
+    updateAuthUIState();
+    return;
+  }
+
+  // NEW USER -> Send OTP for first-time verification
+  if (sendOtpBtnText) sendOtpBtnText.textContent = 'Sending OTP...';
+  const res = await authService.sendOtp(phoneVal);
+
+  if (sendOtpBtnText) sendOtpBtnText.textContent = 'Continue';
+  if (btnSendOtp) btnSendOtp.disabled = false;
+
+  if (res.success) {
+    currentAuthMobileNumber = res.phone;
+    showAuthStepOtp(res.phone, res.devOtp);
+  } else {
+    if (authMobileError) {
+      authMobileError.textContent = res.error || 'Failed to send OTP.';
+      authMobileError.classList.remove('hidden');
     }
   }
-};
-
-// Checkbox change handlers
-checkNearbyPolice && checkNearbyPolice.addEventListener('change', (e) => {
-  nearbyPlacesService.setCategory('police', e.target.checked);
 });
 
-checkNearbyHospitals && checkNearbyHospitals.addEventListener('change', (e) => {
-  nearbyPlacesService.setCategory('hospital', e.target.checked);
+// 2. Change Mobile Number Button
+btnChangeMobileNumber && btnChangeMobileNumber.addEventListener('click', () => {
+  showAuthStepMobile();
 });
 
-checkNearbyPublic && checkNearbyPublic.addEventListener('change', (e) => {
-  nearbyPlacesService.setCategory('public', e.target.checked);
-});
+// 3. Resend OTP Button
+btnResendOtp && btnResendOtp.addEventListener('click', async () => {
+  if (!currentAuthMobileNumber) return;
+  btnResendOtp.textContent = 'Resending...';
+  btnResendOtp.disabled = true;
+  const res = await authService.sendOtp(currentAuthMobileNumber);
+  btnResendOtp.textContent = 'Resend OTP';
+  btnResendOtp.disabled = false;
 
-// Update user location in nearbyPlacesService when GPS fix arrives
-function syncNearbyPlacesLocation(lat, lng) {
-  if (lat && lng) {
-    nearbyPlacesService.updateUserLocation(lat, lng);
+  if (res.success && res.devOtp && authDevOtpCode) {
+    authDevOtpCode.textContent = res.devOtp;
+    authDevOtpToast && authDevOtpToast.classList.remove('hidden');
   }
-}
+});
 
-// Initial center sync with default / geolocation
-if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      syncNearbyPlacesLocation(pos.coords.latitude, pos.coords.longitude);
-    },
-    () => {
-      syncNearbyPlacesLocation(17.4435, 78.3772);
-    },
-    { timeout: 5000, enableHighAccuracy: true }
-  );
-} else {
-  syncNearbyPlacesLocation(17.4435, 78.3772);
-}
+// 4. OTP Inputs Auto-Advancement & Paste Support
+otpDigitInputs.forEach((input, index) => {
+  input.addEventListener('input', (e) => {
+    const val = e.target.value;
+    if (val.length === 1 && index < otpDigitInputs.length - 1) {
+      otpDigitInputs[index + 1].focus();
+    }
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Backspace' && !input.value && index > 0) {
+      otpDigitInputs[index - 1].focus();
+    }
+  });
+
+  input.addEventListener('paste', (e) => {
+    e.preventDefault();
+    const paste = (e.clipboardData || window.clipboardData).getData('text');
+    const digits = paste.replace(/[^0-9]/g, '').slice(0, 6);
+    digits.split('').forEach((d, i) => {
+      if (otpDigitInputs[i]) otpDigitInputs[i].value = d;
+    });
+    const lastIdx = Math.min(digits.length, otpDigitInputs.length - 1);
+    if (otpDigitInputs[lastIdx]) otpDigitInputs[lastIdx].focus();
+  });
+});
+
+// 5. Verify OTP Handler
+formVerifyOtp && formVerifyOtp.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const enteredOtp = Array.from(otpDigitInputs).map(i => i.value).join('');
+  if (authOtpError) authOtpError.classList.add('hidden');
+
+  if (verifyOtpBtnText) verifyOtpBtnText.textContent = 'Verifying...';
+  if (btnVerifyOtp) btnVerifyOtp.disabled = true;
+
+  const res = await authService.verifyOtp(currentAuthMobileNumber, enteredOtp);
+
+  if (verifyOtpBtnText) verifyOtpBtnText.textContent = 'Verify & Continue';
+  if (btnVerifyOtp) btnVerifyOtp.disabled = false;
+
+  if (res.success) {
+    updateAuthUIState();
+  } else {
+    if (authOtpError) {
+      authOtpError.textContent = res.error || 'Incorrect OTP code.';
+      authOtpError.classList.remove('hidden');
+    }
+  }
+});
+
+// 6. Header Logout Button
+btnHeaderLogout && btnHeaderLogout.addEventListener('click', () => {
+  if (confirm('Are you sure you want to log out of SafeRoute?')) {
+    authService.logout();
+    updateAuthUIState();
+  }
+});
+
+// Initialize Authentication State on Load
+updateAuthUIState();
