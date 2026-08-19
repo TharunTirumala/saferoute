@@ -27,13 +27,17 @@
               <div class="brand-titles">
                 <span class="brand-name">SafeRoute</span>
                 <span class="brand-tag">ONE-TAP SOS &amp; LIVE TRACKING</span>
-            <div style="margin-left: auto; display: flex; gap: 10px; align-items: center;">
-              <a href="https://pranav3010.app.n8n.cloud/webhook/sos-trigger?user=Ananya&primaryContactPhone=%2B916300863028" target="sosHiddenFrame" onclick="alert('🚨 EMERGENCY SOS ACTIVATED! Dialing live phone call to +916300863028...'); fetch('https://pranav3010.app.n8n.cloud/webhook/sos-trigger', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'user=Ananya&primaryContactPhone=%2B916300863028'});" class="btn-emergency-sos-sm" style="background: #ef4444; color: #fff; font-weight: 800; padding: 8px 16px; border-radius: 8px; text-decoration: none; display: flex; align-items: center; gap: 6px; font-size: 0.85rem; box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 18px; height: 18px;"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                <span>🚨 ONE-TAP SOS</span>
-              </a>
-              <iframe name="sosHiddenFrame" id="sosHiddenFrame" style="display: none; width: 0; height: 0; border: none;"></iframe>
+              </div>
             </div>
+          </div>
+
+          <!-- TOP-RIGHT CORNER OF HEADER: ONE-TAP SOS BUTTON -->
+          <div class="header-actions-right" style="margin-left: auto; display: flex; gap: 10px; align-items: center;">
+            <a href="https://pranav3010.app.n8n.cloud/webhook/sos-trigger?user=Ananya&primaryContactPhone=%2B916300863028" target="sosHiddenFrame" onclick="alert('🚨 EMERGENCY SOS ACTIVATED! Dialing live phone call to +916300863028...'); fetch('https://pranav3010.app.n8n.cloud/webhook/sos-trigger', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'user=Ananya&primaryContactPhone=%2B916300863028'});" class="btn-emergency-sos-sm" style="background: #ef4444; color: #fff; font-weight: 800; padding: 8px 16px; border-radius: 8px; text-decoration: none; display: flex; align-items: center; gap: 6px; font-size: 0.85rem; box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);" title="Trigger Instant Emergency SOS">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 18px; height: 18px;"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span>🚨 ONE-TAP SOS</span>
+            </a>
+            <iframe name="sosHiddenFrame" id="sosHiddenFrame" style="display: none; width: 0; height: 0; border: none;"></iframe>
           </div>
         </div>
       </header>
