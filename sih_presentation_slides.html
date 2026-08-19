@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SIH Title Page Presentation Slide - SafeRoute</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+    body { background: #0f172a; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+    
+    .slide-canvas {
+      width: 1280px;
+      height: 720px;
+      background: #ffffff;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      padding: 50px 70px;
+    }
+
+    /* SIH Background Watermark */
+    .watermark-bg {
+      position: absolute;
+      right: 40px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 450px;
+      height: 450px;
+      opacity: 0.08;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Header Bar */
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 3px solid #0284c7;
+      padding-bottom: 15px;
+      margin-bottom: 25px;
+      z-index: 2;
+    }
+
+    .sih-main-title {
+      font-size: 32px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-decoration: underline;
+      text-decoration-color: #0284c7;
+      text-underline-offset: 6px;
+    }
+
+    .sih-logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sih-logo-img {
+      width: 60px;
+      height: 60px;
+    }
+
+    .sih-logo-text {
+      font-size: 14px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    /* Sub Header */
+    .sub-header {
+      text-align: center;
+      font-size: 26px;
+      font-weight: 800;
+      color: #1e293b;
+      letter-spacing: 2px;
+      margin-bottom: 35px;
+      text-transform: uppercase;
+      z-index: 2;
+    }
+
+    /* Field List */
+    .fields-container {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      z-index: 2;
+      max-width: 900px;
+    }
+
+    .field-row {
+      display: flex;
+      align-items: baseline;
+      font-size: 22px;
+      line-height: 1.4;
+    }
+
+    .field-bullet {
+      font-size: 28px;
+      margin-right: 15px;
+      color: #0f172a;
+    }
+
+    .field-label {
+      font-weight: 700;
+      color: #0f172a;
+      min-width: 320px;
+    }
+
+    .field-value {
+      font-weight: 600;
+      color: #0284c7;
+      background: #f1f5f9;
+      padding: 4px 12px;
+      border-radius: 6px;
+      border: 1px dashed #cbd5e1;
+    }
+
+    .footer-note {
+      position: absolute;
+      bottom: 20px;
+      left: 70px;
+      font-size: 13px;
+      color: #94a3b8;
+      z-index: 2;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="slide-canvas">
+    <!-- Watermark SVG Logo -->
+    <svg class="watermark-bg" viewBox="0 0 100 100" fill="currentColor">
+      <path d="M50 10 C30 10 15 25 15 45 C15 60 25 72 38 78 L38 88 C38 90 40 92 42 92 L58 92 C60 92 62 90 62 88 L62 78 C75 72 85 60 85 45 C85 25 70 10 50 10 Z" fill="#0284c7"/>
+    </svg>
+
+    <!-- Header -->
+    <div class="header-bar">
+      <div class="sih-main-title">SMART INDIA HACKATHON 2024</div>
+      <div class="sih-logo-wrap">
+        <svg class="sih-logo-img" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="45" fill="#f8fafc" stroke="#0284c7" stroke-width="4"/>
+          <path d="M35 45 C35 30 45 25 50 25 C55 25 65 30 65 45 C65 55 58 62 50 68 C42 62 35 55 35 45 Z" fill="#10b981"/>
+          <path d="M50 68 L50 80 M42 80 L58 80" stroke="#0f172a" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+        <div class="sih-logo-text">SMART INDIA<br>HACKATHON<br>2024</div>
+      </div>
+    </div>
+
+    <!-- Title Sub-Header -->
+    <div class="sub-header">TITLE PAGE</div>
+
+    <!-- Bullet Fields -->
+    <div class="fields-container">
+      <div class="field-row">
+        <span class="field-bullet">•</span>
+        <span class="field-label">Problem Statement ID —</span>
+        <span class="field-value" contenteditable="true">SIH1642</span>
+      </div>
+
+      <div class="field-row">
+        <span class="field-bullet">•</span>
+        <span class="field-label">Problem Statement Title —</span>
+        <span class="field-value" contenteditable="true">AI-Powered Women Safety Navigation & Emergency Response System</span>
+      </div>
+
+      <div class="field-row">
+        <span class="field-bullet">•</span>
+        <span class="field-label">Theme —</span>
+        <span class="field-value" contenteditable="true">Women Safety / Smart Vehicles / AI-GIS</span>
+      </div>
+
+      <div class="field-row">
+        <span class="field-bullet">•</span>
+        <span class="field-label">PS Category —</span>
+        <span class="field-value" contenteditable="true">Software</span>
+      </div>
+
+      <div class="field-row">
+        <span class="field-bullet">•</span>
+        <span class="field-label">Team ID —</span>
+        <span class="field-value" contenteditable="true">[Enter Your Registered Team ID]</span>
+      </div>
+
+      <div class="field-row">
+        <span class="field-bullet">•</span>
+        <span class="field-label">Team Name (Registered on portal) —</span>
+        <span class="field-value" contenteditable="true">[Enter Your Team Name]</span>
+      </div>
+    </div>
+
+    <div class="footer-note">💡 SafeRoute — Official SIH Presentation Slide Template (Click text fields to edit details)</div>
+  </div>
+
+</body>
+</html>
