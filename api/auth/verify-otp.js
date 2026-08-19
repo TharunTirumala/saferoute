@@ -58,7 +58,9 @@ export default async function handler(req, res) {
       message: 'Mobile number verified successfully.',
       sessionToken,
       user: {
+        userId: `usr_${cleanDigits}`,
         phone: formattedPhone,
+        mobileNumber: formattedPhone,
         authenticatedAt: sessionPayload.authenticatedAt
       }
     });

@@ -2020,6 +2020,7 @@ function updateAuthUIState() {
     viewSafeRoute && viewSafeRoute.classList.remove('hidden');
     if (headerUserStatus) headerUserStatus.classList.remove('hidden');
     if (headerUserPhoneText) headerUserPhoneText.textContent = authService.getFormattedPhone();
+    emergencySos.reloadUserContacts();
   } else {
     viewAuthLogin && viewAuthLogin.classList.remove('hidden');
     viewSafeRoute && viewSafeRoute.classList.add('hidden');

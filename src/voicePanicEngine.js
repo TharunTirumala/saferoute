@@ -49,7 +49,7 @@ export class VoicePanicEngine {
     this.state = 'DISABLED'; // 'DISABLED' | 'STARTING' | 'PERMISSION_REQUIRED' | 'LISTENING' | 'COUNTDOWN' | 'EMERGENCY_TRIGGERED' | 'UNSUPPORTED' | 'ERROR'
     
     this.countdownTimer = null;
-    this.countdownSeconds = 5;
+    this.countdownSeconds = 3;
     this.activePhrase = '';
     this.restartAttempts = 0;
     this.maxRestarts = 10;

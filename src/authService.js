@@ -1,3 +1,4 @@
+import { userStore } from './userStore.js';
 // SafeRoute: Authentication & User Session Service
 // Manages Mobile Number + OTP Verification, Client Session Tokens & WhatsApp SOS User Identity
 
@@ -149,8 +150,11 @@ export class AuthService {
 
         if (res.ok) {
           const data = await res.json();
+          const userRecord = userStore.getOrCreateUser(formattedPhone);
           this.saveSession({
+            userId: userRecord.userId,
             phone: formattedPhone,
+            mobileNumber: formattedPhone,
             sessionToken: data.sessionToken,
             authenticatedAt: data.user?.authenticatedAt || new Date().toISOString()
           });
@@ -166,8 +170,11 @@ export class AuthService {
 
     // 2. Client Fallback Verification
     if (this.activeChallenge.clientOtp && this.activeChallenge.clientOtp === cleanOtp) {
+      const userRecord = userStore.getOrCreateUser(formattedPhone);
       this.saveSession({
+        userId: userRecord.userId,
         phone: formattedPhone,
+        mobileNumber: formattedPhone,
         sessionToken: `sess_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
         authenticatedAt: new Date().toISOString()
       });

@@ -16,17 +16,7 @@ export default async function handler(req, res) {
     const formattedUserPhone = userPhone || 'Registered SafeRoute User';
 
     // WhatsApp Message Body Structure
-    const messageBody = `🚨 *EMERGENCY ALERT*
-
-SOS has been activated.
-
-*User:* ${formattedUserPhone}
-I may need help.
-
-📍 *Current Location:*
-${gmapsUrl}
-
-Please contact me immediately.`;
+    const messageBody = `🚨 *EMERGENCY ALERT*\n\nSOS has been activated.\n\nThe user may need immediate assistance.\n\n📍 *Current location:*\n${gmapsUrl}\n\n*User mobile:*\n${formattedUserPhone}\n\nPlease contact them immediately.`;
 
     const recipients = (contacts || []).filter(c => c.phone);
     const results = [];

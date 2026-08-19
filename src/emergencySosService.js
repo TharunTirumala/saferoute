@@ -1,3 +1,5 @@
+import { userStore } from './userStore.js';
+import { authService } from './authService.js';
 // SafeRoute: Central Zero-Tap Android Native & Web Emergency SOS Engine
 // Pre-Authorized Setup -> 5-Second Countdown -> 100% Parallel Automatic GPS, Calling, Alert Dispatch & Foreground Live Tracking
 
