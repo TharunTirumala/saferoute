@@ -3454,3 +3454,61 @@ body {
 
 
 
+
+/* Clean Voice SOS Button for First Page */
+.voice-sos-group {
+  margin-top: 2px;
+  margin-bottom: 6px;
+}
+
+.btn-voice-sos-clean {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 20px;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: -0.01em;
+}
+
+.btn-voice-sos-clean:hover {
+  background: var(--primary-light);
+  border-color: var(--primary-border);
+  color: var(--primary);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12);
+  transform: translateY(-1px);
+}
+
+.btn-voice-sos-clean:active {
+  transform: translateY(0);
+  background: #dbeafe;
+}
+
+.btn-voice-sos-clean .voice-mic-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--primary);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.btn-voice-sos-clean:hover .voice-mic-icon {
+  transform: scale(1.12);
+}
+
+.btn-voice-sos-clean.listening {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}

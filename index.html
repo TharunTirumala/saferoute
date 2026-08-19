@@ -30,58 +30,6 @@
                 <span class="brand-tag">ONE-TAP SOS & LIVE TRACKING</span>
               </div>
             </div>
-
-            <!-- Main Tabs -->
-            <nav class="header-nav-tabs">
-              <button id="tabSafeRoute" class="nav-tab active">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
-                <span>Navigation</span>
-              </button>
-              <button id="tabGuardianEye" class="nav-tab">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-                <span>Guardian Eye CCTV</span>
-              </button>
-            </nav>
-          </div>
-
-          <div class="header-actions">
-            <!-- Pre-Authorized SOS Readiness Indicator -->
-            <button id="btnOpenSosSetup" class="status-indicator-pill-btn" title="Click to view Emergency SOS Setup & Permissions">
-              <span id="headerSosReadinessPill" class="status-indicator-pill not-ready">
-                <span class="status-dot"></span>
-                <span id="headerSosReadinessLabel" class="status-label">SOS Setup</span>
-              </span>
-            </button>
-
-            <!-- Hands-Free Voice SOS Settings Button -->
-            <button id="btnOpenVoiceSettings" class="btn-voice-toggle" title="Open Hands-Free Voice SOS Settings">
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-              <span id="headerVoiceLabel">Voice SOS</span>
-            </button>
-
-            <!-- Emergency Contacts Manager -->
-            <button id="btnOpenContactsManager" class="btn-outline-sm" title="Configure Emergency Contacts">
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              <span>Contacts (<span id="contactsCountBadge">2</span>)</span>
-            </button>
-
-            <!-- Community Reports Drawer -->
-            <button id="openReportsDrawerBtn" class="btn-outline-sm">
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-              <span>Reports (<span id="reportsCountBadge">5</span>)</span>
-            </button>
-
-            <!-- Report Unsafe Area -->
-            <button id="btnHeaderReportModal" class="btn-secondary-action">
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              <span>Report Hazard</span>
-            </button>
-
-            <!-- One-Tap Emergency SOS Trigger Button -->
-            <button id="openSosBtn" class="btn-emergency-sos" title="One-Tap Emergency SOS (Zero Permission Delay)">
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <span>ONE-TAP SOS</span>
-            </button>
           </div>
 
         </div>
@@ -101,26 +49,7 @@
               <p>Compare verified road corridors, avoid hazardous zones, and navigate with pre-authorized one-tap emergency SOS</p>
             </div>
 
-            <!-- Pre-Authorized SOS Readiness Status Card Banner -->
-            <div class="sos-readiness-banner" id="sosReadinessBanner">
-              <div class="readiness-banner-left">
-                <div class="readiness-icon-box" id="readinessIconBox">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-                </div>
-                <div>
-                  <div class="flex-align-center gap-2">
-                    <span class="readiness-title" id="readinessBannerTitle">SOS READY</span>
-                    <span class="badge-tag-clean success" id="readinessBadgeTag">Pre-Authorized</span>
-                  </div>
-                  <span class="readiness-subtitle" id="readinessBannerSub">All emergency permissions pre-authorized. 1-Tap SOS will execute immediately with zero prompts.</span>
-                </div>
-              </div>
-              <div class="readiness-banner-right">
-                <button type="button" id="btnBannerOpenSetup" class="btn-outline-subtle-sm">
-                  Check Setup
-                </button>
-              </div>
-            </div>
+
 
             <form id="tripInputForm" class="trip-input-form" onsubmit="return false;">
               
@@ -215,25 +144,17 @@
                 </div>
               </div>
 
-              <!-- Multilingual Hands-Free Voice SOS Card Banner -->
-              <div class="voice-panic-clean-card">
-                <div class="voice-card-left">
-                  <div class="voice-icon-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-                  </div>
-                  <div>
-                    <span class="voice-card-title">Multilingual Hands-Free Voice SOS</span>
-                    <span class="voice-card-desc">Listens for phrases in English, Hindi, Telugu (నన్ను కాపాడండి / nannu kapadandi), Tamil, Kannada, Marathi, Spanish</span>
-                  </div>
-                </div>
-                <div class="voice-card-right">
-                  <button type="button" id="btnInputVoiceToggle" class="btn-voice-pill">
-                    Enable Voice SOS
-                  </button>
-                  <button type="button" id="btnOpenVoiceSettingsPromo" class="btn-outline-subtle-sm" title="Configure Languages & Custom Phrases">
-                    Settings
-                  </button>
-                </div>
+              <!-- Simple Voice SOS Button -->
+              <div class="form-group-clean voice-sos-group">
+                <button type="button" id="btnOpenVoiceSettingsPromo" class="btn-voice-sos-clean" title="Open Voice SOS Settings">
+                  <svg class="voice-mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                    <line x1="12" y1="19" x2="12" y2="23"/>
+                    <line x1="8" y1="23" x2="16" y2="23"/>
+                  </svg>
+                  <span>Voice SOS</span>
+                </button>
               </div>
 
               <!-- Popular Metro Presets -->

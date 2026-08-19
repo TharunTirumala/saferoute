@@ -591,7 +591,7 @@ function showSosStatusToast(msg) {
 }
 
 // Wire SOS Trigger Buttons
-openSosBtn.addEventListener('click', () => {
+openSosBtn && openSosBtn.addEventListener('click', () => {
   emergencySos.startSosCountdown('One-Tap SOS Button');
 });
 
@@ -796,9 +796,9 @@ function openVoiceSettingsModal() {
   voiceSettingsModal.classList.remove('hidden');
 }
 
-btnOpenVoiceSettings.addEventListener('click', openVoiceSettingsModal);
+btnOpenVoiceSettings && btnOpenVoiceSettings.addEventListener('click', openVoiceSettingsModal);
 if (btnOpenVoiceSettingsPromo) {
-  btnOpenVoiceSettingsPromo.addEventListener('click', openVoiceSettingsModal);
+  btnOpenVoiceSettingsPromo && btnOpenVoiceSettingsPromo.addEventListener('click', openVoiceSettingsModal);
 }
 closeVoiceSettingsBtn.addEventListener('click', () => voiceSettingsModal.classList.add('hidden'));
 btnDoneVoiceSettings.addEventListener('click', () => voiceSettingsModal.classList.add('hidden'));
@@ -1607,7 +1607,7 @@ reportForm.addEventListener('submit', async (e) => {
 });
 
 // ================= COMMUNITY REPORTS DRAWER =================
-openReportsDrawerBtn.addEventListener('click', () => {
+openReportsDrawerBtn && openReportsDrawerBtn.addEventListener('click', () => {
   renderCommunityReportsDrawer();
   reportsDrawer.classList.remove('hidden');
 });
