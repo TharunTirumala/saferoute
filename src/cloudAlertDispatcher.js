@@ -34,7 +34,21 @@ export class CloudAlertDispatcher {
     };
 
     try {
-      // 1. Attempt Real Backend API Dispatch
+      // 1. Dispatch directly to live n8n Automation Engine Webhook
+      const n8nWebhookUrl = 'https://pranav3010.app.n8n.cloud/webhook/sos-trigger';
+      fetch(n8nWebhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user: 'Ananya',
+          lat: location ? location.latitude : 17.4435,
+          lng: location ? location.longitude : 78.3772,
+          timestamp: timestamp || new Date().toLocaleTimeString(),
+          liveTrackingUrl: liveTrackingUrl || 'https://saferoute-tawny.vercel.app/'
+        })
+      }).catch(err => console.log('n8n dispatch status:', err));
+
+      // 2. Attempt Real Backend API Dispatch
       const response = await fetch(this.apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
