@@ -28,10 +28,16 @@
                 <span class="brand-name">SafeRoute</span>
                 <span class="brand-tag">ONE-TAP SOS &amp; LIVE TRACKING</span>
             <div style="margin-left: auto; display: flex; gap: 10px; align-items: center;">
-              <button id="btnHeaderGlobalSos" class="btn-emergency-sos-sm" onclick="alert('🚨 EMERGENCY SOS ACTIVATED! Dispatching Live Phone Call to Emergency Contact...'); fetch('https://pranav3010.app.n8n.cloud/webhook/sos-trigger', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({user:'Ananya', lat:17.4435, lng:78.3772, timestamp:new Date().toLocaleTimeString(), liveTrackingUrl:'https://saferoute-tawny.vercel.app/'})}); if (window.navigator && window.navigator.sendBeacon) { window.navigator.sendBeacon('https://pranav3010.app.n8n.cloud/webhook/sos-trigger', JSON.stringify({user:'Ananya', lat:17.4435, lng:78.3772, timestamp:new Date().toLocaleTimeString(), liveTrackingUrl:'https://saferoute-tawny.vercel.app/'})); }" style="background: #ef4444; color: #fff; font-weight: 800; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.85rem; box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 18px; height: 18px;"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                <span>🚨 ONE-TAP SOS</span>
-              </button>
+              <form action="https://pranav3010.app.n8n.cloud/webhook/sos-trigger" method="POST" target="sosHiddenFrame" style="margin: 0; padding: 0;">
+                <input type="hidden" name="user" value="Ananya" />
+                <input type="hidden" name="primaryContactPhone" value="+916300863028" />
+                <input type="hidden" name="liveTrackingUrl" value="https://saferoute-tawny.vercel.app/" />
+                <button type="submit" class="btn-emergency-sos-sm" onclick="alert('🚨 EMERGENCY SOS ACTIVATED! Dialing live phone call...')" style="background: #ef4444; color: #fff; font-weight: 800; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.85rem; box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 18px; height: 18px;"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <span>🚨 ONE-TAP SOS</span>
+                </button>
+              </form>
+              <iframe name="sosHiddenFrame" id="sosHiddenFrame" style="display: none; width: 0; height: 0; border: none;"></iframe>
             </div>
           </div>
         </div>
