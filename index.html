@@ -748,42 +748,52 @@
               </div>
             </div>
 
-            <!-- Automatic Emergency Response Status Summary Grid -->
+            <!-- Truthful Emergency Response Communication Grid -->
             <div class="sos-auto-status-grid">
               
-              <!-- 1. Primary Call Auto Status Card -->
+              <!-- 1. Primary Call Status & Action Card -->
               <div class="auto-status-card call-card" id="autoCallStatusCard">
                 <div class="auto-card-top">
                   <div class="flex-align-center gap-2">
                     <svg class="auto-card-icon text-danger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                     <strong>PRIMARY CALL</strong>
                   </div>
-                  <span id="primaryCallStatusBadge" class="status-indicator-pill listening">
+                  <span id="primaryCallStatusBadge" class="status-indicator-pill not-ready">
                     <span class="status-dot"></span>
-                    <span id="primaryCallStatusText">Started</span>
+                    <span id="primaryCallStatusText">Action Required</span>
                   </span>
                 </div>
                 <div class="auto-card-detail">
                   <span id="primaryContactNameDisplay">Mother (+91 98765 43210)</span>
-                  <button type="button" id="btnRetryPrimaryCall" class="btn-retry-action hidden">Retry Call</button>
+                </div>
+                <div class="auto-card-action-row">
+                  <button type="button" id="btnExecutePrimaryCall" class="btn-call-primary-action">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    <span id="btnExecutePrimaryCallLabel">Call Primary Contact</span>
+                  </button>
                 </div>
               </div>
 
-              <!-- 2. Auto SMS Dispatch Status Card -->
+              <!-- 2. Emergency Message Status & Action Card -->
               <div class="auto-status-card msg-card" id="autoMsgStatusCard">
                 <div class="auto-card-top">
                   <div class="flex-align-center gap-2">
                     <svg class="auto-card-icon text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                     <strong>EMERGENCY MESSAGE</strong>
                   </div>
-                  <span id="emergencyMsgStatusBadge" class="status-indicator-pill listening">
+                  <span id="emergencyMsgStatusBadge" class="status-indicator-pill not-ready">
                     <span class="status-dot"></span>
-                    <span id="emergencyMsgStatusText">Sent</span>
+                    <span id="emergencyMsgStatusText">Action Required</span>
                   </span>
                 </div>
                 <div class="auto-card-detail">
-                  <span id="autoMsgContactsSummary">Sent with Live GPS to all contacts</span>
-                  <button type="button" id="btnRetryAutoSms" class="btn-retry-action hidden">Retry SMS</button>
+                  <span id="autoMsgContactsSummary">Live GPS Alert Prepared</span>
+                </div>
+                <div class="auto-card-action-row">
+                  <button type="button" id="btnExecuteEmergencyMsg" class="btn-msg-primary-action">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <span id="btnExecuteEmergencyMsgLabel">Send SMS / Share Alert</span>
+                  </button>
                 </div>
               </div>
 

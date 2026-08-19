@@ -1,25 +1,20 @@
-// SafeRoute: Central Automatic Emergency SOS Engine
-// Pre-authorized Permissions -> 5-Second Countdown -> Instant Automatic Call + Automatic SMS + Continuous Live Tracking
+// SafeRoute: Central Truthful Emergency SOS Engine
+// Pre-authorized Permissions -> 5-Second Countdown -> Automatic Live GPS & Truthful Platform Communication (iOS Safari / Web / Native)
 
 import { liveSosSessionStore } from './liveSosSessionStore.js';
+import { platformEmergencyBridge, COMM_STATUS } from './platformEmergencyBridge.js';
 
 export const SOS_STATUS = {
   INACTIVE: 'SOS INACTIVE',
   COUNTDOWN: 'SOS COUNTDOWN',
   ACTIVE: 'SOS ACTIVE',
   LOCATION_DETECTED: 'LOCATION DETECTED',
-  LOCATION_UNAVAILABLE: 'LOCATION UNAVAILABLE',
-  CALL_STARTING: 'CALL STARTING',
-  CALL_STARTED: 'CALL STARTED',
-  CALL_FAILED: 'CALL FAILED',
-  MESSAGE_SENDING: 'MESSAGE SENDING',
-  MESSAGE_SENT: 'MESSAGE SENT',
-  MESSAGE_FAILED: 'MESSAGE FAILED'
+  LOCATION_UNAVAILABLE: 'LOCATION UNAVAILABLE'
 };
 
 const DEFAULT_CONTACTS = [
-  { id: 'c1', name: 'Mother', phone: '+919876543210', relation: 'Family', isPrimary: true, callStatus: 'Not Started', messageStatus: 'Not Started' },
-  { id: 'c2', name: 'Friend', phone: '+919123456789', relation: 'Friend', isPrimary: false, callStatus: 'Not Started', messageStatus: 'Not Started' }
+  { id: 'c1', name: 'Mother', phone: '+919876543210', relation: 'Family', isPrimary: true, callStatus: 'NOT_STARTED', messageStatus: 'NOT_STARTED' },
+  { id: 'c2', name: 'Friend', phone: '+919123456789', relation: 'Friend', isPrimary: false, callStatus: 'NOT_STARTED', messageStatus: 'NOT_STARTED' }
 ];
 
 export class EmergencySosService {
@@ -66,8 +61,8 @@ export class EmergencySosService {
         if (Array.isArray(parsed) && parsed.length > 0) {
           return parsed.map(c => ({
             ...c,
-            callStatus: 'Not Started',
-            messageStatus: 'Not Started'
+            callStatus: COMM_STATUS.NOT_STARTED,
+            messageStatus: COMM_STATUS.NOT_STARTED
           }));
         }
       }
@@ -118,8 +113,8 @@ export class EmergencySosService {
       phone: cleanPhone,
       relation: relation.trim() || 'Contact',
       isPrimary: isPrimary || this.contacts.length === 0,
-      callStatus: 'Not Started',
-      messageStatus: 'Not Started'
+      callStatus: COMM_STATUS.NOT_STARTED,
+      messageStatus: COMM_STATUS.NOT_STARTED
     };
 
     this.contacts.push(newContact);
@@ -224,6 +219,7 @@ export class EmergencySosService {
       notifications: this.permissionState.notifications,
       contactsCount: this.contacts.length,
       primaryContact: this.getPrimaryContact(),
+      platform: platformEmergencyBridge.platform,
       phoneSupport: true,
       smsSupport: true,
       liveTrackingSupport: true
@@ -296,7 +292,7 @@ export class EmergencySosService {
     }
   }
 
-  // ================= AUTOMATIC SOS EXECUTION =================
+  // ================= EMERGENCY SOS PIPELINE =================
 
   /**
    * Starts 5-Second False-Activation-Prevention Countdown
@@ -336,13 +332,15 @@ export class EmergencySosService {
   }
 
   /**
-   * ONE CENTRAL AUTOMATIC SOS FUNCTION
-   * Executed automatically at countdown 0:
-   * 1. Get Live GPS
-   * 2. Start Continuous Live Location Session
-   * 3. Send Automatic Emergency SMS to all contacts
-   * 4. Start Automatic Phone Call to Primary Contact
-   * 5. Display SOS ACTIVE screen (No manual buttons required)
+   * ONE CENTRAL TRUTHFUL SOS FUNCTION
+   * Executed at countdown 0:
+   * 1. Get Live GPS (instant, pre-authorized)
+   * 2. Start Continuous Live Location Session (100% automatic)
+   * 3. Prepare real emergency message with HTTPS live link
+   * 4. Perform platform-appropriate communication:
+   *    - On Native Android with direct call/SMS permission -> Execute automatically
+   *    - On Web / iOS Safari -> Set status to ACTION_REQUIRED and present prominent 1-tap call & SMS triggers
+   * 5. Display SOS ACTIVE screen with truthful statuses
    */
   async activateSOS(source = this.triggerSource) {
     if (this.countdownTimer) {
@@ -355,10 +353,13 @@ export class EmergencySosService {
     this.sosTimestamp = new Date().toLocaleString();
     this.locationError = null;
 
-    // Reset status indicators
+    // Truthful initial statuses based on platform capability
+    const initialCall = platformEmergencyBridge.getInitialCallStatus();
+    const initialMsg = platformEmergencyBridge.getInitialMessageStatus();
+
     this.contacts.forEach(c => {
-      c.callStatus = 'Not Started';
-      c.messageStatus = 'Sending...';
+      c.callStatus = c.isPrimary ? initialCall.status : COMM_STATUS.NOT_STARTED;
+      c.messageStatus = initialMsg.status;
     });
 
     this.onStateChange(this.state, {
@@ -375,14 +376,28 @@ export class EmergencySosService {
     this.activeLiveSession = liveSosSessionStore.createSession(initialCoords, this.triggerSource);
     const liveTrackingUrl = liveSosSessionStore.getLiveTrackingUrl(this.activeLiveSession.id);
 
-    // 3. Start Continuous Live Location Tracking
+    // 3. Start Continuous Live Location Tracking (100% Automatic)
     this.startLiveLocationTracking();
 
-    // 4. Automatically Send Emergency Messages to ALL configured contacts
-    this.autoSendEmergencyMessages(liveTrackingUrl);
+    // 4. If platform supports silent background execution (Native Android bridge), execute now
+    if (platformEmergencyBridge.canAutoSendSmsWithoutUserGesture()) {
+      const primary = this.getPrimaryContact();
+      if (primary) {
+        const msg = this.getEmergencyMessageText(liveTrackingUrl);
+        const res = await platformEmergencyBridge.executeSms(primary.phone, msg);
+        this.contacts.forEach(c => c.messageStatus = res.status);
+      }
+    }
 
-    // 5. Automatically Start Emergency Call to PRIMARY contact
-    this.autoStartPrimaryCall();
+    if (platformEmergencyBridge.canAutoDialWithoutUserGesture()) {
+      const primary = this.getPrimaryContact();
+      if (primary) {
+        const res = await platformEmergencyBridge.executeCall(primary.phone);
+        primary.callStatus = res.status;
+      }
+    }
+
+    this.onContactsChange(this.contacts);
 
     this.onStateChange(this.state, {
       source: this.triggerSource,
@@ -470,7 +485,7 @@ export class EmergencySosService {
   }
 
   /**
-   * Generates standard plain-text emergency message payload with HTTPS Live Tracking URL
+   * Generates standard plain-text emergency message payload with deployed HTTPS Live Tracking URL
    */
   getEmergencyMessageText(liveTrackingUrl = null) {
     let locStr = 'Current location could not be determined.';
@@ -487,122 +502,52 @@ export class EmergencySosService {
       liveUrlStr = `\n\nLive GPS Tracking:\n${liveUrl}`;
     }
 
-    return `SafeRoute Emergency Alert\n\nI may be in an emergency situation.\n\nMy current location:\n${locStr}${liveUrlStr}\n\nTime:\n${this.sosTimestamp || new Date().toLocaleString()}\n\nPlease contact me immediately.`;
+    return `SAFE ROUTE EMERGENCY ALERT\n\nI may be in an emergency situation.\n\nMy current location:\n${locStr}${liveUrlStr}\n\nTime:\n${this.sosTimestamp || new Date().toLocaleString()}\n\nPlease contact me immediately.`;
   }
 
   /**
-   * Automatically dispatches emergency SMS / messaging alerts to all configured contacts
+   * Executes emergency call for specified contact or primary contact
    */
-  autoSendEmergencyMessages(liveTrackingUrl = null) {
-    const messageText = this.getEmergencyMessageText(liveTrackingUrl);
-    const primary = this.getPrimaryContact();
-
-    this.contacts.forEach(c => {
-      c.messageStatus = 'Sending...';
-    });
-    this.onContactsChange(this.contacts);
-
-    try {
-      const cleanPhone = primary ? primary.phone.replace(/[^0-9+]/g, '') : '';
-      const encodedBody = encodeURIComponent(messageText);
-
-      // Trigger standard native SMS URI protocol
-      if (cleanPhone) {
-        const smsUri = `sms:${cleanPhone}?body=${encodedBody}`;
-        const hiddenIframe = document.createElement('iframe');
-        hiddenIframe.style.display = 'none';
-        hiddenIframe.src = smsUri;
-        document.body.appendChild(hiddenIframe);
-        setTimeout(() => {
-          if (hiddenIframe.parentNode) hiddenIframe.parentNode.removeChild(hiddenIframe);
-        }, 1500);
-      }
-
-      this.contacts.forEach(c => {
-        c.messageStatus = 'Sent (SMS Dispatched)';
-      });
-      this.onContactsChange(this.contacts);
-    } catch (err) {
-      console.warn('Auto SMS dispatch error:', err);
-      this.contacts.forEach(c => {
-        c.messageStatus = 'Failed';
-      });
-      this.onContactsChange(this.contacts);
-    }
-  }
-
-  /**
-   * Automatically initiates emergency call to the configured PRIMARY contact
-   */
-  autoStartPrimaryCall() {
-    const primary = this.getPrimaryContact();
-    if (!primary || !primary.phone) {
-      console.warn('No primary contact configured for auto call');
-      return;
-    }
-
-    const cleanNumber = primary.phone.replace(/[^0-9+]/g, '');
-    if (!cleanNumber) {
-      primary.callStatus = 'Failed (Invalid Number)';
-      this.onContactsChange(this.contacts);
-      return;
-    }
-
-    primary.callStatus = 'Starting...';
-    this.onContactsChange(this.contacts);
-
-    try {
-      primary.callStatus = 'Started (Dialer Opened)';
-      this.onContactsChange(this.contacts);
-      window.location.href = `tel:${cleanNumber}`;
-    } catch (err) {
-      console.warn('Auto call launch error:', err);
-      primary.callStatus = 'Failed';
-      this.onContactsChange(this.contacts);
-    }
-  }
-
-  /**
-   * Manual fallback retry for call
-   */
-  callContact(contactId) {
+  async callContact(contactId) {
     const contact = this.contacts.find(c => c.id === contactId) || this.getPrimaryContact();
-    if (!contact || !contact.phone) return { success: false, error: 'No phone number available.' };
-
-    const cleanNumber = contact.phone.replace(/[^0-9+]/g, '');
-    try {
-      contact.callStatus = 'Started (Dialer Opened)';
-      this.onContactsChange(this.contacts);
-      window.location.href = `tel:${cleanNumber}`;
-      return { success: true };
-    } catch (e) {
-      contact.callStatus = 'Failed';
-      this.onContactsChange(this.contacts);
-      return { success: false, error: 'Unable to start call.' };
+    if (!contact || !contact.phone) {
+      return { success: false, error: 'No phone number available.' };
     }
+
+    const res = await platformEmergencyBridge.executeCall(contact.phone);
+    contact.callStatus = res.status;
+    this.onContactsChange(this.contacts);
+    return res;
   }
 
   /**
-   * Manual fallback retry for message
+   * Dispatches emergency SMS / Share for specified contact or all contacts
    */
   async sendMessageToContact(contactId) {
     const contact = this.contacts.find(c => c.id === contactId) || this.getPrimaryContact();
-    if (!contact || !contact.phone) return { success: false, error: 'No phone number available.' };
+    if (!contact || !contact.phone) {
+      return { success: false, error: 'No phone number available.' };
+    }
 
     const messageText = this.getEmergencyMessageText();
-    const cleanNumber = contact.phone.replace(/[^0-9+]/g, '');
+    const res = await platformEmergencyBridge.executeSms(contact.phone, messageText);
+    contact.messageStatus = res.status;
+    this.onContactsChange(this.contacts);
+    return res;
+  }
 
-    try {
-      const encodedBody = encodeURIComponent(messageText);
-      window.location.href = `sms:${cleanNumber}?body=${encodedBody}`;
-      contact.messageStatus = 'Sent (SMS Dispatched)';
-      this.onContactsChange(this.contacts);
-      return { success: true };
-    } catch (err) {
-      contact.messageStatus = 'Failed';
-      this.onContactsChange(this.contacts);
-      return { success: false, error: 'Failed to send SMS.' };
-    }
+  /**
+   * Dispatches emergency alert to ALL contacts via Web Share / SMS
+   */
+  async shareEmergencyAlertWithAll() {
+    const messageText = this.getEmergencyMessageText();
+    const primary = this.getPrimaryContact();
+    const phone = primary ? primary.phone : '';
+
+    const res = await platformEmergencyBridge.executeSms(phone, messageText);
+    this.contacts.forEach(c => c.messageStatus = res.status);
+    this.onContactsChange(this.contacts);
+    return res;
   }
 
   /**

@@ -145,11 +145,11 @@ export class LiveSosSessionStore {
   getLiveTrackingUrl(sessionId) {
     if (!sessionId) return '';
     const origin = window.location.origin;
-    // If running in HTTPS production, use actual origin; otherwise use production-grade HTTPS URL with local fallback
     if (origin.startsWith('https://') && !origin.includes('localhost')) {
-      return `${origin}/sos/${encodeURIComponent(sessionId)}`;
+      return `${origin}/?sos_session=${encodeURIComponent(sessionId)}`;
     }
-    return `https://saferoute-live.app/sos/${encodeURIComponent(sessionId)}`;
+    // Deployed production Vercel endpoint
+    return `https://saferoute-tawny.vercel.app/?sos_session=${encodeURIComponent(sessionId)}`;
   }
 
   /**
