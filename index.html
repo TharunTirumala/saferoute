@@ -377,18 +377,8 @@
                 <div class="map-render-frame relative-pos">
                   <div id="safeRouteLeafletMap" class="clean-leaflet-canvas large-map-canvas"></div>
 
-                  <!-- Floating Nearby Safety Places Control -->
-                  <div id="nearbySafetyPlacesControl" class="nearby-places-floating-card" role="region" aria-label="Nearby Safety Places Filter">
-                    <div class="nearby-card-header">
-                      <div class="nearby-title-wrap">
-                        <svg class="nearby-shield-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                        </svg>
-                        <span class="nearby-title">Nearby Safety Places</span>
-                      </div>
-                      <span id="nearbyPlacesLoadingIndicator" class="nearby-spinner hidden" title="Finding nearby safety places..."></span>
-                    </div>
-
+                  <!-- Floating Safety Places Filter Control -->
+                  <div id="nearbySafetyPlacesControl" class="nearby-places-floating-card" role="region" aria-label="Safety Places Filter">
                     <div class="nearby-options-list">
                       <label class="nearby-checkbox-row">
                         <input type="checkbox" id="checkNearbyPolice" checked />
@@ -415,6 +405,7 @@
                       </label>
                     </div>
 
+                    <span id="nearbyPlacesLoadingIndicator" class="nearby-spinner hidden" title="Finding safety places..."></span>
                     <div id="nearbyPlacesStatusMsg" class="nearby-status-note hidden"></div>
                   </div>
 
