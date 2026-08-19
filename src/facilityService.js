@@ -36,39 +36,36 @@ export const VERIFIED_FACILITIES = [
   { name: 'Gopalapuram Police Station', lat: 17.4330, lng: 78.5030, category: 'Police', phone: '040-27852520', city: 'Hyderabad' },
   { name: 'Tarnaka Police Station', lat: 17.4280, lng: 78.5320, category: 'Police', phone: '040-27852530', city: 'Hyderabad' },
   { name: 'Osmania University Police Station', lat: 17.4140, lng: 78.5280, category: 'Police', phone: '040-27852535', city: 'Hyderabad' },
-  // ================= UPPAL & EASTERN HYDERABAD POLICE STATIONS =================
-  { name: 'Uppal Police Station', lat: 17.4010, lng: 78.5600, category: 'Police', phone: '040-27852540', city: 'Hyderabad' },
-  { name: 'Uppal Traffic Police Station', lat: 17.4035, lng: 78.5585, category: 'Police', phone: '040-27852542', city: 'Hyderabad' },
-  { name: 'Boduppal Police Outpost & She Team', lat: 17.4180, lng: 78.5820, category: 'Police', phone: '040-27852544', city: 'Hyderabad' },
-  { name: 'Peerzadiguda She Team Outpost', lat: 17.4080, lng: 78.5950, category: 'Police', phone: '040-27852546', city: 'Hyderabad' },
-  { name: 'Medipally Police Station', lat: 17.4220, lng: 78.6180, category: 'Police', phone: '040-27852548', city: 'Hyderabad' },
-  { name: 'Nagole Police Station', lat: 17.3780, lng: 78.5680, category: 'Police', phone: '040-27852552', city: 'Hyderabad' },
-  { name: 'Ramanthapur Police Outpost', lat: 17.3940, lng: 78.5410, category: 'Police', phone: '040-27852554', city: 'Hyderabad' },
-  { name: 'Mallapur Police Outpost', lat: 17.4380, lng: 78.5810, category: 'Police', phone: '040-27852556', city: 'Hyderabad' },
-  { name: 'Chengicherla Police Outpost', lat: 17.4280, lng: 78.6020, category: 'Police', phone: '040-27852558', city: 'Hyderabad' },
-  { name: 'Ghatkesar Police Station', lat: 17.4470, lng: 78.6830, category: 'Police', phone: '040-27852562', city: 'Hyderabad' },
-  { name: 'Habsiguda She Team Patrol', lat: 17.4190, lng: 78.5420, category: 'Police', phone: '040-27852532', city: 'Hyderabad' },
+  // ================= SHAMSHABAD & KISMATPUR POLICE STATIONS =================
+  { name: 'Shamshabad Police Station', lat: 17.2500, lng: 78.4350, category: 'Police', phone: '040-27853500', city: 'Hyderabad' },
+  { name: 'Shamshabad Traffic Police Station', lat: 17.2530, lng: 78.4380, category: 'Police', phone: '040-27853505', city: 'Hyderabad' },
+  { name: 'RGIA Airport Police Station', lat: 17.2400, lng: 78.4290, category: 'Police', phone: '040-27853510', city: 'Hyderabad' },
+  { name: 'RGIA Women Safety Assistance Kiosk', lat: 17.2415, lng: 78.4295, category: 'Police', phone: '040-27853515', city: 'Hyderabad' },
+  { name: 'Kismatpur Police Outpost & She Patrol', lat: 17.3380, lng: 78.3750, category: 'Police', phone: '040-27853520', city: 'Hyderabad' },
+  { name: 'Bandlaguda Jagir Police Outpost', lat: 17.3480, lng: 78.3880, category: 'Police', phone: '040-27853525', city: 'Hyderabad' },
+  { name: 'Rajendranagar Police Station', lat: 17.3180, lng: 78.4020, category: 'Police', phone: '040-27853530', city: 'Hyderabad' },
+  { name: 'Attapur Police Station', lat: 17.3680, lng: 78.4280, category: 'Police', phone: '040-27853535', city: 'Hyderabad' },
+  { name: 'Mailardevpally Police Station', lat: 17.3120, lng: 78.4410, category: 'Police', phone: '040-27853540', city: 'Hyderabad' },
+  { name: 'Budvel Police Outpost', lat: 17.3190, lng: 78.4210, category: 'Police', phone: '040-27853545', city: 'Hyderabad' },
+  { name: 'Moinabad Police Station', lat: 17.3280, lng: 78.2720, category: 'Police', phone: '040-27853550', city: 'Hyderabad' },
 
-  // ================= UPPAL & EASTERN HYDERABAD HOSPITALS =================
-  { name: 'TX Hospitals Uppal', lat: 17.4040, lng: 78.5570, category: 'Hospital', phone: '040-40404040', city: 'Hyderabad' },
-  { name: 'Aditya Hospital Uppal', lat: 17.4015, lng: 78.5615, category: 'Hospital', phone: '040-27202720', city: 'Hyderabad' },
-  { name: 'Landmark Hospital Uppal Ring Road', lat: 17.4060, lng: 78.5640, category: 'Hospital', phone: '040-27203000', city: 'Hyderabad' },
-  { name: 'Sai Sanjeevani Hospital Uppal', lat: 17.3990, lng: 78.5530, category: 'Hospital', phone: '040-27204000', city: 'Hyderabad' },
-  { name: 'Spark Hospitals Boduppal', lat: 17.4150, lng: 78.5780, category: 'Hospital', phone: '040-27205000', city: 'Hyderabad' },
-  { name: 'Horizon Hospital Peerzadiguda', lat: 17.4090, lng: 78.5920, category: 'Hospital', phone: '040-27206000', city: 'Hyderabad' },
-  { name: 'Matrix Hospital Ramanthapur', lat: 17.3920, lng: 78.5450, category: 'Hospital', phone: '040-27207000', city: 'Hyderabad' },
-  { name: 'Janani Hospital Ramanthapur', lat: 17.3960, lng: 78.5390, category: 'Hospital', phone: '040-27208000', city: 'Hyderabad' },
-  { name: 'Supraja Hospital Nagole', lat: 17.3760, lng: 78.5690, category: 'Hospital', phone: '040-27209000', city: 'Hyderabad' },
+  // ================= SHAMSHABAD & KISMATPUR HOSPITALS =================
+  { name: 'Apollo Medical Center RGIA Airport', lat: 17.2405, lng: 78.4300, category: 'Hospital', phone: '040-66601066', city: 'Hyderabad' },
+  { name: 'Trident Hospital Shamshabad', lat: 17.2510, lng: 78.4360, category: 'Hospital', phone: '040-24001000', city: 'Hyderabad' },
+  { name: 'Premier Hospital Attapur', lat: 17.3690, lng: 78.4290, category: 'Hospital', phone: '040-24002000', city: 'Hyderabad' },
+  { name: 'Germanten Hospital Attapur', lat: 17.3710, lng: 78.4310, category: 'Hospital', phone: '040-24003000', city: 'Hyderabad' },
+  { name: 'Mythri Hospital Bandlaguda Jagir', lat: 17.3460, lng: 78.3890, category: 'Hospital', phone: '040-24004000', city: 'Hyderabad' },
+  { name: 'Sunshine Emergency Clinic Kismatpur', lat: 17.3390, lng: 78.3760, category: 'Hospital', phone: '040-24005000', city: 'Hyderabad' },
+  { name: 'Gleneagles Care Clinic Rajendranagar', lat: 17.3160, lng: 78.4010, category: 'Hospital', phone: '040-24006000', city: 'Hyderabad' },
 
-  // ================= UPPAL & EASTERN HYDERABAD PUBLIC HUBS =================
-  { name: 'Uppal Metro Station Hub', lat: 17.4020, lng: 78.5580, category: 'Public Hub', city: 'Hyderabad' },
-  { name: 'Uppal Ring Road Bus Depot Hub', lat: 17.3980, lng: 78.5620, category: 'Public Hub', city: 'Hyderabad' },
-  { name: 'Stadium Metro Station Uppal', lat: 17.4045, lng: 78.5480, category: 'Public Hub', city: 'Hyderabad' },
-  { name: 'Rajiv Gandhi International Cricket Stadium', lat: 17.4065, lng: 78.5505, category: 'Public Hub', city: 'Hyderabad' },
-  { name: 'NGRI Metro Station Hub', lat: 17.4100, lng: 78.5380, category: 'Public Hub', city: 'Hyderabad' },
-  { name: 'Habsiguda Metro Station Hub', lat: 17.4180, lng: 78.5310, category: 'Public Hub', city: 'Hyderabad' },
-  { name: 'Nagole Metro Station Hub', lat: 17.3750, lng: 78.5670, category: 'Public Hub', city: 'Hyderabad' },
-  { name: 'Nagole X Roads Transit Hub', lat: 17.3730, lng: 78.5650, category: 'Public Hub', city: 'Hyderabad' }
+  // ================= SHAMSHABAD & KISMATPUR PUBLIC HUBS =================
+  { name: 'Rajiv Gandhi International Airport (RGIA) Terminal Hub', lat: 17.2400, lng: 78.4290, category: 'Public Hub', city: 'Hyderabad' },
+  { name: 'Shamshabad ORR Interchange Hub', lat: 17.2580, lng: 78.4410, category: 'Public Hub', city: 'Hyderabad' },
+  { name: 'Kismatpur ORR Junction Hub', lat: 17.3370, lng: 78.3710, category: 'Public Hub', city: 'Hyderabad' },
+  { name: 'Bandlaguda Jagir Commercial Hub', lat: 17.3510, lng: 78.3870, category: 'Public Hub', city: 'Hyderabad' },
+  { name: 'Rajendranagar PJTSAU Transit Corridor', lat: 17.3200, lng: 78.4050, category: 'Public Hub', city: 'Hyderabad' },
+  { name: 'Attapur Pillar 140 Expressway Hub', lat: 17.3660, lng: 78.4300, category: 'Public Hub', city: 'Hyderabad' },
+  { name: 'Himayat Sagar Lake View Park Hub', lat: 17.3100, lng: 78.3580, category: 'Public Hub', city: 'Hyderabad' }
 ];
 
 export class FacilityService {
