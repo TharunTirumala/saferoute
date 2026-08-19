@@ -239,6 +239,7 @@ export class EmergencySosService {
       contactsCount: this.contacts.length,
       primaryContact: this.getPrimaryContact(),
       platform: platformEmergencyBridge.platform,
+      isNativeAndroid: platformEmergencyBridge.isNativeAndroid(),
       phoneSupport: true,
       smsSupport: true,
       liveTrackingSupport: true
@@ -360,7 +361,7 @@ export class EmergencySosService {
    * 1. Get Live GPS
    * 2. Start Live Location Tracking + Android Foreground Service
    * 3. Send Emergency Alert (Native SMS / Backend Cloud Alert)
-   * 4. Call Primary Contact (Android Native Telephony)
+   * 4. Call Primary Contact (Android Native Telephony ACTION_CALL)
    * 5. Show SOS ACTIVE status screen (ZERO taps required)
    */
   async activateNativeSOS(source = this.triggerSource) {
@@ -375,10 +376,15 @@ export class EmergencySosService {
     this.locationError = null;
 
     const primary = this.getPrimaryContact();
+    const isNative = platformEmergencyBridge.isNativeAndroid();
 
-    // Reset status indicators to Preparing / Sending
+    // Reset status indicators
     this.contacts.forEach(c => {
-      c.callStatus = c.isPrimary ? 'Calling' : 'Standby';
+      if (c.isPrimary) {
+        c.callStatus = isNative ? 'Calling' : 'Web Standby';
+      } else {
+        c.callStatus = 'Standby';
+      }
       c.messageStatus = 'Sending';
     });
 
@@ -386,6 +392,7 @@ export class EmergencySosService {
       source: this.triggerSource,
       timestamp: this.sosTimestamp,
       contacts: this.contacts,
+      isNativeAndroid: isNative,
       statusPhase: 'INITIALIZING'
     });
 
@@ -403,7 +410,7 @@ export class EmergencySosService {
     // 4. Parallel Task D: Automatically Dispatch Emergency Alert
     this.autoDispatchEmergencyAlert(liveTrackingUrl);
 
-    // 5. Parallel Task E: Automatically Initiate Primary Phone Call
+    // 5. Parallel Task E: Automatically Initiate Primary Phone Call (on Android Native)
     if (primary) {
       this.autoInitiatePrimaryCall(primary);
     }
@@ -414,6 +421,7 @@ export class EmergencySosService {
       contacts: this.contacts,
       session: this.activeLiveSession,
       liveUrl: liveTrackingUrl,
+      isNativeAndroid: isNative,
       statusPhase: 'ACTIVE'
     });
   }
@@ -524,16 +532,24 @@ export class EmergencySosService {
    * Automatically initiates the phone call to the primary contact
    */
   async autoInitiatePrimaryCall(primary) {
-    primary.callStatus = 'Calling';
-    this.onContactsChange(this.contacts);
-
     const res = await platformEmergencyBridge.autoInitiateCall(primary.phone);
     if (res && res.success) {
-      primary.callStatus = 'Calling';
+      primary.callStatus = res.status === COMM_STATUS.CALLING ? 'Calling' : (res.status === COMM_STATUS.WEB_STANDBY ? 'Web Standby' : 'Active');
     } else {
       primary.callStatus = 'Failed';
     }
     this.onContactsChange(this.contacts);
+  }
+
+  /**
+   * Manual call execution for Web fallback
+   */
+  manualCallPrimary() {
+    const primary = this.getPrimaryContact();
+    if (primary) {
+      return platformEmergencyBridge.manualWebCall(primary.phone);
+    }
+    return { success: false, error: 'No primary contact configured.' };
   }
 
   /**

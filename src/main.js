@@ -483,20 +483,35 @@ btnCopyLiveUrl.addEventListener('click', () => {
 
 // Render contacts list and automatic response status inside active SOS screen
 function renderSosActiveContacts(contacts) {
+  const isNative = platformEmergencyBridge.isNativeAndroid();
+  const webLimitationNotice = document.getElementById('webLimitationNotice');
+
+  if (webLimitationNotice) {
+    if (isNative) {
+      webLimitationNotice.classList.add('hidden');
+    } else {
+      webLimitationNotice.classList.remove('hidden');
+    }
+  }
+
   // Update Top Call Status Card
   const primary = emergencySos.getPrimaryContact();
   if (primary) {
     primaryContactNameDisplay.textContent = `${primary.name} (${primary.phone})`;
-    const status = primary.callStatus || 'Preparing';
+    const status = primary.callStatus || (isNative ? 'Preparing' : 'Web Standby');
 
-    if (status.includes('Progress') || status.includes('Started')) {
-      primaryCallStatusText.textContent = 'IN PROGRESS';
+    if (status === 'Calling' || status === 'Active' || status.includes('Progress')) {
+      primaryCallStatusText.textContent = status.toUpperCase();
       primaryCallStatusBadge.className = 'status-indicator-pill listening';
-      primaryCallStatusBadge.innerHTML = '<span class="status-dot"></span><span>IN PROGRESS</span>';
-    } else if (status.includes('Failed')) {
+      primaryCallStatusBadge.innerHTML = `<span class="status-dot"></span><span>${status.toUpperCase()}</span>`;
+    } else if (status === 'Failed' || status.includes('Failed')) {
       primaryCallStatusText.textContent = 'FAILED';
       primaryCallStatusBadge.className = 'status-indicator-pill unsupported';
       primaryCallStatusBadge.innerHTML = '<span class="status-dot"></span><span>FAILED</span>';
+    } else if (status === 'Web Standby' || !isNative) {
+      primaryCallStatusText.textContent = 'WEB STANDBY';
+      primaryCallStatusBadge.className = 'status-indicator-pill off';
+      primaryCallStatusBadge.innerHTML = '<span class="status-dot"></span><span>WEB STANDBY</span>';
     } else {
       primaryCallStatusText.textContent = 'PREPARING';
       primaryCallStatusBadge.className = 'status-indicator-pill off';
