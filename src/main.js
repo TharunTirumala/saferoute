@@ -13,6 +13,7 @@ import { SAFETY_CONFIG } from './safetyConfig.js';
 import { VoicePanicEngine, SUPPORTED_LANGUAGES } from './voicePanicEngine.js';
 import { EmergencySosService, SOS_STATUS } from './emergencySosService.js';
 import { liveSosSessionStore } from './liveSosSessionStore.js';
+import { generateLLMSafetyReasoning } from './llmService.js';
 
 // ================= TAB SWITCHING =================
 const tabGuardianEye = document.getElementById('tabGuardianEye');
@@ -1409,6 +1410,26 @@ function renderSafeRouteUI() {
       li.textContent = w;
       riskWarningsList.appendChild(li);
     });
+
+    // Asynchronous Generative LLM Safety Intelligence Integration
+    const tripContext = {
+      origin: typeof sourceInput !== 'undefined' && sourceInput.value ? sourceInput.value : 'Starting Location',
+      destination: typeof destInput !== 'undefined' && destInput.value ? destInput.value : 'Destination',
+      travelMode: typeof selectedTravelMode !== 'undefined' ? selectedTravelMode : 'Car',
+      timeOfDay: typeof travelTimeSelect !== 'undefined' && travelTimeSelect.value ? travelTimeSelect.value : 'Night'
+    };
+
+    generateLLMSafetyReasoning(selected, tripContext).then((llmResult) => {
+      const headlineEl = document.getElementById('llmHeadlineText');
+      const reasoningEl = document.getElementById('llmReasoningText');
+      const threatEl = document.getElementById('llmAvoidedThreat');
+      const confEl = document.getElementById('llmConfidenceTag');
+
+      if (headlineEl) headlineEl.textContent = llmResult.headline;
+      if (reasoningEl) reasoningEl.textContent = llmResult.reasoning;
+      if (threatEl) threatEl.textContent = llmResult.avoidedThreat;
+      if (confEl) confEl.textContent = `${llmResult.confidenceScore}% Confidence`;
+    }).catch((err) => console.warn('LLM reasoning update error:', err));
   }
 
   safeRouteMapRenderer.render(safeRouteEngine);
