@@ -39,9 +39,11 @@ export class CloudAlertDispatcher {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user: 'Ananya',
+          user: userPhone || 'SafeRoute User',
+          userMobile: userPhone || 'SafeRoute User',
           lat: location ? location.latitude : 17.4435,
           lng: location ? location.longitude : 78.3772,
+          googleMapsUrl: location ? `https://www.google.com/maps?q=${location.latitude},${location.longitude}` : (liveTrackingUrl || 'https://saferoute-tawny.vercel.app/'),
           timestamp: timestamp || new Date().toLocaleTimeString(),
           liveTrackingUrl: liveTrackingUrl || 'https://saferoute-tawny.vercel.app/'
         })
