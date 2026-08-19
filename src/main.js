@@ -281,15 +281,27 @@ const emergencySos = new EmergencySosService({
   }
 });
 
-// Initialize Voice Panic Engine (Connects directly to EmergencySosService)
+// Initialize Voice Panic Engine (Connects directly to EmergencySosService & n8n Automation)
 const voicePanicEngine = new VoicePanicEngine({
   onStatusChange: (status, label) => {
     updateVoicePanicStatusUI(status, label);
   },
   onEmergencyDetected: (phrase) => {
-    emergencySos.startSosCountdown(`Voice Trigger ("${phrase}")`);
+    console.log(`🎙️ Voice Emergency Triggered: "${phrase}" -> Dispatching n8n & Twilio Calls`);
+    emergencySos.executeSosNow(`Voice SOS Triggered ("${phrase}")`);
   }
 });
+
+// Auto-start Voice Listening in background if browser supports speech recognition
+if (voicePanicEngine && voicePanicEngine.isSupported) {
+  setTimeout(() => {
+    try {
+      voicePanicEngine.startListening();
+    } catch (e) {
+      console.info("Voice engine background start note:", e.message);
+    }
+  }, 1000);
+}
 
 // ================= SOS READINESS RENDERING =================
 function renderSosReadiness(isReady, report) {
