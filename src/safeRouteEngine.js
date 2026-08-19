@@ -573,7 +573,7 @@ export class SafeRouteEngine {
       id: cand.id,
       name: cand.name,
       distanceKm: cand.distanceKm,
-      durationMin: cand.durationMin,
+      durationMin: this.calculateEstimatedDurationMin(cand.distanceKm),
       path: cand.path,
       safetyScore: finalScore,
       riskLevel: meta.riskLevel,

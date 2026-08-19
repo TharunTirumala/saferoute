@@ -1141,13 +1141,116 @@ btnGpsSource.addEventListener('click', () => {
   );
 });
 
-// ================= TRAVEL MODE SELECTION =================
-const travelModeButtons = document.querySelectorAll('.travel-mode-card');
-travelModeButtons.forEach((btn) => {
+// ================= TRAVEL MODES DICTIONARY & FORMATTING =================
+const TRAVEL_MODES = {
+  walking: { name: 'Walking', icon: '🚶', speed: 4.8 },
+  bus: { name: 'Bus', icon: '🚌', speed: 20.0 },
+  car: { name: 'Car', icon: '🚗', speed: 32.0 },
+  bike: { name: 'Bike', icon: '🏍️', speed: 26.0 },
+  auto: { name: 'Auto', icon: '🛺', speed: 24.0 }
+};
+
+function formatDurationText(durationMin) {
+  const rounded = Math.round(durationMin);
+  if (rounded < 60) {
+    return `${rounded} min`;
+  }
+  const hrs = Math.floor(rounded / 60);
+  const mins = rounded % 60;
+  return mins > 0 ? `${hrs} hr ${mins < 10 ? '0' : ''}${mins} min` : `${hrs} hr`;
+}
+
+// Function to calculate and update live route distance and time preview on First Interface
+function updateFirstPageRoutePreview() {
+  const origin = safeRouteEngine.origin;
+  const dest = safeRouteEngine.destination;
+  const modeKey = safeRouteEngine.travelMode || 'car';
+  const modeInfo = TRAVEL_MODES[modeKey] || TRAVEL_MODES.car;
+
+  const previewTravelingByTag = document.getElementById('previewTravelingByTag');
+  const previewDistanceValue = document.getElementById('previewDistanceValue');
+  const previewTimeValue = document.getElementById('previewTimeValue');
+
+  if (previewTravelingByTag) {
+    previewTravelingByTag.textContent = `Traveling by ${modeInfo.icon} ${modeInfo.name}`;
+  }
+
+  if (origin && dest && !isNaN(origin.lat) && !isNaN(dest.lat)) {
+    // Haversine direct distance with urban curvature factor (1.25)
+    const R = 6371;
+    const dLat = ((dest.lat - origin.lat) * Math.PI) / 180;
+    const dLon = ((dest.lng - origin.lng) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((origin.lat * Math.PI) / 180) *
+        Math.cos((dest.lat * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const rawDist = R * c;
+    const distKm = Math.max(0.8, Math.round(rawDist * 1.25 * 10) / 10);
+    const durMin = (distKm / modeInfo.speed) * 60;
+
+    if (previewDistanceValue) previewDistanceValue.textContent = `${distKm} km`;
+    if (previewTimeValue) previewTimeValue.textContent = formatDurationText(durMin);
+  }
+}
+
+// ================= TRAVEL MODE DROPDOWN =================
+const btnTravelModeDropdownTrigger = document.getElementById('btnTravelModeDropdownTrigger');
+const travelModePopover = document.getElementById('travelModePopover');
+const selectedModeIcon = document.getElementById('selectedModeIcon');
+const selectedModeDisplay = document.getElementById('selectedModeDisplay');
+const modeOptionButtons = document.querySelectorAll('.mode-option-btn');
+
+function toggleModePopover(show) {
+  if (!travelModePopover) return;
+  const isHidden = travelModePopover.classList.contains('hidden');
+  const shouldShow = show !== undefined ? show : isHidden;
+  
+  if (shouldShow) {
+    travelModePopover.classList.remove('hidden');
+    btnTravelModeDropdownTrigger && btnTravelModeDropdownTrigger.setAttribute('aria-expanded', 'true');
+  } else {
+    travelModePopover.classList.add('hidden');
+    btnTravelModeDropdownTrigger && btnTravelModeDropdownTrigger.setAttribute('aria-expanded', 'false');
+  }
+}
+
+if (btnTravelModeDropdownTrigger) {
+  btnTravelModeDropdownTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleModePopover();
+  });
+}
+
+if (travelModePopover) {
+  travelModePopover.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+}
+
+// Close popovers on click outside
+document.addEventListener('click', (e) => {
+  if (travelModePopover && !travelModePopover.contains(e.target) && btnTravelModeDropdownTrigger && !btnTravelModeDropdownTrigger.contains(e.target)) {
+    toggleModePopover(false);
+  }
+});
+
+modeOptionButtons.forEach((btn) => {
   btn.addEventListener('click', () => {
-    travelModeButtons.forEach(b => b.classList.remove('active'));
+    const selectedMode = btn.dataset.mode || 'car';
+    safeRouteEngine.travelMode = selectedMode;
+    const modeInfo = TRAVEL_MODES[selectedMode] || TRAVEL_MODES.car;
+
+    modeOptionButtons.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    safeRouteEngine.travelMode = btn.dataset.mode || 'car';
+
+    if (selectedModeIcon) selectedModeIcon.textContent = modeInfo.icon;
+    if (selectedModeDisplay) selectedModeDisplay.textContent = `How are you travelling? → ${modeInfo.icon} ${modeInfo.name}`;
+
+    toggleModePopover(false);
+    updateFirstPageRoutePreview();
   });
 });
 
@@ -1876,3 +1979,8 @@ if (formSmartNewsNLP) {
     processHeadlineNLP(text);
   });
 }
+
+// Initialize First Page Route Preview on load
+setTimeout(() => {
+  updateFirstPageRoutePreview();
+}, 200);
