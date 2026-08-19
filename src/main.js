@@ -22,10 +22,10 @@ const viewGuardianEye = document.getElementById('viewGuardianEye');
 const viewSafeRoute = document.getElementById('viewSafeRoute');
 
 function switchToSafeRoute() {
-  tabSafeRoute.classList.add('active');
-  tabGuardianEye.classList.remove('active');
-  viewSafeRoute.classList.add('active');
-  viewGuardianEye.classList.remove('active');
+  if (tabSafeRoute) tabSafeRoute.classList.add('active');
+  if (tabGuardianEye) tabGuardianEye.classList.remove('active');
+  if (viewSafeRoute) viewSafeRoute.classList.add('active');
+  if (viewGuardianEye) viewGuardianEye.classList.remove('active');
   setTimeout(() => {
     if (safeRouteMapRenderer && safeRouteMapRenderer.map) {
       safeRouteMapRenderer.map.invalidateSize();
@@ -34,14 +34,14 @@ function switchToSafeRoute() {
 }
 
 function switchToGuardianEye() {
-  tabGuardianEye.classList.add('active');
-  tabSafeRoute.classList.remove('active');
-  viewGuardianEye.classList.add('active');
-  viewSafeRoute.classList.remove('active');
+  if (tabGuardianEye) tabGuardianEye.classList.add('active');
+  if (tabSafeRoute) tabSafeRoute.classList.remove('active');
+  if (viewGuardianEye) viewGuardianEye.classList.add('active');
+  if (viewSafeRoute) viewSafeRoute.classList.remove('active');
 }
 
-tabSafeRoute.addEventListener('click', switchToSafeRoute);
-tabGuardianEye.addEventListener('click', switchToGuardianEye);
+if (tabSafeRoute) tabSafeRoute.addEventListener('click', switchToSafeRoute);
+if (tabGuardianEye) tabGuardianEye.addEventListener('click', switchToGuardianEye);
 
 // ================= SAFEROUTE ENGINE & MAP INITIALIZATION =================
 const safeRouteEngine = new SafeRouteEngine();
@@ -290,39 +290,43 @@ const voicePanicEngine = new VoicePanicEngine({
 // ================= SOS READINESS RENDERING =================
 function renderSosReadiness(isReady, report) {
   if (isReady) {
-    headerSosReadinessPill.className = 'status-indicator-pill ready';
-    headerSosReadinessLabel.textContent = 'SOS READY';
+    if (headerSosReadinessPill) headerSosReadinessPill.className = 'status-indicator-pill ready';
+    if (headerSosReadinessLabel) headerSosReadinessLabel.textContent = 'SOS READY';
 
-    sosReadinessBanner.className = 'sos-readiness-banner ready';
-    readinessIconBox.className = 'readiness-icon-box ready';
-    readinessBannerTitle.textContent = 'SOS READY';
-    readinessBadgeTag.className = 'badge-tag-clean success';
-    readinessBadgeTag.textContent = 'Pre-Authorized';
-    readinessBannerSub.textContent = 'All emergency permissions pre-authorized. 1-Tap SOS will execute immediately with zero prompts.';
-    btnBannerOpenSetup.textContent = 'Check Setup';
+    if (sosReadinessBanner) sosReadinessBanner.className = 'sos-readiness-banner ready';
+    if (readinessIconBox) readinessIconBox.className = 'readiness-icon-box ready';
+    if (readinessBannerTitle) readinessBannerTitle.textContent = 'SOS READY';
+    if (readinessBadgeTag) {
+      readinessBadgeTag.className = 'badge-tag-clean success';
+      readinessBadgeTag.textContent = 'Pre-Authorized';
+    }
+    if (readinessBannerSub) readinessBannerSub.textContent = 'All emergency permissions pre-authorized. 1-Tap SOS will execute immediately with zero prompts.';
+    if (btnBannerOpenSetup) btnBannerOpenSetup.textContent = 'Check Setup';
 
-    setupStatusDot.className = 'status-indicator-dot ready';
-    setupStatusHeadline.textContent = 'SOS READY';
-    setupStatusSubtext.textContent = 'Emergency SOS is fully pre-authorized. In an emergency, alerts dispatch instantly.';
-    setupStatusPill.className = 'status-indicator-pill ready';
-    setupStatusPillText.textContent = 'Ready';
+    if (setupStatusDot) setupStatusDot.className = 'status-indicator-dot ready';
+    if (setupStatusHeadline) setupStatusHeadline.textContent = 'SOS READY';
+    if (setupStatusSubtext) setupStatusSubtext.textContent = 'Emergency SOS is fully pre-authorized. In an emergency, alerts dispatch instantly.';
+    if (setupStatusPill) setupStatusPill.className = 'status-indicator-pill ready';
+    if (setupStatusPillText) setupStatusPillText.textContent = 'Ready';
   } else {
-    headerSosReadinessPill.className = 'status-indicator-pill not-ready';
-    headerSosReadinessLabel.textContent = 'SOS Setup Required';
+    if (headerSosReadinessPill) headerSosReadinessPill.className = 'status-indicator-pill not-ready';
+    if (headerSosReadinessLabel) headerSosReadinessLabel.textContent = 'SOS Setup Required';
 
-    sosReadinessBanner.className = 'sos-readiness-banner not-ready';
-    readinessIconBox.className = 'readiness-icon-box not-ready';
-    readinessBannerTitle.textContent = 'SOS NOT READY';
-    readinessBadgeTag.className = 'badge-tag-clean warning';
-    readinessBadgeTag.textContent = 'Setup Required';
-    readinessBannerSub.textContent = 'Some emergency permissions or contacts are missing. Complete one-time setup now to ensure instant 1-tap SOS.';
-    btnBannerOpenSetup.textContent = 'Complete Setup';
+    if (sosReadinessBanner) sosReadinessBanner.className = 'sos-readiness-banner not-ready';
+    if (readinessIconBox) readinessIconBox.className = 'readiness-icon-box not-ready';
+    if (readinessBannerTitle) readinessBannerTitle.textContent = 'SOS NOT READY';
+    if (readinessBadgeTag) {
+      readinessBadgeTag.className = 'badge-tag-clean warning';
+      readinessBadgeTag.textContent = 'Setup Required';
+    }
+    if (readinessBannerSub) readinessBannerSub.textContent = 'Some emergency permissions or contacts are missing. Complete one-time setup now to ensure instant 1-tap SOS.';
+    if (btnBannerOpenSetup) btnBannerOpenSetup.textContent = 'Complete Setup';
 
-    setupStatusDot.className = 'status-indicator-dot not-ready';
-    setupStatusHeadline.textContent = 'SOS NOT READY';
-    setupStatusSubtext.textContent = 'Grant location access and configure contacts so emergency dispatch operates with zero prompts.';
-    setupStatusPill.className = 'status-indicator-pill not-ready';
-    setupStatusPillText.textContent = 'Setup Needed';
+    if (setupStatusDot) setupStatusDot.className = 'status-indicator-dot not-ready';
+    if (setupStatusHeadline) setupStatusHeadline.textContent = 'SOS NOT READY';
+    if (setupStatusSubtext) setupStatusSubtext.textContent = 'Grant location access and configure contacts so emergency dispatch operates with zero prompts.';
+    if (setupStatusPill) setupStatusPill.className = 'status-indicator-pill not-ready';
+    if (setupStatusPillText) setupStatusPillText.textContent = 'Setup Needed';
   }
 
   // Location item
@@ -376,8 +380,8 @@ function openSosSetupModal() {
   sosSetupModal.classList.remove('hidden');
 }
 
-btnOpenSosSetup.addEventListener('click', openSosSetupModal);
-btnBannerOpenSetup.addEventListener('click', openSosSetupModal);
+if (btnOpenSosSetup) btnOpenSosSetup.addEventListener('click', openSosSetupModal);
+if (btnBannerOpenSetup) btnBannerOpenSetup.addEventListener('click', openSosSetupModal);
 closeSosSetupBtn.addEventListener('click', () => sosSetupModal.classList.add('hidden'));
 btnDoneSosSetup.addEventListener('click', () => sosSetupModal.classList.add('hidden'));
 
@@ -625,7 +629,7 @@ closeSosModalBtn.addEventListener('click', () => {
 // ================= EMERGENCY CONTACTS MANAGER MODAL =================
 function updateContactsCountBadge() {
   const count = emergencySos.getContacts().length;
-  contactsCountBadge.textContent = count;
+  if (contactsCountBadge) contactsCountBadge.textContent = count;
 }
 updateContactsCountBadge();
 
@@ -635,7 +639,7 @@ function openContactsManager() {
   contactsManagerModal.classList.remove('hidden');
 }
 
-btnOpenContactsManager.addEventListener('click', openContactsManager);
+if (btnOpenContactsManager) btnOpenContactsManager.addEventListener('click', openContactsManager);
 btnEditContactsInSos.addEventListener('click', openContactsManager);
 closeContactsManagerBtn.addEventListener('click', () => contactsManagerModal.classList.add('hidden'));
 btnDoneContactsManager.addEventListener('click', () => contactsManagerModal.classList.add('hidden'));
@@ -750,8 +754,9 @@ voiceLangSelect.addEventListener('change', () => {
 
 function updateVoicePanicStatusUI(status) {
   if (status === 'LISTENING') {
-    headerVoiceLabel.textContent = 'Voice SOS: Active';
-    btnOpenVoiceSettings.classList.add('listening');
+    if (headerVoiceLabel) headerVoiceLabel.textContent = 'Voice SOS: Active';
+    if (btnOpenVoiceSettings) btnOpenVoiceSettings.classList.add('listening');
+    if (btnOpenVoiceSettingsPromo) btnOpenVoiceSettingsPromo.classList.add('listening');
     btnModalToggleVoice.textContent = 'Disable';
     btnModalToggleVoice.className = 'btn-danger-outline-sm';
 
@@ -768,8 +773,9 @@ function updateVoicePanicStatusUI(status) {
     btnModalToggleVoice.textContent = 'Allow Access';
     btnModalToggleVoice.className = 'btn-primary-action-sm';
   } else if (status === 'UNSUPPORTED') {
-    headerVoiceLabel.textContent = 'Voice SOS: N/A';
-    btnOpenVoiceSettings.classList.remove('listening');
+    if (headerVoiceLabel) headerVoiceLabel.textContent = 'Voice SOS: N/A';
+    if (btnOpenVoiceSettings) btnOpenVoiceSettings.classList.remove('listening');
+    if (btnOpenVoiceSettingsPromo) btnOpenVoiceSettingsPromo.classList.remove('listening');
     btnModalToggleVoice.textContent = 'Unsupported';
     btnModalToggleVoice.disabled = true;
 
@@ -778,8 +784,9 @@ function updateVoicePanicStatusUI(status) {
       btnInputVoiceToggle.disabled = true;
     }
   } else {
-    headerVoiceLabel.textContent = 'Voice SOS';
-    btnOpenVoiceSettings.classList.remove('listening');
+    if (headerVoiceLabel) headerVoiceLabel.textContent = 'Voice SOS';
+    if (btnOpenVoiceSettings) btnOpenVoiceSettings.classList.remove('listening');
+    if (btnOpenVoiceSettingsPromo) btnOpenVoiceSettingsPromo.classList.remove('listening');
     btnModalToggleVoice.textContent = 'Enable';
     btnModalToggleVoice.className = 'btn-primary-action-sm';
 
@@ -1508,7 +1515,7 @@ function openReportModal() {
   reportModal.classList.remove('hidden');
 }
 
-btnHeaderReportModal.addEventListener('click', openReportModal);
+if (btnHeaderReportModal) btnHeaderReportModal.addEventListener('click', openReportModal);
 btnResultReportModal.addEventListener('click', openReportModal);
 
 closeModalBtn.addEventListener('click', () => reportModal.classList.add('hidden'));
@@ -1618,7 +1625,7 @@ closeDrawerBtn.addEventListener('click', () => {
 
 function renderCommunityReportsDrawer() {
   const reps = reportStore.getAllReports();
-  reportsCountBadge.textContent = reps.length;
+  if (reportsCountBadge) reportsCountBadge.textContent = reps.length;
   communityReportsList.innerHTML = '';
 
   if (reps.length === 0) {
