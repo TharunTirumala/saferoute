@@ -384,14 +384,18 @@ export class EmergencySosService {
       statusPhase: 'INITIALIZING'
     });
 
-    // 1. Obtain Real GPS Fix
+    // 1. DISPATCH EMERGENCY ALERT TO N8N & TWILIO IMMEDIATELY WITH ZERO DELAY
+    const fallbackLiveUrl = 'https://saferoute-tawny.vercel.app/';
+    this.autoDispatchEmergencyAlert(fallbackLiveUrl);
+
+    // 2. Obtain Real GPS Fix in background
     const initialCoords = await this.fetchCurrentLocation();
 
-    // 2. Initialize Secure SOS Live Session
+    // 3. Initialize Secure SOS Live Session
     this.activeLiveSession = liveSosSessionStore.createSession(initialCoords, this.triggerSource);
     const liveTrackingUrl = liveSosSessionStore.getLiveTrackingUrl(this.activeLiveSession.id);
 
-    // 3. Log event into user's isolated SOS history
+    // 4. Log event into user's isolated SOS history
     const user = authService?.getAuthenticatedUser();
     const systemNumber = user?.systemNumber || user?.mobileNumber || user?.phone || 'usr_default';
     userStore.logSosEvent(systemNumber, {
@@ -404,12 +408,9 @@ export class EmergencySosService {
       status: 'ACTIVE'
     });
 
-    // 4. Start Continuous GPS Tracking & Persistent Foreground Service
+    // 5. Start Continuous GPS Tracking & Persistent Foreground Service
     this.startLiveLocationTracking();
     platformEmergencyBridge.startForegroundService(this.activeLiveSession.id);
-
-    // 5. Automatically Dispatch Emergency Alert with User's System Number
-    this.autoDispatchEmergencyAlert(liveTrackingUrl);
 
     // 6. Automatically Initiate Primary Phone Call
     if (primary && primary.phone) {
