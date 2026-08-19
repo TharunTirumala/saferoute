@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/shield.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SafeRoute — Professional Safety-First Navigation & Hands-Free SOS</title>
-    <meta name="description" content="SafeRoute: Professional safety navigation platform with verified road network routing, multilingual hands-free voice panic SOS, and dynamic hazard avoidance." />
+    <title>SafeRoute — Professional Safety-First Navigation & Emergency SOS</title>
+    <meta name="description" content="SafeRoute: Safety navigation platform with verified road network routing, multilingual hands-free voice panic SOS, and real-time emergency contact call and messaging system." />
     <!-- Modern Sans Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,7 +27,7 @@
               </svg>
               <div class="brand-titles">
                 <span class="brand-name">SafeRoute</span>
-                <span class="brand-tag">SAFETY NAVIGATION</span>
+                <span class="brand-tag">SAFETY NAVIGATION & SOS</span>
               </div>
             </div>
 
@@ -45,7 +45,7 @@
           </div>
 
           <div class="header-actions">
-            <!-- Hands-Free Voice SOS Quick Toggle & Settings Button -->
+            <!-- Hands-Free Voice SOS Settings Button -->
             <button id="btnOpenVoiceSettings" class="btn-voice-toggle" title="Open Hands-Free Voice SOS Settings">
               <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
               <span id="headerVoiceLabel">Voice SOS</span>
@@ -54,6 +54,12 @@
               <span class="status-dot"></span>
               <span class="status-label">Disabled</span>
             </span>
+
+            <!-- Emergency Contacts Manager -->
+            <button id="btnOpenContactsManager" class="btn-outline-sm" title="Configure Emergency Contacts">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <span>Contacts (<span id="contactsCountBadge">2</span>)</span>
+            </button>
 
             <!-- Community Reports Drawer -->
             <button id="openReportsDrawerBtn" class="btn-outline-sm">
@@ -67,8 +73,8 @@
               <span>Report Hazard</span>
             </button>
 
-            <!-- Emergency SOS -->
-            <button id="openSosBtn" class="btn-emergency-sos">
+            <!-- Emergency SOS Trigger Button -->
+            <button id="openSosBtn" class="btn-emergency-sos" title="Activate Emergency SOS Countdown">
               <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               <span>SOS Panic</span>
             </button>
@@ -88,7 +94,7 @@
             
             <div class="input-screen-header">
               <h2>Find the Safest Way to Travel</h2>
-              <p>Compare verified road corridors, avoid hazardous zones, and navigate with multilingual emergency awareness</p>
+              <p>Compare verified road corridors, avoid hazardous zones, and navigate with multilingual emergency SOS awareness</p>
             </div>
 
             <form id="tripInputForm" class="trip-input-form" onsubmit="return false;">
@@ -507,7 +513,178 @@
 
       <!-- ================= MODALS & DRAWERS (CLEAN, MINIMAL DESIGN) ================= -->
 
-      <!-- MULTILINGUAL VOICE SOS SETTINGS MODAL -->
+      <!-- 1. CENTRAL 5-SECOND SOS COUNTDOWN MODAL (Manual or Voice Triggered) -->
+      <div id="centralSosCountdownModal" class="modal-backdrop-clean hidden">
+        <div class="modal-box-clean countdown-box">
+          <div class="modal-clean-header center">
+            <svg class="header-alert-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <h3 id="countdownModalHeading">SOS ACTIVATING</h3>
+          </div>
+          
+          <div class="detected-phrase-box-clean">
+            <span>Activation Trigger:</span>
+            <strong id="countdownTriggerSourceName">Manual Emergency Button</strong>
+          </div>
+
+          <div class="countdown-circle-clean">
+            <span id="centralCountdownNumber" class="countdown-digit">5</span>
+            <span class="countdown-sub">SECONDS</span>
+          </div>
+
+          <p class="countdown-explainer">
+            Calling primary emergency contact and preparing live GPS emergency alert in <strong><span id="centralCountdownNoticeSecs">5</span>s</strong>.
+          </p>
+
+          <button type="button" id="btnCancelCentralCountdown" class="btn-cancel-countdown-clean">
+            CANCEL SOS
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. REAL EMERGENCY SOS ACTIVE SCREEN MODAL -->
+      <div id="sosModal" class="modal-backdrop-clean hidden">
+        <div class="modal-box-clean sos-active-box">
+          <div class="modal-clean-header sos-header">
+            <div class="header-with-icon">
+              <svg class="sos-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <h3>SOS ACTIVE</h3>
+            </div>
+            <button id="closeSosModalBtn" class="btn-close-modal">✕</button>
+          </div>
+
+          <div class="sos-modal-content">
+            
+            <!-- Trigger Banner -->
+            <div class="sos-trigger-banner" id="sosTriggerSourceTag">
+              <span>Trigger Source:</span>
+              <strong id="sosTriggerSourceName">MANUAL EMERGENCY BUTTON</strong>
+            </div>
+
+            <!-- Location Detected Card -->
+            <div class="sos-gps-card" id="sosLocationStatusCard">
+              <div class="flex-justify-between align-center mb-1">
+                <span class="gps-label">CURRENT GPS LOCATION</span>
+                <span id="sosGpsStatusBadge" class="status-indicator-pill off">Locating...</span>
+              </div>
+              <strong id="sosGpsCoords" class="gps-value">Fetching live GPS coordinates...</strong>
+              <div class="flex-justify-between align-center mt-1">
+                <span id="sosGpsTimestamp" class="text-xs text-muted">Time: --:--:--</span>
+                <a id="linkOpenMapLocation" href="#" target="_blank" class="text-xs text-primary hidden">Open Map Location ↗</a>
+              </div>
+            </div>
+
+            <!-- Primary Action Mobile Buttons -->
+            <div class="emergency-quick-actions-grid">
+              <button type="button" id="btnCallPrimaryContactNow" class="btn-call-primary-lg">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                <span>CALL EMERGENCY CONTACT</span>
+              </button>
+
+              <button type="button" id="btnSendEmergencyMessageNow" class="btn-msg-primary-lg">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <span>SEND EMERGENCY MESSAGE</span>
+              </button>
+            </div>
+
+            <!-- Configured Emergency Contacts List with Call/SMS Status -->
+            <div class="sos-contacts-list-card">
+              <div class="contacts-header-row">
+                <span class="contacts-title">Configured Emergency Contacts</span>
+                <button type="button" id="btnEditContactsInSos" class="btn-link-sm">Manage Contacts</button>
+              </div>
+              
+              <div id="sosActiveContactsList" class="sos-contacts-active-list">
+                <!-- Rendered dynamically via JavaScript -->
+              </div>
+            </div>
+
+            <!-- Direct Helplines -->
+            <div class="helplines-grid-clean">
+              <a href="tel:100" class="helpline-card police">
+                <strong>Police (100)</strong>
+                <span>Direct control room</span>
+              </a>
+              <a href="tel:108" class="helpline-card medical">
+                <strong>Ambulance (108)</strong>
+                <span>24/7 Medical emergency</span>
+              </a>
+              <a href="tel:112" class="helpline-card emergency">
+                <strong>Helpline (112)</strong>
+                <span>All-in-one national emergency</span>
+              </a>
+            </div>
+
+            <!-- Action Status Alert -->
+            <div id="sosDispatchStatus" class="sos-status-alert hidden"></div>
+
+            <div class="sos-footer-actions">
+              <button type="button" id="btnDismissSos" class="btn-dismiss-sos-clean">
+                STOP SOS
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. EMERGENCY CONTACTS MANAGER MODAL -->
+      <div id="contactsManagerModal" class="modal-backdrop-clean hidden">
+        <div class="modal-box-clean contacts-manager-box">
+          <div class="modal-clean-header">
+            <div class="header-with-icon">
+              <svg class="header-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <h3>Emergency Contacts</h3>
+            </div>
+            <button id="closeContactsManagerBtn" class="btn-close-modal">✕</button>
+          </div>
+
+          <div class="contacts-manager-content">
+            <p class="contacts-intro-text">
+              Configure your trusted emergency circle. When SOS activates, SafeRoute provides one-tap direct calling and pre-filled emergency SMS with your live GPS location.
+            </p>
+
+            <div class="contacts-toolbar-row">
+              <span class="clean-label">SAVED CONTACTS</span>
+              <button type="button" id="btnOpenAddContactForm" class="btn-primary-action-sm">
+                + Add Emergency Contact
+              </button>
+            </div>
+
+            <!-- Add / Edit Contact Inline Form -->
+            <div id="addContactInlineForm" class="add-contact-card hidden">
+              <h4 id="contactFormTitle">Add New Contact</h4>
+              <input type="hidden" id="editContactId" value="" />
+              <div class="form-row-2col">
+                <input type="text" id="inputContactName" class="clean-text-input-sm" placeholder="Contact Name (e.g. Mother)" required />
+                <input type="tel" id="inputContactPhone" class="clean-text-input-sm" placeholder="Phone (e.g. +91 98765 43210)" required />
+              </div>
+              <div class="form-row-2col align-center mt-1">
+                <input type="text" id="inputContactRelation" class="clean-text-input-sm" placeholder="Relationship (e.g. Family, Friend)" />
+                <label class="clean-checkbox-label">
+                  <input type="checkbox" id="checkContactIsPrimary" />
+                  <span>Set as Primary Contact</span>
+                </label>
+              </div>
+              <div id="contactFormError" class="form-error-msg hidden mt-1"></div>
+              <div class="modal-actions-row mt-1">
+                <button type="button" id="btnCancelContactForm" class="btn-cancel-clean">Cancel</button>
+                <button type="button" id="btnSaveContactSubmit" class="btn-primary-action">Save Contact</button>
+              </div>
+            </div>
+
+            <!-- Contacts Cards List -->
+            <div id="contactsManagerList" class="contacts-manager-cards-list">
+              <!-- Rendered dynamically via JavaScript -->
+            </div>
+
+          </div>
+
+          <div class="modal-actions-row">
+            <button type="button" id="btnDoneContactsManager" class="btn-primary-action">Done</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. MULTILINGUAL VOICE SOS SETTINGS MODAL -->
       <div id="voiceSettingsModal" class="modal-backdrop-clean hidden">
         <div class="modal-box-clean voice-settings-modal-box">
           <div class="modal-clean-header">
@@ -520,12 +697,10 @@
 
           <div class="voice-settings-content">
             
-            <!-- Explainer -->
             <p class="voice-settings-intro">
               Listen for emergency phrases in your chosen language without touching the screen. Operates strictly on-device; no audio is recorded or stored.
             </p>
 
-            <!-- Language Selection & Toggle Row -->
             <div class="voice-config-row">
               <div class="form-group-clean flex-1">
                 <label for="voiceLangSelect" class="clean-label">VOICE RECOGNITION LANGUAGE</label>
@@ -554,7 +729,6 @@
               </div>
             </div>
 
-            <!-- Emergency Phrases Section -->
             <div class="phrases-management-section">
               <div class="phrases-header-row">
                 <label class="clean-label">REGISTERED EMERGENCY PHRASES</label>
@@ -568,16 +742,14 @@
                 </div>
               </div>
 
-              <!-- Phrases List Container -->
               <div id="phrasesCardsContainer" class="phrases-cards-list">
                 <!-- Rendered dynamically via JavaScript -->
               </div>
             </div>
 
-            <!-- Browser & Privacy Notice -->
             <div class="voice-privacy-notice">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-              <span>Voice SOS is active while SafeRoute is open in your browser. SpeechRecognition depends on browser permissions.</span>
+              <span>Voice SOS operates while SafeRoute is open in your browser. SpeechRecognition depends on browser permissions.</span>
             </div>
 
           </div>
@@ -588,7 +760,7 @@
         </div>
       </div>
 
-      <!-- ADD / EDIT EMERGENCY PHRASE MODAL -->
+      <!-- 5. ADD / EDIT EMERGENCY PHRASE MODAL -->
       <div id="addPhraseModal" class="modal-backdrop-clean hidden">
         <div class="modal-box-clean add-phrase-box">
           <div class="modal-clean-header">
@@ -636,35 +808,7 @@
         </div>
       </div>
 
-      <!-- 5-SECOND VOICE SOS COUNTDOWN MODAL -->
-      <div id="voiceCountdownModal" class="modal-backdrop-clean hidden">
-        <div class="modal-box-clean countdown-box">
-          <div class="modal-clean-header center">
-            <svg class="header-alert-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            <h3>Emergency Voice Phrase Detected</h3>
-          </div>
-          
-          <div class="detected-phrase-box-clean">
-            <span>Detected Trigger Phrase:</span>
-            <strong id="detectedPhraseText">"HELP ME"</strong>
-          </div>
-
-          <div class="countdown-circle-clean">
-            <span id="countdownNumber" class="countdown-digit">5</span>
-            <span class="countdown-sub">SECONDS</span>
-          </div>
-
-          <p class="countdown-explainer">
-            Dispatching live GPS location to emergency services and registered contacts in <strong><span id="countdownNoticeSecs">5</span>s</strong>.
-          </p>
-
-          <button type="button" id="btnCancelVoiceCountdown" class="btn-cancel-countdown-clean">
-            Cancel Emergency SOS
-          </button>
-        </div>
-      </div>
-
-      <!-- REPORT HAZARD MODAL (Exact Coordinates) -->
+      <!-- 6. REPORT HAZARD MODAL (Exact Coordinates) -->
       <div id="reportModal" class="modal-backdrop-clean hidden">
         <div class="modal-box-clean">
           <div class="modal-clean-header">
@@ -756,7 +900,7 @@
         </div>
       </div>
 
-      <!-- COMMUNITY REPORTS DRAWER -->
+      <!-- 7. COMMUNITY REPORTS DRAWER -->
       <div id="reportsDrawer" class="drawer-backdrop-clean hidden">
         <div class="drawer-box-clean">
           <div class="drawer-header-clean">
@@ -767,85 +911,6 @@
             Verified community reports are stored and directly influence route safety scoring and heatmap densities.
           </div>
           <div class="drawer-reports-list" id="communityReportsList"></div>
-        </div>
-      </div>
-
-      <!-- EMERGENCY SOS ACTIVE MODAL -->
-      <div id="sosModal" class="modal-backdrop-clean hidden">
-        <div class="modal-box-clean sos-active-box">
-          <div class="modal-clean-header sos-header">
-            <div class="header-with-icon">
-              <svg class="sos-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <h3>SOS ACTIVE</h3>
-            </div>
-            <button id="closeSosModalBtn" class="btn-close-modal">✕</button>
-          </div>
-
-          <div class="sos-modal-content">
-            <div class="sos-trigger-banner" id="sosTriggerSourceTag">
-              <span>Trigger Source:</span>
-              <strong id="sosTriggerSourceName">Manual Emergency Button</strong>
-            </div>
-
-            <p class="sos-broadcast-text">
-              Emergency alert activated. Real-time GPS location is being transmitted.
-            </p>
-
-            <div class="sos-gps-card">
-              <span class="gps-label">CURRENT GPS LOCATION:</span>
-              <strong id="sosGpsCoords" class="gps-value">Fetching current GPS coordinates...</strong>
-            </div>
-
-            <!-- Emergency Contacts -->
-            <div class="contacts-card-clean">
-              <div class="contacts-header-row">
-                <span class="contacts-title">Emergency Contacts</span>
-                <button type="button" id="btnEditContacts" class="btn-link-sm">Edit Numbers</button>
-              </div>
-              <div id="contactsDisplayList" class="contacts-pills-row">
-                <span class="contact-pill-clean">Contact 1: Primary (+91 98765 43210)</span>
-                <span class="contact-pill-clean">Contact 2: Secondary (+91 91234 56789)</span>
-              </div>
-              <div id="contactsEditForm" class="contacts-edit-form hidden">
-                <div class="form-row-2col">
-                  <input type="text" id="contactName1" class="clean-text-input-sm" placeholder="Contact 1 Name" value="Primary Contact" />
-                  <input type="text" id="contactPhone1" class="clean-text-input-sm" placeholder="Phone (e.g. +91 9876543210)" value="+91 98765 43210" />
-                </div>
-                <div class="form-row-2col">
-                  <input type="text" id="contactName2" class="clean-text-input-sm" placeholder="Contact 2 Name" value="Secondary Contact" />
-                  <input type="text" id="contactPhone2" class="clean-text-input-sm" placeholder="Phone (e.g. +91 9123456789)" value="+91 91234 56789" />
-                </div>
-                <button type="button" id="btnSaveContacts" class="btn-primary-action-sm">Save Contacts</button>
-              </div>
-            </div>
-
-            <!-- Direct Helplines -->
-            <div class="helplines-grid-clean">
-              <a href="tel:100" class="helpline-card police">
-                <strong>Call Police (100)</strong>
-                <span>Direct police control room</span>
-              </a>
-              <a href="tel:108" class="helpline-card medical">
-                <strong>Call Ambulance (108)</strong>
-                <span>24/7 Medical emergency</span>
-              </a>
-              <a href="tel:112" class="helpline-card emergency">
-                <strong>National Helpline (112)</strong>
-                <span>All-in-one emergency response</span>
-              </a>
-            </div>
-
-            <button id="btnSimulateContactSms" class="btn-primary-action w-full mt-3">
-              Send Emergency SMS with Live Location to Contacts
-            </button>
-            <div id="sosDispatchStatus" class="sos-status-alert hidden"></div>
-
-            <div class="sos-footer-actions">
-              <button type="button" id="btnDismissSos" class="btn-dismiss-sos-clean">
-                Stop / Dismiss SOS
-              </button>
-            </div>
-          </div>
         </div>
       </div>
 

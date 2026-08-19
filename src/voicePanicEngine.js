@@ -37,6 +37,7 @@ export class VoicePanicEngine {
     this.onCountdownTick = options.onCountdownTick || (() => {});
     this.onEmergencyTriggered = options.onEmergencyTriggered || (() => {});
     this.onCancelled = options.onCancelled || (() => {});
+    this.onEmergencyDetected = options.onEmergencyDetected || null;
 
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     this.isSupported = !!SpeechRec;
@@ -217,7 +218,12 @@ export class VoicePanicEngine {
           
           const matchedPhrase = this.checkTriggerPhrase(transcript);
           if (matchedPhrase) {
-            this.startCountdown(matchedPhrase);
+            this.state = 'COUNTDOWN';
+            if (this.onEmergencyDetected) {
+              this.onEmergencyDetected(matchedPhrase);
+            } else {
+              this.startCountdown(matchedPhrase);
+            }
             break;
           }
         }

@@ -9,6 +9,7 @@ import { reportStore } from './reportStore.js';
 import { AIReportClassifier } from './aiClassifier.js';
 import { SAFETY_CONFIG } from './safetyConfig.js';
 import { VoicePanicEngine, SUPPORTED_LANGUAGES } from './voicePanicEngine.js';
+import { EmergencySosService, SOS_STATUS } from './emergencySosService.js';
 
 // ================= TAB SWITCHING =================
 const tabGuardianEye = document.getElementById('tabGuardianEye');
@@ -121,14 +122,55 @@ const photoPreviewContainer = document.getElementById('photoPreviewContainer');
 const photoPreviewImg = document.getElementById('photoPreviewImg');
 const btnRemovePhoto = document.getElementById('btnRemovePhoto');
 
-// ================= MULTILINGUAL HANDS-FREE VOICE SOS =================
+// ================= CENTRAL SOS SERVICE INITIALIZATION =================
+const centralSosCountdownModal = document.getElementById('centralSosCountdownModal');
+const countdownModalHeading = document.getElementById('countdownModalHeading');
+const countdownTriggerSourceName = document.getElementById('countdownTriggerSourceName');
+const centralCountdownNumber = document.getElementById('centralCountdownNumber');
+const centralCountdownNoticeSecs = document.getElementById('centralCountdownNoticeSecs');
+const btnCancelCentralCountdown = document.getElementById('btnCancelCentralCountdown');
+
+const openSosBtn = document.getElementById('openSosBtn');
+const sosModal = document.getElementById('sosModal');
+const closeSosModalBtn = document.getElementById('closeSosModalBtn');
+const sosTriggerSourceName = document.getElementById('sosTriggerSourceName');
+const sosGpsStatusBadge = document.getElementById('sosGpsStatusBadge');
+const sosGpsCoords = document.getElementById('sosGpsCoords');
+const sosGpsTimestamp = document.getElementById('sosGpsTimestamp');
+const linkOpenMapLocation = document.getElementById('linkOpenMapLocation');
+
+const btnCallPrimaryContactNow = document.getElementById('btnCallPrimaryContactNow');
+const btnSendEmergencyMessageNow = document.getElementById('btnSendEmergencyMessageNow');
+const sosActiveContactsList = document.getElementById('sosActiveContactsList');
+const btnEditContactsInSos = document.getElementById('btnEditContactsInSos');
+const sosDispatchStatus = document.getElementById('sosDispatchStatus');
+const btnDismissSos = document.getElementById('btnDismissSos');
+
+// Contacts Manager Modal Elements
+const btnOpenContactsManager = document.getElementById('btnOpenContactsManager');
+const contactsCountBadge = document.getElementById('contactsCountBadge');
+const contactsManagerModal = document.getElementById('contactsManagerModal');
+const closeContactsManagerBtn = document.getElementById('closeContactsManagerBtn');
+const btnDoneContactsManager = document.getElementById('btnDoneContactsManager');
+const btnOpenAddContactForm = document.getElementById('btnOpenAddContactForm');
+const addContactInlineForm = document.getElementById('addContactInlineForm');
+const contactFormTitle = document.getElementById('contactFormTitle');
+const editContactId = document.getElementById('editContactId');
+const inputContactName = document.getElementById('inputContactName');
+const inputContactPhone = document.getElementById('inputContactPhone');
+const inputContactRelation = document.getElementById('inputContactRelation');
+const checkContactIsPrimary = document.getElementById('checkContactIsPrimary');
+const contactFormError = document.getElementById('contactFormError');
+const btnCancelContactForm = document.getElementById('btnCancelContactForm');
+const btnSaveContactSubmit = document.getElementById('btnSaveContactSubmit');
+const contactsManagerList = document.getElementById('contactsManagerList');
+
+// Voice SOS Modal Elements
 const btnOpenVoiceSettings = document.getElementById('btnOpenVoiceSettings');
 const headerVoiceLabel = document.getElementById('headerVoiceLabel');
 const voicePanicStatusTag = document.getElementById('voicePanicStatusTag');
 const btnInputVoiceToggle = document.getElementById('btnInputVoiceToggle');
 const btnOpenVoiceSettingsPromo = document.getElementById('btnOpenVoiceSettingsPromo');
-
-// Voice Settings Modal Elements
 const voiceSettingsModal = document.getElementById('voiceSettingsModal');
 const closeVoiceSettingsBtn = document.getElementById('closeVoiceSettingsBtn');
 const btnDoneVoiceSettings = document.getElementById('btnDoneVoiceSettings');
@@ -139,7 +181,6 @@ const phrasesCardsContainer = document.getElementById('phrasesCardsContainer');
 const btnResetPhrases = document.getElementById('btnResetPhrases');
 const btnOpenAddPhraseModal = document.getElementById('btnOpenAddPhraseModal');
 
-// Add / Edit Phrase Modal Elements
 const addPhraseModal = document.getElementById('addPhraseModal');
 const addPhraseModalTitle = document.getElementById('addPhraseModalTitle');
 const closeAddPhraseModalBtn = document.getElementById('closeAddPhraseModalBtn');
@@ -151,61 +192,323 @@ const selectPhraseLangTag = document.getElementById('selectPhraseLangTag');
 const addPhraseErrorMsg = document.getElementById('addPhraseErrorMsg');
 const btnSavePhraseSubmit = document.getElementById('btnSavePhraseSubmit');
 
-// 5-Second Voice SOS Countdown Modal Elements
-const voiceCountdownModal = document.getElementById('voiceCountdownModal');
-const detectedPhraseText = document.getElementById('detectedPhraseText');
-const countdownNumber = document.getElementById('countdownNumber');
-const countdownNoticeSecs = document.getElementById('countdownNoticeSecs');
-const btnCancelVoiceCountdown = document.getElementById('btnCancelVoiceCountdown');
-
-// SOS Modal Elements
-const openSosBtn = document.getElementById('openSosBtn');
-const sosModal = document.getElementById('sosModal');
-const closeSosModalBtn = document.getElementById('closeSosModalBtn');
-const sosGpsCoords = document.getElementById('sosGpsCoords');
-const sosTriggerSourceName = document.getElementById('sosTriggerSourceName');
-const btnSimulateContactSms = document.getElementById('btnSimulateContactSms');
-const sosDispatchStatus = document.getElementById('sosDispatchStatus');
-const btnDismissSos = document.getElementById('btnDismissSos');
-
-// Emergency Contacts Elements
-const btnEditContacts = document.getElementById('btnEditContacts');
-const contactsDisplayList = document.getElementById('contactsDisplayList');
-const contactsEditForm = document.getElementById('contactsEditForm');
-const contactName1 = document.getElementById('contactName1');
-const contactPhone1 = document.getElementById('contactPhone1');
-const contactName2 = document.getElementById('contactName2');
-const contactPhone2 = document.getElementById('contactPhone2');
-const btnSaveContacts = document.getElementById('btnSaveContacts');
-
 // State for exact report coordinate picking
 let currentReportCoords = { lat: 17.4435, lng: 78.3772 };
 let activePhotoDataUrl = null;
 let navigationSimulationInterval = null;
 
-// ================= INITIALIZE VOICE SOS ENGINE =================
+// Initialize Central Emergency SOS Service
+const emergencySos = new EmergencySosService({
+  onStateChange: (state, data) => {
+    handleSosStateChange(state, data);
+  },
+  onCountdownTick: (secondsRemaining) => {
+    centralCountdownNumber.textContent = secondsRemaining;
+    centralCountdownNoticeSecs.textContent = secondsRemaining;
+    sound.playCountdownChime(secondsRemaining);
+  },
+  onLocationUpdate: (loc, error) => {
+    renderSosLocation(loc, error);
+  },
+  onContactsChange: (contacts) => {
+    renderSosActiveContacts(contacts);
+    renderContactsManagerList(contacts);
+    updateContactsCountBadge();
+  }
+});
+
+// Initialize Voice Panic Engine (Connects directly to EmergencySosService)
 const voicePanicEngine = new VoicePanicEngine({
   onStatusChange: (status, label) => {
     updateVoicePanicStatusUI(status, label);
   },
-  onCountdownTick: (secondsRemaining, phrase) => {
-    detectedPhraseText.textContent = `"${phrase}"`;
-    countdownNumber.textContent = secondsRemaining;
-    countdownNoticeSecs.textContent = secondsRemaining;
-    voiceCountdownModal.classList.remove('hidden');
-    sound.playCountdownChime(secondsRemaining);
-  },
-  onEmergencyTriggered: (phrase) => {
-    voiceCountdownModal.classList.add('hidden');
-    triggerEmergencySos(`Voice Trigger ("${phrase}")`);
-  },
-  onCancelled: () => {
-    voiceCountdownModal.classList.add('hidden');
-    sound.playBeep(440, 0.15);
+  onEmergencyDetected: (phrase) => {
+    emergencySos.startSosCountdown(`Voice Trigger ("${phrase}")`);
   }
 });
 
-// Sync Voice Language Selection with engine
+// ================= CENTRAL SOS STATE HANDLER =================
+function handleSosStateChange(state, data = {}) {
+  if (state === SOS_STATUS.COUNTDOWN) {
+    countdownTriggerSourceName.textContent = (data.source || 'Emergency Trigger').toUpperCase();
+    centralCountdownNumber.textContent = data.seconds || 5;
+    centralCountdownNoticeSecs.textContent = data.seconds || 5;
+    centralSosCountdownModal.classList.remove('hidden');
+    sosModal.classList.add('hidden');
+  } else if (state === SOS_STATUS.INACTIVE) {
+    centralSosCountdownModal.classList.add('hidden');
+    sosModal.classList.add('hidden');
+    if (data.cancelled) {
+      sound.playBeep(440, 0.15);
+      alert("SOS cancelled. Returning to SafeRoute.");
+      voicePanicEngine.resumeAfterEmergency();
+    } else if (data.stopped) {
+      voicePanicEngine.resumeAfterEmergency();
+    }
+  } else if (state === SOS_STATUS.ACTIVE) {
+    centralSosCountdownModal.classList.add('hidden');
+    sosTriggerSourceName.textContent = (data.source || 'EMERGENCY TRIGGER').toUpperCase();
+    sosModal.classList.remove('hidden');
+    sound.playSiren();
+    renderSosActiveContacts(emergencySos.getContacts());
+  }
+}
+
+function renderSosLocation(loc, error) {
+  if (loc) {
+    sosGpsStatusBadge.className = 'status-indicator-pill listening';
+    sosGpsStatusBadge.innerHTML = '<span class="status-dot"></span><span class="status-label">Location Detected</span>';
+    sosGpsCoords.textContent = `${loc.latitude}° N, ${loc.longitude}° E (±${loc.accuracy}m)`;
+    sosGpsTimestamp.textContent = `Timestamp: ${loc.timestamp}`;
+    
+    linkOpenMapLocation.href = `https://maps.google.com/?q=${loc.latitude},${loc.longitude}`;
+    linkOpenMapLocation.classList.remove('hidden');
+
+    safeRouteMapRenderer.updateUserLocation(loc.latitude, loc.longitude);
+  } else {
+    sosGpsStatusBadge.className = 'status-indicator-pill unsupported';
+    sosGpsStatusBadge.innerHTML = '<span class="status-dot"></span><span class="status-label">Location Unavailable</span>';
+    sosGpsCoords.textContent = error || 'Unable to access your current location.';
+    sosGpsTimestamp.textContent = `Timestamp: ${new Date().toLocaleTimeString()}`;
+    linkOpenMapLocation.classList.add('hidden');
+  }
+}
+
+// Render contacts list inside active SOS screen
+function renderSosActiveContacts(contacts) {
+  sosActiveContactsList.innerHTML = '';
+  if (!contacts || contacts.length === 0) {
+    sosActiveContactsList.innerHTML = '<div class="text-xs text-muted py-2">No emergency contacts configured yet.</div>';
+    return;
+  }
+
+  contacts.forEach((c) => {
+    const card = document.createElement('div');
+    card.className = `sos-contact-item-card ${c.isPrimary ? 'primary' : ''}`;
+
+    const callBadgeClass = c.callStatus.includes('Started') ? 'good' : c.callStatus.includes('Failed') ? 'danger' : 'dim';
+    const msgBadgeClass = c.messageStatus.includes('Opened') || c.messageStatus.includes('Shared') ? 'good' : c.messageStatus.includes('Failed') ? 'danger' : 'dim';
+
+    card.innerHTML = `
+      <div class="sos-contact-info">
+        <div class="contact-name-row">
+          <strong>${c.name}</strong>
+          ${c.isPrimary ? '<span class="primary-badge">PRIMARY</span>' : ''}
+          <span class="relation-tag">${c.relation || 'Contact'}</span>
+        </div>
+        <div class="contact-phone-text">${c.phone}</div>
+        <div class="contact-comm-statuses">
+          <span>Call: <strong class="status-text ${callBadgeClass}">${c.callStatus}</strong></span>
+          <span>·</span>
+          <span>Message: <strong class="status-text ${msgBadgeClass}">${c.messageStatus}</strong></span>
+        </div>
+      </div>
+
+      <div class="sos-contact-actions">
+        <button type="button" class="btn-contact-call" title="Call this contact via device phone dialer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          <span>Call</span>
+        </button>
+        <button type="button" class="btn-contact-msg" title="Send emergency SMS via messaging app">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span>SMS</span>
+        </button>
+      </div>
+    `;
+
+    // Action listeners
+    card.querySelector('.btn-contact-call').addEventListener('click', () => {
+      const res = emergencySos.callContact(c.id);
+      if (!res.success) alert(res.error);
+    });
+
+    card.querySelector('.btn-contact-msg').addEventListener('click', async () => {
+      const res = await emergencySos.sendMessageToContact(c.id);
+      if (res.success) {
+        showSosStatusToast(res.status);
+      } else {
+        alert(res.error);
+      }
+    });
+
+    sosActiveContactsList.appendChild(card);
+  });
+}
+
+function showSosStatusToast(msg) {
+  sosDispatchStatus.textContent = msg;
+  sosDispatchStatus.classList.remove('hidden');
+  setTimeout(() => {
+    sosDispatchStatus.classList.add('hidden');
+  }, 6000);
+}
+
+// Wire SOS Trigger Buttons
+openSosBtn.addEventListener('click', () => {
+  emergencySos.startSosCountdown('Manual SOS Button');
+});
+
+const triggerManualSos = document.getElementById('triggerManualSos');
+if (triggerManualSos) {
+  triggerManualSos.addEventListener('click', () => {
+    emergencySos.startSosCountdown('Manual CCTV Emergency');
+  });
+}
+
+btnCancelCentralCountdown.addEventListener('click', () => {
+  emergencySos.cancelSosCountdown();
+});
+
+btnDismissSos.addEventListener('click', () => {
+  emergencySos.stopSOS();
+});
+
+closeSosModalBtn.addEventListener('click', () => {
+  emergencySos.stopSOS();
+});
+
+// Primary Contact Quick Call Button
+btnCallPrimaryContactNow.addEventListener('click', () => {
+  const primary = emergencySos.getPrimaryContact();
+  if (primary) {
+    const res = emergencySos.callContact(primary.id);
+    if (!res.success) alert(res.error);
+  } else {
+    alert("No emergency contacts configured. Please add an emergency contact.");
+  }
+});
+
+// Send Emergency Message to All Contacts Button
+btnSendEmergencyMessageNow.addEventListener('click', async () => {
+  const res = await emergencySos.shareEmergencyAlertWithAll();
+  if (res.success) {
+    showSosStatusToast(res.status);
+  } else {
+    alert(res.error);
+  }
+});
+
+// ================= EMERGENCY CONTACTS MANAGER MODAL =================
+function updateContactsCountBadge() {
+  const count = emergencySos.getContacts().length;
+  contactsCountBadge.textContent = count;
+}
+updateContactsCountBadge();
+
+function openContactsManager() {
+  renderContactsManagerList(emergencySos.getContacts());
+  addContactInlineForm.classList.add('hidden');
+  contactsManagerModal.classList.remove('hidden');
+}
+
+btnOpenContactsManager.addEventListener('click', openContactsManager);
+btnEditContactsInSos.addEventListener('click', openContactsManager);
+closeContactsManagerBtn.addEventListener('click', () => contactsManagerModal.classList.add('hidden'));
+btnDoneContactsManager.addEventListener('click', () => contactsManagerModal.classList.add('hidden'));
+
+function renderContactsManagerList(contacts) {
+  contactsManagerList.innerHTML = '';
+  if (!contacts || contacts.length === 0) {
+    contactsManagerList.innerHTML = '<div class="text-xs text-muted py-3">No emergency contacts saved yet. Click "+ Add Emergency Contact" above.</div>';
+    return;
+  }
+
+  contacts.forEach((c) => {
+    const card = document.createElement('div');
+    card.className = `contact-mgr-item-card ${c.isPrimary ? 'primary' : ''}`;
+
+    card.innerHTML = `
+      <div class="mgr-contact-main">
+        <div class="contact-name-row">
+          <strong>${c.name}</strong>
+          ${c.isPrimary ? '<span class="primary-badge">PRIMARY</span>' : ''}
+          <span class="relation-tag">${c.relation || 'Contact'}</span>
+        </div>
+        <div class="contact-phone-text">${c.phone}</div>
+      </div>
+
+      <div class="mgr-contact-tools">
+        ${!c.isPrimary ? '<button type="button" class="btn-mgr-tool btn-set-primary">Set Primary</button>' : ''}
+        <button type="button" class="btn-mgr-tool btn-edit-contact">Edit</button>
+        <button type="button" class="btn-mgr-tool btn-del-contact">Delete</button>
+      </div>
+    `;
+
+    if (!c.isPrimary) {
+      card.querySelector('.btn-set-primary').addEventListener('click', () => {
+        emergencySos.setPrimaryContact(c.id);
+      });
+    }
+
+    card.querySelector('.btn-edit-contact').addEventListener('click', () => {
+      editContactId.value = c.id;
+      inputContactName.value = c.name;
+      inputContactPhone.value = c.phone;
+      inputContactRelation.value = c.relation || '';
+      checkContactIsPrimary.checked = !!c.isPrimary;
+      contactFormTitle.textContent = 'Edit Contact';
+      contactFormError.classList.add('hidden');
+      addContactInlineForm.classList.remove('hidden');
+    });
+
+    card.querySelector('.btn-del-contact').addEventListener('click', () => {
+      if (confirm(`Remove emergency contact "${c.name}"?`)) {
+        emergencySos.deleteContact(c.id);
+      }
+    });
+
+    contactsManagerList.appendChild(card);
+  });
+}
+
+btnOpenAddContactForm.addEventListener('click', () => {
+  editContactId.value = '';
+  inputContactName.value = '';
+  inputContactPhone.value = '';
+  inputContactRelation.value = '';
+  checkContactIsPrimary.checked = (emergencySos.getContacts().length === 0);
+  contactFormTitle.textContent = 'Add New Emergency Contact';
+  contactFormError.classList.add('hidden');
+  addContactInlineForm.classList.remove('hidden');
+});
+
+btnCancelContactForm.addEventListener('click', () => {
+  addContactInlineForm.classList.add('hidden');
+});
+
+btnSaveContactSubmit.addEventListener('click', () => {
+  const name = inputContactName.value.trim();
+  const phone = inputContactPhone.value.trim();
+  const relation = inputContactRelation.value.trim();
+  const isPrimary = checkContactIsPrimary.checked;
+  const id = editContactId.value;
+
+  if (!name || !phone) {
+    contactFormError.textContent = 'Contact name and phone number are required.';
+    contactFormError.classList.remove('hidden');
+    return;
+  }
+
+  if (id) {
+    const res = emergencySos.updateContact(id, { name, phone, relation, isPrimary });
+    if (!res.success) {
+      contactFormError.textContent = res.error;
+      contactFormError.classList.remove('hidden');
+      return;
+    }
+  } else {
+    const res = emergencySos.addContact(name, phone, relation, isPrimary);
+    if (!res.success) {
+      contactFormError.textContent = res.error;
+      contactFormError.classList.remove('hidden');
+      return;
+    }
+  }
+
+  addContactInlineForm.classList.add('hidden');
+});
+
+// ================= MULTILINGUAL VOICE SOS UI =================
 voiceLangSelect.value = voicePanicEngine.currentLanguage;
 voiceLangSelect.addEventListener('change', () => {
   voicePanicEngine.setLanguage(voiceLangSelect.value);
@@ -271,7 +574,6 @@ function updateVoicePanicStatusUI(status) {
   }
 }
 
-// Open / Close Voice SOS Settings Modal
 function openVoiceSettingsModal() {
   voiceLangSelect.value = voicePanicEngine.currentLanguage;
   renderPhrasesList();
@@ -285,7 +587,6 @@ if (btnOpenVoiceSettingsPromo) {
 closeVoiceSettingsBtn.addEventListener('click', () => voiceSettingsModal.classList.add('hidden'));
 btnDoneVoiceSettings.addEventListener('click', () => voiceSettingsModal.classList.add('hidden'));
 
-// Toggle Voice SOS from Modal
 btnModalToggleVoice.addEventListener('click', () => {
   if (!voicePanicEngine.isSupported) {
     alert("Hands-Free Voice SOS is not supported by your current browser. Please use Chrome or Edge for Web Speech API support.");
@@ -294,7 +595,6 @@ btnModalToggleVoice.addEventListener('click', () => {
   voicePanicEngine.toggle();
 });
 
-// Quick toggle from Interface 1 card
 if (btnInputVoiceToggle) {
   btnInputVoiceToggle.addEventListener('click', () => {
     if (!voicePanicEngine.isSupported) {
@@ -305,12 +605,6 @@ if (btnInputVoiceToggle) {
   });
 }
 
-// Cancel 5-second countdown
-btnCancelVoiceCountdown.addEventListener('click', () => {
-  voicePanicEngine.cancelCountdown();
-});
-
-// ================= EMERGENCY PHRASES MANAGEMENT =================
 function renderPhrasesList() {
   const phrases = voicePanicEngine.getPhrases();
   phrasesCardsContainer.innerHTML = '';
@@ -340,21 +634,17 @@ function renderPhrasesList() {
         <span class="phrase-lang-tag">${langLabel}</span>
       </div>
       <div class="phrase-actions-group">
-        <button type="button" class="btn-phrase-tool btn-edit-phrase" title="Edit phrase">Edit</button>
-        <button type="button" class="btn-phrase-tool btn-del-phrase" title="Delete phrase">Delete</button>
+        <button type="button" class="btn-phrase-tool btn-edit-phrase">Edit</button>
+        <button type="button" class="btn-phrase-tool btn-del-phrase">Delete</button>
       </div>
     `;
 
-    // Toggle Enabled
-    const checkbox = card.querySelector('.phrase-toggle-input');
-    checkbox.addEventListener('change', () => {
+    card.querySelector('.phrase-toggle-input').addEventListener('change', () => {
       voicePanicEngine.togglePhrase(item.id);
       renderPhrasesList();
     });
 
-    // Edit Phrase
-    const btnEdit = card.querySelector('.btn-edit-phrase');
-    btnEdit.addEventListener('click', () => {
+    card.querySelector('.btn-edit-phrase').addEventListener('click', () => {
       editPhraseId.value = item.id;
       inputCustomPhrase.value = item.phrase;
       selectPhraseLangTag.value = item.lang || 'all';
@@ -363,9 +653,7 @@ function renderPhrasesList() {
       addPhraseModal.classList.remove('hidden');
     });
 
-    // Delete Phrase
-    const btnDel = card.querySelector('.btn-del-phrase');
-    btnDel.addEventListener('click', () => {
+    card.querySelector('.btn-del-phrase').addEventListener('click', () => {
       voicePanicEngine.deletePhrase(item.id);
       renderPhrasesList();
     });
@@ -374,7 +662,6 @@ function renderPhrasesList() {
   });
 }
 
-// Reset Phrases to Defaults
 btnResetPhrases.addEventListener('click', () => {
   if (confirm("Restore default multilingual emergency trigger phrases?")) {
     voicePanicEngine.resetToDefaults();
@@ -382,7 +669,6 @@ btnResetPhrases.addEventListener('click', () => {
   }
 });
 
-// Add Phrase Modal Handlers
 btnOpenAddPhraseModal.addEventListener('click', () => {
   editPhraseId.value = '';
   inputCustomPhrase.value = '';
@@ -408,7 +694,6 @@ addPhraseForm.addEventListener('submit', (e) => {
   }
 
   if (id) {
-    // Editing existing phrase
     const res = voicePanicEngine.updatePhrase(id, text);
     if (!res.success) {
       addPhraseErrorMsg.textContent = res.error;
@@ -416,7 +701,6 @@ addPhraseForm.addEventListener('submit', (e) => {
       return;
     }
   } else {
-    // Adding new phrase
     const res = voicePanicEngine.addPhrase(text, lang);
     if (!res.success) {
       addPhraseErrorMsg.textContent = res.error;
@@ -427,99 +711,6 @@ addPhraseForm.addEventListener('submit', (e) => {
 
   addPhraseModal.classList.add('hidden');
   renderPhrasesList();
-});
-
-// ================= EMERGENCY SOS DISPATCH =================
-function triggerEmergencySos(sourceDescription = 'MANUAL SOS BUTTON') {
-  sosTriggerSourceName.textContent = sourceDescription.toUpperCase();
-  sosGpsCoords.textContent = 'Fetching current real-time GPS location...';
-  sosModal.classList.remove('hidden');
-  sound.playSiren();
-
-  // Obtain Current Real GPS Location
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = Number(pos.coords.latitude.toFixed(6));
-        const lng = Number(pos.coords.longitude.toFixed(6));
-        const accuracy = Math.round(pos.coords.accuracy || 10);
-        sosGpsCoords.textContent = `${lat.toFixed(6)}° N, ${lng.toFixed(6)}° E (±${accuracy}m)`;
-        safeRouteMapRenderer.updateUserLocation(lat, lng);
-      },
-      (err) => {
-        sosGpsCoords.textContent = `Unable to obtain current GPS location (${err.message})`;
-      },
-      { enableHighAccuracy: true, timeout: 8000 }
-    );
-  } else {
-    sosGpsCoords.textContent = 'Geolocation is not supported by this browser';
-  }
-}
-
-openSosBtn.addEventListener('click', () => {
-  triggerEmergencySos('MANUAL SOS BUTTON');
-});
-
-closeSosModalBtn.addEventListener('click', () => {
-  sosModal.classList.add('hidden');
-  voicePanicEngine.resumeAfterEmergency();
-});
-
-btnDismissSos.addEventListener('click', () => {
-  sosModal.classList.add('hidden');
-  voicePanicEngine.resumeAfterEmergency();
-});
-
-// Emergency Contacts Management (localStorage)
-function loadEmergencyContacts() {
-  const saved = localStorage.getItem('saferoute_emergency_contacts_v2');
-  if (saved) {
-    try {
-      const contacts = JSON.parse(saved);
-      if (Array.isArray(contacts) && contacts.length >= 2) {
-        contactName1.value = contacts[0].name || 'Primary Contact';
-        contactPhone1.value = contacts[0].phone || '+91 98765 43210';
-        contactName2.value = contacts[1].name || 'Secondary Contact';
-        contactPhone2.value = contacts[1].phone || '+91 91234 56789';
-
-        contactsDisplayList.innerHTML = `
-          <span class="contact-pill-clean">${contacts[0].name}: ${contacts[0].phone}</span>
-          <span class="contact-pill-clean">${contacts[1].name}: ${contacts[1].phone}</span>
-        `;
-      }
-    } catch (e) {}
-  }
-}
-loadEmergencyContacts();
-
-btnEditContacts.addEventListener('click', () => {
-  contactsEditForm.classList.toggle('hidden');
-});
-
-btnSaveContacts.addEventListener('click', () => {
-  const c1 = { name: contactName1.value.trim() || 'Primary Contact', phone: contactPhone1.value.trim() || '+91 98765 43210' };
-  const c2 = { name: contactName2.value.trim() || 'Secondary Contact', phone: contactPhone2.value.trim() || '+91 91234 56789' };
-  
-  localStorage.setItem('saferoute_emergency_contacts_v2', JSON.stringify([c1, c2]));
-  contactsDisplayList.innerHTML = `
-    <span class="contact-pill-clean">${c1.name}: ${c1.phone}</span>
-    <span class="contact-pill-clean">${c2.name}: ${c2.phone}</span>
-  `;
-  contactsEditForm.classList.add('hidden');
-  alert("Emergency contacts updated.");
-});
-
-btnSimulateContactSms.addEventListener('click', () => {
-  btnSimulateContactSms.disabled = true;
-  btnSimulateContactSms.textContent = 'Transmitting Emergency SOS...';
-  setTimeout(() => {
-    btnSimulateContactSms.disabled = false;
-    btnSimulateContactSms.textContent = 'Send Emergency SMS with Live Location to Contacts';
-    const p1 = contactPhone1.value || '+91 98765 43210';
-    const p2 = contactPhone2.value || '+91 91234 56789';
-    sosDispatchStatus.textContent = `Emergency broadcast sent to [${p1}] and [${p2}] with your live GPS coordinates.`;
-    sosDispatchStatus.classList.remove('hidden');
-  }, 1200);
 });
 
 // ================= DYNAMIC GEOCODING & AUTOCOMPLETE =================
@@ -1130,7 +1321,6 @@ const thresholdRange = document.getElementById('thresholdRange');
 const thresholdVal = document.getElementById('thresholdVal');
 const emotionSelect = document.getElementById('emotionSelect');
 const timeToggle = document.getElementById('timeToggle');
-const triggerManualSos = document.getElementById('triggerManualSos');
 const toggleNightVisionBtn = document.getElementById('toggleNightVisionBtn');
 
 let isNightVision = false;

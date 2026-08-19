@@ -2595,3 +2595,327 @@ body {
   font-size: 11px;
 }
 
+/* ================= REAL EMERGENCY SOS ACTIVE SCREEN STYLES ================= */
+.emergency-quick-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+@media (max-width: 480px) {
+  .emergency-quick-actions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.btn-call-primary-lg {
+  background: var(--danger-color);
+  border: 1px solid var(--danger-color);
+  color: #ffffff;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.35);
+  transition: all 0.15s ease;
+}
+
+.btn-call-primary-lg:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+.btn-call-primary-lg svg {
+  width: 18px;
+  height: 18px;
+}
+
+.btn-msg-primary-lg {
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  color: #ffffff;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+  transition: all 0.15s ease;
+}
+
+.btn-msg-primary-lg:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.btn-msg-primary-lg svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* SOS Active Contacts List */
+.sos-contacts-list-card {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+}
+
+.sos-contacts-active-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.sos-contact-item-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.sos-contact-item-card.primary {
+  border-left: 3px solid var(--danger-color);
+}
+
+.sos-contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.contact-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.primary-badge {
+  font-size: 8px;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  border: 1px solid var(--danger-border);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.relation-tag {
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.contact-phone-text {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-body);
+}
+
+.contact-comm-statuses {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.status-text.good { color: var(--safe-text); }
+.status-text.danger { color: var(--danger-text); }
+.status-text.dim { color: var(--text-muted); }
+
+.sos-contact-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-contact-call {
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  color: var(--danger-text);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.btn-contact-call:hover {
+  background: var(--danger-color);
+  color: #ffffff;
+}
+
+.btn-contact-call svg {
+  width: 12px;
+  height: 12px;
+}
+
+.btn-contact-msg {
+  background: var(--primary-light);
+  border: 1px solid var(--primary-border);
+  color: var(--primary);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.btn-contact-msg:hover {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.btn-contact-msg svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* ================= CONTACTS MANAGER MODAL ================= */
+.contacts-manager-box {
+  max-width: 540px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.contacts-manager-content {
+  padding: 16px 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.contacts-intro-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.contacts-toolbar-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.add-contact-card {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.add-contact-card h4 {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.clean-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-body);
+  cursor: pointer;
+}
+
+.clean-checkbox-label input {
+  accent-color: var(--primary);
+}
+
+.contacts-manager-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.contact-mgr-item-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.contact-mgr-item-card.primary {
+  border-left: 3px solid var(--danger-color);
+}
+
+.mgr-contact-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mgr-contact-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-mgr-tool {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  color: var(--text-body);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.btn-mgr-tool:hover {
+  background: var(--border-light);
+  color: var(--text-main);
+}
+
+.btn-set-primary {
+  color: var(--danger-text);
+  border-color: var(--danger-border);
+  background: var(--danger-bg);
+}
+
+.text-xs { font-size: 11px; }
+.text-muted { color: var(--text-muted); }
+.text-primary { color: var(--primary); text-decoration: none; font-weight: 600; }
+.py-2 { padding-top: 8px; padding-bottom: 8px; }
+.py-3 { padding-top: 12px; padding-bottom: 12px; }
+.mt-1 { margin-top: 4px; }
+
+
