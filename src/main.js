@@ -1254,6 +1254,9 @@ function updateFirstPageRoutePreview() {
 
     if (previewDistanceValue) previewDistanceValue.textContent = `${distKm} km`;
     if (previewTimeValue) previewTimeValue.textContent = formatDurationText(durMin);
+  } else {
+    if (previewDistanceValue) previewDistanceValue.textContent = `-- km`;
+    if (previewTimeValue) previewTimeValue.textContent = `-- min`;
   }
 }
 
@@ -1451,26 +1454,48 @@ btnFindSafestRoute.addEventListener('click', async (e) => {
 });
 
 async function handleFindSafeRoutes() {
+  const srcVal = (sourceInput.value || '').trim();
+  const destVal = (destInput.value || '').trim();
+
+  if (!srcVal) {
+    alert("Please enter a starting location.");
+    sourceInput.focus();
+    return;
+  }
+  if (!destVal) {
+    alert("Please enter a destination.");
+    destInput.focus();
+    return;
+  }
+
   if (isCalculatingRoute) return;
   isCalculatingRoute = true;
   findBtnText.textContent = 'Calculating Safe Routes...';
   btnFindSafestRoute.disabled = true;
 
   try {
-    if (sourceInput.value && (!safeRouteEngine.origin || safeRouteEngine.origin.name !== sourceInput.value)) {
+    if (!safeRouteEngine.origin || safeRouteEngine.origin.name !== srcVal) {
       try {
-        const s = await safeRouteEngine.geocode(sourceInput.value);
-        if (s[0]) safeRouteEngine.origin = { name: s[0].name, lat: s[0].lat, lng: s[0].lng };
+        const s = await safeRouteEngine.geocode(srcVal);
+        if (s && s[0]) {
+          safeRouteEngine.origin = { name: s[0].name, lat: s[0].lat, lng: s[0].lng };
+        } else {
+          throw new Error(`Starting location "${srcVal}" could not be found.`);
+        }
       } catch (e) {
-        if (!safeRouteEngine.origin) safeRouteEngine.origin = { name: sourceInput.value, lat: 17.4435, lng: 78.3772 };
+        throw new Error(e.message || `Could not find starting location "${srcVal}". Please check the spelling.`);
       }
     }
-    if (destInput.value && (!safeRouteEngine.destination || safeRouteEngine.destination.name !== destInput.value)) {
+    if (!safeRouteEngine.destination || safeRouteEngine.destination.name !== destVal) {
       try {
-        const d = await safeRouteEngine.geocode(destInput.value);
-        if (d[0]) safeRouteEngine.destination = { name: d[0].name, lat: d[0].lat, lng: d[0].lng };
+        const d = await safeRouteEngine.geocode(destVal);
+        if (d && d[0]) {
+          safeRouteEngine.destination = { name: d[0].name, lat: d[0].lat, lng: d[0].lng };
+        } else {
+          throw new Error(`Destination "${destVal}" could not be found.`);
+        }
       } catch (e) {
-        if (!safeRouteEngine.destination) safeRouteEngine.destination = { name: destInput.value, lat: 17.4150, lng: 78.4350 };
+        throw new Error(e.message || `Could not find destination "${destVal}". Please check the spelling.`);
       }
     }
 
@@ -1481,23 +1506,15 @@ async function handleFindSafeRoutes() {
     interfaceRouteResult.classList.remove('hidden');
 
     summaryLocations.innerHTML = `
-      <span class="loc-text origin">${safeRouteEngine.origin ? safeRouteEngine.origin.name : sourceInput.value}</span>
+      <span class="loc-text origin">${safeRouteEngine.origin ? safeRouteEngine.origin.name : srcVal}</span>
       <svg class="arrow-sep" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-      <span class="loc-text destination">${safeRouteEngine.destination ? safeRouteEngine.destination.name : destInput.value}</span>
+      <span class="loc-text destination">${safeRouteEngine.destination ? safeRouteEngine.destination.name : destVal}</span>
     `;
 
     await safeRouteEngine.calculateRoutes();
 
     const modeLabels = { car: 'Car', bike: 'Bike', auto: 'Auto', walking: 'Walking' };
     summaryModeChip.textContent = modeLabels[safeRouteEngine.travelMode] || 'Car';
-    
-    const timeLabels = {
-      now: 'Now',
-      morning: 'Morning',
-      afternoon: 'Afternoon',
-      evening: 'Evening',
-      night: 'Night'
-    };
     summaryTimeChip.textContent = safeRouteEngine.travelTime || 'Now';
 
     setTimeout(() => {

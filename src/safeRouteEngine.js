@@ -87,8 +87,8 @@ function deduplicateRoutes(routes) {
 
 export class SafeRouteEngine {
   constructor() {
-    this.origin = { name: "Hitech City, Hyderabad", lat: 17.4435, lng: 78.3772 };
-    this.destination = { name: "Banjara Hills, Hyderabad", lat: 17.4150, lng: 78.4350 };
+    this.origin = null;
+    this.destination = null;
     this.travelMode = 'car'; // 'car' | 'bike' | 'auto' | 'walking'
     this.travelTime = 'now'; // 'now' | 'morning' | 'afternoon' | 'evening' | 'night'
     this.selectedRouteIndex = 0;
