@@ -80,7 +80,6 @@ export class PlatformEmergencyBridge {
     }
 
     // 3. Web / Safari Browser Environment
-    // Do NOT trigger silent automatic tel: redirects that cause browser confirmation popups
     return {
       success: true,
       status: COMM_STATUS.WEB_STANDBY,
@@ -109,12 +108,13 @@ export class PlatformEmergencyBridge {
    * - On Android Native: Dispatches multipart SMS via SmsManager
    * - On Web / Cloud: Dispatches via SafeRoute Cloud Notification Dispatcher
    */
-  async autoDispatchAlert({ sessionId, location, contacts, timestamp, liveTrackingUrl }) {
+  async autoDispatchAlert({ sessionId, location, contacts, timestamp, liveTrackingUrl, userPhone }) {
     // 1. Android Native Direct SMS via SmsManager
     if (this.isNativeAndroid()) {
       let anySent = false;
-      const gmapsLink = location ? `https://www.google.com/maps?q=${location.latitude},${location.longitude}` : (liveTrackingUrl || 'Live location active');
-      const messageText = `Emergency Alert: I need help. My SOS has been activated. My current location: ${gmapsLink}`;
+      const gmapsLink = location ? `https://www.google.com/maps?q=${location.latitude},${location.longitude}` : (liveTrackingUrl || 'Location tracking active');
+      const userNum = userPhone || 'SafeRoute User';
+      const messageText = `🚨 EMERGENCY ALERT\n\nSOS has been activated.\n\nUser: ${userNum}\nThe user may need immediate assistance.\n\n📍 Current location:\n${gmapsLink}\n\nPlease contact the user immediately.`;
 
       for (const contact of contacts) {
         if (contact.phone) {
@@ -135,7 +135,8 @@ export class PlatformEmergencyBridge {
         location,
         contacts,
         timestamp,
-        liveTrackingUrl
+        liveTrackingUrl,
+        userPhone
       });
 
       if (res && res.success) {
@@ -149,21 +150,15 @@ export class PlatformEmergencyBridge {
     }
   }
 
-  /**
-   * Starts Native Foreground Service for screen-lock & background live GPS persistence
-   */
   startForegroundService(sessionId) {
     if (this.isNativeAndroid()) {
-      androidNativeSosService.startForegroundTracking(sessionId);
+      androidNativeSosService.startForegroundService(sessionId);
     }
   }
 
-  /**
-   * Stops Native Foreground Service
-   */
   stopForegroundService() {
     if (this.isNativeAndroid()) {
-      androidNativeSosService.stopForegroundTracking();
+      androidNativeSosService.stopForegroundService();
     }
   }
 }
