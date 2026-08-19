@@ -52,24 +52,37 @@ export class CloudAlertDispatcher {
       ];
       
       n8nEndpoints.forEach(endpoint => {
+        const payloadStr = JSON.stringify({
+          user: normSystemNumber,
+          userMobile: normSystemNumber,
+          systemNumber: normSystemNumber,
+          primaryContactPhone: primaryContact ? primaryContact.phone : '+916300863028',
+          primaryContactName: primaryContact ? primaryContact.name : 'Emergency Contact',
+          allRecipients: recipients,
+          lat: location ? location.latitude : 17.4435,
+          lng: location ? location.longitude : 78.3772,
+          googleMapsUrl: gmapsUrl,
+          message,
+          timestamp: timestamp || new Date().toLocaleTimeString(),
+          liveTrackingUrl: liveTrackingUrl || 'https://saferoute-tawny.vercel.app/'
+        });
+
+        // 1. Standard CORS POST
         fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user: normSystemNumber,
-            userMobile: normSystemNumber,
-            systemNumber: normSystemNumber,
-            primaryContactPhone: primaryContact ? primaryContact.phone : '+916300863028',
-            primaryContactName: primaryContact ? primaryContact.name : 'Emergency Contact',
-            allRecipients: recipients,
-            lat: location ? location.latitude : 17.4435,
-            lng: location ? location.longitude : 78.3772,
-            googleMapsUrl: gmapsUrl,
-            message,
-            timestamp: timestamp || new Date().toLocaleTimeString(),
-            liveTrackingUrl: liveTrackingUrl || 'https://saferoute-tawny.vercel.app/'
-          })
-        }).catch(err => console.log('n8n dispatch status:', err));
+          body: payloadStr
+        }).catch(err => console.log('n8n standard dispatch note:', err));
+
+        // 2. Fail-proof Beacon / No-CORS Dispatch (bypasses browser CORS restrictions completely)
+        try {
+          if (navigator && navigator.sendBeacon) {
+            const blob = new Blob([payloadStr], { type: 'application/json' });
+            navigator.sendBeacon(endpoint, blob);
+          }
+        } catch (bErr) {
+          console.log('sendBeacon fallback:', bErr);
+        }
       });
 
       const response = await fetch(this.apiEndpoint, {
