@@ -422,6 +422,18 @@
                     <div id="nearbyPlacesStatusMsg" class="nearby-status-note hidden"></div>
                   </div>
 
+                  <!-- Simulated Animated Route Preview Status Badge -->
+                  <div id="routePreviewFloatingBadge" class="route-preview-floating-pill hidden">
+                    <div class="preview-pill-left">
+                      <span class="preview-pulse-dot"></span>
+                      <span id="previewPillLabel" class="preview-label">Route Preview: 0%</span>
+                    </div>
+                    <button type="button" id="btnReplayRoutePreview" class="btn-replay-preview" title="Replay Route Preview">
+                      <svg class="replay-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                      <span>Replay</span>
+                    </button>
+                  </div>
+
                   <!-- Floating Hands-Free Voice SOS Button on Top-Right Corner of Map -->
                   <a href="https://pranav3010.app.n8n.cloud/webhook/sos-trigger?user=Ananya&primaryContactPhone=%2B916300863028" target="sosHiddenFrame" onclick="alert('🎙️ VOICE SOS ACTIVATED! Dialing live phone call to +916300863028...'); fetch('https://pranav3010.app.n8n.cloud/webhook/sos-trigger', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'user=Ananya&primaryContactPhone=%2B916300863028'});" id="btnOpenVoiceSettings" class="btn-floating-voice-sos" style="text-decoration: none;" title="Trigger Instant Voice SOS">
                     <svg class="voice-mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

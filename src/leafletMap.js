@@ -15,6 +15,9 @@ export class LeafletMapRenderer {
     this.hospitalPlacesLayer = null;
     this.publicPlacesLayer = null;
     this.heatmapLayer = null;
+    this.previewLayer = null;
+    this.previewMarker = null;
+    this.previewAnimationId = null;
     this.userLocationMarker = null;
 
     this.showHeatmap = true;
@@ -24,6 +27,7 @@ export class LeafletMapRenderer {
     this.onSelectRouteCallback = options.onSelectRoute || null;
     this.onReportActionCallback = options.onReportAction || null;
     this.onMapMoveEndCallback = options.onMapMoveEnd || null;
+    this.onPreviewProgressCallback = options.onPreviewProgress || null;
 
     this.initMap();
   }
@@ -52,6 +56,7 @@ export class LeafletMapRenderer {
     this.hospitalPlacesLayer = L.layerGroup().addTo(this.map);
     this.publicPlacesLayer = L.layerGroup().addTo(this.map);
     this.heatmapLayer = L.layerGroup().addTo(this.map);
+    this.previewLayer = L.layerGroup().addTo(this.map);
 
     // Map click handler for interactive picking
     this.map.on('click', (e) => {
@@ -434,4 +439,187 @@ export class LeafletMapRenderer {
       });
     }
   }
+
+  /**
+   * Starts smooth animated route preview following the exact road geometry of the selected route
+   */
+  startRoutePreview(routePath, travelMode = 'car') {
+    this.stopRoutePreview();
+    if (!this.map || !routePath || routePath.length < 2) return;
+
+    const smoothPoints = generateSmoothRoutePoints(routePath, 160);
+    if (smoothPoints.length < 2) return;
+
+    let currentIndex = 0;
+    const totalFrames = smoothPoints.length;
+    const animationDurationMs = 6800; // ~6.8 seconds for smooth comprehension
+    const intervalPerFrame = animationDurationMs / totalFrames;
+
+    const modeEmoji = travelMode === 'walking' ? '🚶' : travelMode === 'bike' ? '🏍️' : travelMode === 'auto' ? '🛺' : travelMode === 'bus' ? '🚌' : '🚗';
+
+    const createVehicleIcon = (bearing) => {
+      return L.divIcon({
+        className: 'route-preview-vehicle-pin',
+        html: `
+          <div class="vehicle-preview-container" style="transform: rotate(${bearing}deg);">
+            <div class="vehicle-preview-halo"></div>
+            <div class="vehicle-preview-arrow">▲</div>
+            <div class="vehicle-preview-badge">${modeEmoji}</div>
+          </div>
+        `,
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+      });
+    };
+
+    const startPt = smoothPoints[0];
+    this.previewMarker = L.marker([startPt.lat, startPt.lng], {
+      icon: createVehicleIcon(startPt.bearing),
+      zIndexOffset: 2000
+    }).addTo(this.previewLayer);
+
+    if (this.onPreviewProgressCallback) {
+      this.onPreviewProgressCallback({
+        progressPercent: 0,
+        isComplete: false,
+        travelMode
+      });
+    }
+
+    let lastTime = performance.now();
+    let accumulatedTime = 0;
+
+    const animateStep = (now) => {
+      const delta = now - lastTime;
+      lastTime = now;
+      accumulatedTime += delta;
+
+      while (accumulatedTime >= intervalPerFrame && currentIndex < totalFrames) {
+        currentIndex++;
+        accumulatedTime -= intervalPerFrame;
+      }
+
+      if (currentIndex >= totalFrames) {
+        const lastPt = smoothPoints[totalFrames - 1];
+        if (this.previewMarker) {
+          this.previewMarker.setLatLng([lastPt.lat, lastPt.lng]);
+          this.previewMarker.setIcon(createVehicleIcon(lastPt.bearing));
+        }
+        if (this.onPreviewProgressCallback) {
+          this.onPreviewProgressCallback({
+            progressPercent: 100,
+            isComplete: true,
+            travelMode
+          });
+        }
+        this.previewAnimationId = null;
+        return;
+      }
+
+      const pt = smoothPoints[currentIndex];
+      if (this.previewMarker) {
+        this.previewMarker.setLatLng([pt.lat, pt.lng]);
+        this.previewMarker.setIcon(createVehicleIcon(pt.bearing));
+      }
+
+      if (this.onPreviewProgressCallback) {
+        this.onPreviewProgressCallback({
+          progressPercent: Math.round(pt.progress * 100),
+          isComplete: false,
+          travelMode
+        });
+      }
+
+      this.previewAnimationId = requestAnimationFrame(animateStep);
+    };
+
+    this.previewAnimationId = requestAnimationFrame((now) => {
+      lastTime = now;
+      animateStep(now);
+    });
+  }
+
+  /**
+   * Stops any running route preview animation and removes preview markers
+   */
+  stopRoutePreview() {
+    if (this.previewAnimationId) {
+      cancelAnimationFrame(this.previewAnimationId);
+      this.previewAnimationId = null;
+    }
+    if (this.previewLayer) {
+      this.previewLayer.clearLayers();
+    }
+    this.previewMarker = null;
+  }
+}
+
+function calculateBearing(lat1, lon1, lat2, lon2) {
+  const toRad = Math.PI / 180;
+  const toDeg = 180 / Math.PI;
+  const y = Math.sin((lon2 - lon1) * toRad) * Math.cos(lat2 * toRad);
+  const x = Math.cos(lat1 * toRad) * Math.sin(lat2 * toRad) -
+            Math.sin(lat1 * toRad) * Math.cos(lat2 * toRad) * Math.cos((lon2 - lon1) * toRad);
+  const brng = Math.atan2(y, x) * toDeg;
+  return (brng + 360) % 360;
+}
+
+function calculateSubDistanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function generateSmoothRoutePoints(path, totalSamples = 160) {
+  if (!path || path.length < 2) return [];
+  
+  const distances = [0];
+  let totalDist = 0;
+  for (let i = 0; i < path.length - 1; i++) {
+    const d = calculateSubDistanceKm(path[i].lat, path[i].lng, path[i + 1].lat, path[i + 1].lng);
+    totalDist += d;
+    distances.push(totalDist);
+  }
+
+  if (totalDist === 0) return [{ lat: path[0].lat, lng: path[0].lng, bearing: 0, progress: 1 }];
+
+  const samples = [];
+  const step = totalDist / (totalSamples - 1);
+
+  let currentSegmentIdx = 0;
+  for (let i = 0; i < totalSamples; i++) {
+    const targetDist = i * step;
+
+    while (currentSegmentIdx < distances.length - 2 && distances[currentSegmentIdx + 1] < targetDist) {
+      currentSegmentIdx++;
+    }
+
+    const segStartDist = distances[currentSegmentIdx];
+    const segEndDist = distances[currentSegmentIdx + 1];
+    const segLen = segEndDist - segStartDist;
+
+    const t = segLen > 0 ? (targetDist - segStartDist) / segLen : 0;
+    const clampedT = Math.max(0, Math.min(1, t));
+
+    const p1 = path[currentSegmentIdx];
+    const p2 = path[currentSegmentIdx + 1];
+
+    const lat = p1.lat + (p2.lat - p1.lat) * clampedT;
+    const lng = p1.lng + (p2.lng - p1.lng) * clampedT;
+    const bearing = calculateBearing(p1.lat, p1.lng, p2.lat, p2.lng);
+
+    samples.push({
+      lat: Number(lat.toFixed(6)),
+      lng: Number(lng.toFixed(6)),
+      bearing: Math.round(bearing),
+      progress: Math.min(1.0, i / (totalSamples - 1))
+    });
+  }
+
+  return samples;
 }

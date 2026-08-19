@@ -63,6 +63,20 @@ const safeRouteMapRenderer = new LeafletMapRenderer('safeRouteLeafletMap', {
   },
   onMapMoveEnd: (lat, lng) => {
     syncNearbyPlacesLocation(lat, lng);
+  },
+  onPreviewProgress: ({ progressPercent, isComplete }) => {
+    const routePreviewFloatingBadge = document.getElementById('routePreviewFloatingBadge');
+    const previewPillLabel = document.getElementById('previewPillLabel');
+    if (routePreviewFloatingBadge && !navigationSimulationInterval) {
+      routePreviewFloatingBadge.classList.remove('hidden');
+    }
+    if (previewPillLabel) {
+      if (isComplete) {
+        previewPillLabel.textContent = 'Preview Complete';
+      } else {
+        previewPillLabel.textContent = `Route Preview: ${progressPercent}%`;
+      }
+    }
   }
 });
 
@@ -1509,6 +1523,9 @@ async function handleFindSafeRoutes() {
 
 // ================= BACK TO INTERFACE 1 =================
 btnBackToInput.addEventListener('click', () => {
+  safeRouteMapRenderer.stopRoutePreview();
+  const routePreviewFloatingBadge = document.getElementById('routePreviewFloatingBadge');
+  if (routePreviewFloatingBadge) routePreviewFloatingBadge.classList.add('hidden');
   document.body.classList.remove('page-second');
   document.body.classList.add('page-first');
   interfaceRouteResult.classList.add('hidden');
@@ -1702,21 +1719,38 @@ function renderSafeRouteUI() {
   }
 
   safeRouteMapRenderer.render(safeRouteEngine);
+
+  // Automatically start animated simulated route preview on selected road route
+  if (!navigationSimulationInterval && selected && selected.path && selected.path.length >= 2) {
+    safeRouteMapRenderer.startRoutePreview(selected.path, safeRouteEngine.travelMode);
+  }
 }
 
-// ================= GPS NAVIGATION SIMULATION =================
+// ================= GPS NAVIGATION SIMULATION (STATE 2: REAL/ACTIVE NAVIGATION) =================
 btnStartNavigation.addEventListener('click', () => {
+  const routePreviewFloatingBadge = document.getElementById('routePreviewFloatingBadge');
+
   if (navigationSimulationInterval) {
     clearInterval(navigationSimulationInterval);
     navigationSimulationInterval = null;
     btnStartNavigation.textContent = 'Start GPS Navigation Simulation';
     btnStartNavigation.classList.remove('active');
     deviationAlertBanner.classList.add('hidden');
+
+    // Return to State 1: Simulated Route Preview
+    const sel = safeRouteEngine.getSelectedRoute();
+    if (sel && sel.path && sel.path.length >= 2) {
+      safeRouteMapRenderer.startRoutePreview(sel.path, safeRouteEngine.travelMode);
+    }
     return;
   }
 
   const selected = safeRouteEngine.routes[safeRouteEngine.selectedRouteIndex];
   if (!selected || !selected.path || selected.path.length < 2) return;
+
+  // Transition from Preview State to Real Navigation State
+  safeRouteMapRenderer.stopRoutePreview();
+  if (routePreviewFloatingBadge) routePreviewFloatingBadge.classList.add('hidden');
 
   btnStartNavigation.textContent = 'Stop Navigation Simulation';
   btnStartNavigation.classList.add('active');
@@ -1731,6 +1765,11 @@ btnStartNavigation.addEventListener('click', () => {
       btnStartNavigation.classList.remove('active');
       sound.playBeep(1200, 0.2);
       alert("Destination reached safely via SafeRoute.");
+
+      const sel = safeRouteEngine.getSelectedRoute();
+      if (sel && sel.path && sel.path.length >= 2) {
+        safeRouteMapRenderer.startRoutePreview(sel.path, safeRouteEngine.travelMode);
+      }
       return;
     }
 
@@ -1748,6 +1787,18 @@ btnStartNavigation.addEventListener('click', () => {
     step++;
   }, 1200);
 });
+
+// Replay Route Preview Button
+const btnReplayRoutePreview = document.getElementById('btnReplayRoutePreview');
+if (btnReplayRoutePreview) {
+  btnReplayRoutePreview.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const sel = safeRouteEngine.getSelectedRoute();
+    if (sel && sel.path && sel.path.length >= 2) {
+      safeRouteMapRenderer.startRoutePreview(sel.path, safeRouteEngine.travelMode);
+    }
+  });
+}
 
 btnRecalculateOffRoute.addEventListener('click', async () => {
   deviationAlertBanner.classList.add('hidden');

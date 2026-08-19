@@ -5089,3 +5089,132 @@ body.page-second .header-actions {
   width: 12px;
   height: 12px;
 }
+
+/* ================= ANIMATED ROUTE PREVIEW ================= */
+.route-preview-floating-pill {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 999;
+  background: rgba(15, 23, 42, 0.90);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 24px;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
+  font-size: 12px;
+  font-weight: 700;
+  pointer-events: auto;
+  transition: all 0.2s ease;
+}
+
+.preview-pill-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.preview-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: previewPulse 1.5s infinite;
+}
+
+@keyframes previewPulse {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 12px #10b981; }
+  100% { transform: scale(0.9); opacity: 0.8; }
+}
+
+.preview-label {
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.btn-replay-preview {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.15s ease;
+}
+
+.btn-replay-preview:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.btn-replay-preview .replay-icon {
+  width: 12px;
+  height: 12px;
+}
+
+/* Vehicle preview marker on Leaflet map */
+.route-preview-vehicle-pin {
+  background: transparent;
+  border: none;
+}
+
+.vehicle-preview-container {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.08s linear;
+}
+
+.vehicle-preview-halo {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.25);
+  border: 1.5px solid rgba(37, 99, 235, 0.6);
+  animation: haloPulse 1.2s infinite ease-out;
+}
+
+@keyframes haloPulse {
+  0% { transform: scale(0.8); opacity: 0.9; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+.vehicle-preview-arrow {
+  position: absolute;
+  top: -6px;
+  font-size: 10px;
+  color: #2563eb;
+  font-weight: 900;
+  text-shadow: 0 0 3px rgba(255, 255, 255, 0.8);
+}
+
+.vehicle-preview-badge {
+  position: relative;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #2563eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
