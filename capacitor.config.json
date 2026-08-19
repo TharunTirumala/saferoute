@@ -1,0 +1,15 @@
+{
+  "appId": "com.saferoute.app",
+  "appName": "SafeRoute",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://saferoute-tawny.vercel.app",
+    "cleartext": true
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": true
+  }
+}

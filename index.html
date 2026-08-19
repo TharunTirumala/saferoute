@@ -617,31 +617,45 @@
                 </div>
               </div>
 
-              <!-- Phone & SMS Communication Protocols -->
-              <div class="setup-check-item">
+              <!-- Phone Calling (Native / Web Telephony) -->
+              <div class="setup-check-item" id="checkItemCalling">
                 <div class="check-item-info">
                   <div class="check-item-header">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                    <strong>Phone & SMS Dispatch</strong>
+                    <strong>Phone Calling</strong>
                   </div>
-                  <span class="check-item-desc">Native mobile dialer (tel:) and emergency SMS / Web Share pre-configured.</span>
+                  <span class="check-item-desc">Zero-Tap native direct dial (CALL_PHONE) to Primary Contact.</span>
                 </div>
                 <div class="check-item-action">
-                  <span class="check-status-tag success">✓ Supported</span>
+                  <span class="check-status-tag success" id="callingStatusTag">✓ Ready</span>
                 </div>
               </div>
 
-              <!-- Continuous Live Location Tracking Engine -->
-              <div class="setup-check-item">
+              <!-- Emergency Messaging (Native SMS / Backend Cloud Alert) -->
+              <div class="setup-check-item" id="checkItemMessaging">
+                <div class="check-item-info">
+                  <div class="check-item-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <strong>Emergency Messaging</strong>
+                  </div>
+                  <span class="check-item-desc">Automated SMS / Cloud Alert dispatch with Live Location URL.</span>
+                </div>
+                <div class="check-item-action">
+                  <span class="check-status-tag success" id="messagingStatusTag">✓ Ready</span>
+                </div>
+              </div>
+
+              <!-- Background Location & Foreground Service -->
+              <div class="setup-check-item" id="checkItemBackgroundLoc">
                 <div class="check-item-info">
                   <div class="check-item-header">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><polygon points="12 6 12 12 16 14"/></svg>
-                    <strong>Live Location Session Engine</strong>
+                    <strong>Background Location</strong>
                   </div>
-                  <span class="check-item-desc">Continuous high-accuracy GPS breadcrumb updates with secure expiring link.</span>
+                  <span class="check-item-desc">Persistent Foreground Service keeps Live GPS tracking active on lock screen.</span>
                 </div>
                 <div class="check-item-action">
-                  <span class="check-status-tag success">✓ Ready</span>
+                  <span class="check-status-tag success" id="bgLocStatusTag">✓ Ready</span>
                 </div>
               </div>
 

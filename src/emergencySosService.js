@@ -1,8 +1,9 @@
-// SafeRoute: Central Zero-Touch Automatic Emergency SOS Engine
-// Pre-Authorized Setup -> 5-Second Countdown -> 100% Automatic GPS, Calling, Alert Dispatch & Live Tracking
+// SafeRoute: Central Zero-Tap Android Native & Web Emergency SOS Engine
+// Pre-Authorized Setup -> 5-Second Countdown -> 100% Parallel Automatic GPS, Calling, Alert Dispatch & Foreground Live Tracking
 
 import { liveSosSessionStore } from './liveSosSessionStore.js';
 import { platformEmergencyBridge, COMM_STATUS } from './platformEmergencyBridge.js';
+import { androidNativeSosService } from './androidNativeSosService.js';
 
 export const SOS_STATUS = {
   INACTIVE: 'SOS INACTIVE',
@@ -12,7 +13,7 @@ export const SOS_STATUS = {
 
 const DEFAULT_CONTACTS = [
   { id: 'c1', name: 'Mother', phone: '+919876543210', relation: 'Family', isPrimary: true, callStatus: 'Preparing', messageStatus: 'Preparing' },
-  { id: 'c2', name: 'Friend', phone: '+919123456789', relation: 'Friend', isPrimary: false, callStatus: 'Not Started', messageStatus: 'Preparing' }
+  { id: 'c2', name: 'Friend', phone: '+919123456789', relation: 'Friend', isPrimary: false, callStatus: 'Standby', messageStatus: 'Preparing' }
 ];
 
 export class EmergencySosService {
@@ -41,11 +42,20 @@ export class EmergencySosService {
       location: 'unknown',
       microphone: 'unknown',
       notifications: 'unknown',
+      androidCalling: 'unknown',
+      androidSms: 'unknown',
+      androidBackgroundLoc: 'unknown',
       contactsConfigured: this.contacts.length > 0,
       hasPrimaryContact: this.contacts.some(c => c.isPrimary)
     };
 
     this.initPermissionMonitoring();
+
+    if (typeof window !== 'undefined') {
+      window.onNativePermissionsUpdated = () => {
+        this.checkPermissionStatus();
+      };
+    }
   }
 
   /**
@@ -199,6 +209,14 @@ export class EmergencySosService {
       this.permissionState.notifications = 'unsupported';
     }
 
+    // Android Native Permission Inspection
+    const nativeReport = androidNativeSosService.checkNativePermissions();
+    if (nativeReport.isNative) {
+      this.permissionState.androidCalling = nativeReport.callPhone ? 'granted' : 'prompt';
+      this.permissionState.androidSms = nativeReport.sendSms ? 'granted' : 'prompt';
+      this.permissionState.androidBackgroundLoc = nativeReport.backgroundLocation ? 'granted' : 'prompt';
+    }
+
     this.permissionState.contactsConfigured = this.contacts.length > 0;
     this.permissionState.hasPrimaryContact = this.contacts.some(c => c.isPrimary);
 
@@ -215,6 +233,9 @@ export class EmergencySosService {
       location: this.permissionState.location,
       microphone: this.permissionState.microphone,
       notifications: this.permissionState.notifications,
+      androidCalling: this.permissionState.androidCalling,
+      androidSms: this.permissionState.androidSms,
+      androidBackgroundLoc: this.permissionState.androidBackgroundLoc,
       contactsCount: this.contacts.length,
       primaryContact: this.getPrimaryContact(),
       platform: platformEmergencyBridge.platform,
@@ -290,7 +311,11 @@ export class EmergencySosService {
     }
   }
 
-  // ================= ZERO-TOUCH AUTOMATIC SOS PIPELINE =================
+  requestAndroidNativePermissions() {
+    return androidNativeSosService.requestNativePermissions();
+  }
+
+  // ================= ZERO-TAP AUTOMATIC NATIVE SOS PIPELINE =================
 
   /**
    * Starts 5-Second False-Activation-Prevention Countdown
@@ -312,7 +337,7 @@ export class EmergencySosService {
       } else {
         clearInterval(this.countdownTimer);
         this.countdownTimer = null;
-        this.activateSOS(this.triggerSource);
+        this.activateNativeSOS(this.triggerSource);
       }
     }, 1000);
   }
@@ -330,16 +355,15 @@ export class EmergencySosService {
   }
 
   /**
-   * ONE CENTRAL ZERO-TOUCH SOS FUNCTION
-   * Executed automatically when countdown reaches 0:
-   * 1. Automatically get real GPS location
-   * 2. Automatically create secure SOS session
-   * 3. Automatically start continuous live GPS tracking
-   * 4. Automatically send emergency live location alert via backend
-   * 5. Automatically initiate emergency phone call to primary contact
-   * 6. Show SOS ACTIVE status screen (NO user buttons)
+   * CENTRAL NATIVE ZERO-TAP SOS FUNCTION (Called at Countdown = 0)
+   * Runs all operations in PARALLEL without sequential delays:
+   * 1. Get Live GPS
+   * 2. Start Live Location Tracking + Android Foreground Service
+   * 3. Send Emergency Alert (Native SMS / Backend Cloud Alert)
+   * 4. Call Primary Contact (Android Native Telephony)
+   * 5. Show SOS ACTIVE status screen (ZERO taps required)
    */
-  async activateSOS(source = this.triggerSource) {
+  async activateNativeSOS(source = this.triggerSource) {
     if (this.countdownTimer) {
       clearInterval(this.countdownTimer);
       this.countdownTimer = null;
@@ -347,14 +371,15 @@ export class EmergencySosService {
 
     this.state = SOS_STATUS.ACTIVE;
     this.triggerSource = source;
-    this.sosTimestamp = new Date().toLocaleString();
+    this.sosTimestamp = new Date().toLocaleTimeString();
     this.locationError = null;
 
-    // Reset status indicators to Preparing
     const primary = this.getPrimaryContact();
+
+    // Reset status indicators to Preparing / Sending
     this.contacts.forEach(c => {
-      c.callStatus = c.isPrimary ? 'Preparing' : 'Not Started';
-      c.messageStatus = 'Sending...';
+      c.callStatus = c.isPrimary ? 'Calling' : 'Standby';
+      c.messageStatus = 'Sending';
     });
 
     this.onStateChange(this.state, {
@@ -364,20 +389,21 @@ export class EmergencySosService {
       statusPhase: 'INITIALIZING'
     });
 
-    // 1. Automatically Obtain Real GPS Fix
+    // 1. Parallel Task A: Obtain Real GPS Fix
     const initialCoords = await this.fetchCurrentLocation();
 
-    // 2. Automatically Initialize Secure Live Location Tracking Session
+    // 2. Parallel Task B: Initialize Secure SOS Live Session
     this.activeLiveSession = liveSosSessionStore.createSession(initialCoords, this.triggerSource);
     const liveTrackingUrl = liveSosSessionStore.getLiveTrackingUrl(this.activeLiveSession.id);
 
-    // 3. Automatically Start Continuous Live GPS Tracking
+    // 3. Parallel Task C: Start Continuous GPS Tracking & Persistent Foreground Service
     this.startLiveLocationTracking();
+    platformEmergencyBridge.startForegroundService(this.activeLiveSession.id);
 
-    // 4. Automatically Dispatch Emergency Live Location Alert via Cloud Backend
+    // 4. Parallel Task D: Automatically Dispatch Emergency Alert
     this.autoDispatchEmergencyAlert(liveTrackingUrl);
 
-    // 5. Automatically Initiate Primary Phone Call
+    // 5. Parallel Task E: Automatically Initiate Primary Phone Call
     if (primary) {
       this.autoInitiatePrimaryCall(primary);
     }
@@ -390,6 +416,13 @@ export class EmergencySosService {
       liveUrl: liveTrackingUrl,
       statusPhase: 'ACTIVE'
     });
+  }
+
+  /**
+   * Backward-compatible alias for activateNativeSOS
+   */
+  async activateSOS(source = this.triggerSource) {
+    return this.activateNativeSOS(source);
   }
 
   /**
@@ -419,7 +452,7 @@ export class EmergencySosService {
         (err) => {
           console.warn('Geolocation error during SOS:', err);
           let errMsg = 'Unable to access your current location.';
-          if (err.code === 1) errMsg = 'Location permission denied. Please enable location in browser settings.';
+          if (err.code === 1) errMsg = 'Location permission denied. Please enable location in settings.';
           else if (err.code === 2) errMsg = 'Current location could not be determined.';
           else if (err.code === 3) errMsg = 'Location request timed out.';
           
@@ -468,7 +501,7 @@ export class EmergencySosService {
   }
 
   /**
-   * Automatically dispatches the emergency live-location alert to all contacts via backend
+   * Automatically dispatches the emergency live-location alert
    */
   async autoDispatchEmergencyAlert(liveTrackingUrl) {
     const res = await platformEmergencyBridge.autoDispatchAlert({
@@ -491,12 +524,12 @@ export class EmergencySosService {
    * Automatically initiates the phone call to the primary contact
    */
   async autoInitiatePrimaryCall(primary) {
-    primary.callStatus = 'In Progress';
+    primary.callStatus = 'Calling';
     this.onContactsChange(this.contacts);
 
     const res = await platformEmergencyBridge.autoInitiateCall(primary.phone);
     if (res && res.success) {
-      primary.callStatus = 'In Progress';
+      primary.callStatus = 'Calling';
     } else {
       primary.callStatus = 'Failed';
     }
@@ -504,13 +537,15 @@ export class EmergencySosService {
   }
 
   /**
-   * Stops active SOS and invalidates live location session
+   * Stops active SOS and terminates live location session
    */
   stopSOS() {
     if (this.watchPositionId !== null) {
       navigator.geolocation.clearWatch(this.watchPositionId);
       this.watchPositionId = null;
     }
+
+    platformEmergencyBridge.stopForegroundService();
 
     if (this.activeLiveSession) {
       liveSosSessionStore.terminateSession(this.activeLiveSession.id);
