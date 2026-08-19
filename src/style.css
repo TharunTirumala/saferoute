@@ -5031,3 +5031,29 @@ body.page-second .header-actions {
   border-color: #fca5a5;
   color: #dc2626;
 }
+
+/* Menu Bar SOS Button */
+.sidebar-menu-btn.sos-menu-btn {
+  background: #fef2f2;
+  border: 1.5px solid #fecaca;
+  color: #dc2626;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  transition: all 0.15s ease;
+}
+
+.sidebar-menu-btn.sos-menu-btn:hover {
+  background: #fee2e2;
+  border-color: #f87171;
+  color: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.18);
+}
+
+.sidebar-menu-btn.sos-menu-btn:active {
+  transform: translateY(0);
+}
+
+.sidebar-menu-btn.sos-menu-btn .menu-icon {
+  color: #dc2626;
+}

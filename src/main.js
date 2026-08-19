@@ -610,10 +610,17 @@ function showSosStatusToast(msg) {
   }, 6000);
 }
 
-// Wire SOS Trigger Buttons
+// Wire SOS Trigger Buttons (Floating Map Button + Menu Bar SOS Button)
 openSosBtn && openSosBtn.addEventListener('click', () => {
   emergencySos.startSosCountdown('One-Tap SOS Button');
 });
+
+const btnSidebarSos = document.getElementById('btnSidebarSos');
+if (btnSidebarSos) {
+  btnSidebarSos.addEventListener('click', () => {
+    emergencySos.startSosCountdown('Menu SOS Button');
+  });
+}
 
 const triggerManualSos = document.getElementById('triggerManualSos');
 if (triggerManualSos) {
