@@ -1,8 +1,10 @@
-// SafeRoute: User & Scoped Emergency Contacts Store
-// Enforces strict multi-tenant user isolation: Contacts are keyed strictly to authenticated userId
+// SafeRoute: Authoritative User & Scoped Emergency Contacts Store
+// Zero hardcoded numbers. Contacts belong strictly to the authenticated user.
 
-const USERS_DB_KEY = 'saferoute_users_db_v1';
-const CONTACTS_DB_KEY = 'saferoute_contacts_db_v1';
+import { normalizePhoneNumber, formatDisplayPhone } from './phoneUtils.js';
+
+const USERS_DB_KEY = 'saferoute_users_db_v2';
+const CONTACTS_DB_KEY = 'saferoute_contacts_db_v2';
 
 export class UserStore {
   constructor() {}
@@ -28,22 +30,22 @@ export class UserStore {
   }
 
   getOrCreateUser(mobileNumber) {
-    const userId = this.generateUserId(mobileNumber);
+    const normPhone = normalizePhoneNumber(mobileNumber);
+    const userId = this.generateUserId(normPhone);
     const users = this.getUsers();
     
     if (!users[userId]) {
       users[userId] = {
         userId,
-        mobileNumber,
+        mobileNumber: normPhone,
         createdAt: new Date().toISOString(),
         lastLoginAt: new Date().toISOString()
       };
-      this.saveUsers(users);
     } else {
       users[userId].lastLoginAt = new Date().toISOString();
-      this.saveUsers(users);
     }
 
+    this.saveUsers(users);
     return users[userId];
   }
 
@@ -53,49 +55,39 @@ export class UserStore {
       const saved = localStorage.getItem(`${CONTACTS_DB_KEY}_${userId}`);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+        if (Array.isArray(parsed)) {
+          return parsed.map(c => ({
+            ...c,
+            contactNumber: normalizePhoneNumber(c.contactNumber || c.phone)
+          }));
         }
       }
     } catch (e) {
       console.warn('Failed to load user contacts:', e);
     }
-
-    // Default template contacts for newly registered user
-    const defaultContacts = [
-      {
-        contactId: `cnt_${Date.now()}_1`,
-        userId,
-        contactName: 'Emergency Contact 1',
-        contactNumber: '+91 98765 43210',
-        relation: 'Family',
-        isPrimary: true
-      },
-      {
-        contactId: `cnt_${Date.now()}_2`,
-        userId,
-        contactName: 'Emergency Contact 2',
-        contactNumber: '+91 91234 56789',
-        relation: 'Friend',
-        isPrimary: false
-      }
-    ];
-
-    this.saveUserContacts(userId, defaultContacts);
-    return defaultContacts;
+    return [];
   }
 
   saveUserContacts(userId, contacts) {
     if (!userId) return false;
     try {
-      const sanitized = (contacts || []).map(c => ({
-        contactId: c.contactId || c.id || `cnt_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-        userId,
-        contactName: (c.contactName || c.name || '').trim(),
-        contactNumber: (c.contactNumber || c.phone || '').trim(),
-        relation: (c.relation || 'Contact').trim(),
-        isPrimary: !!c.isPrimary
-      }));
+      const sanitized = (contacts || []).map((c, idx) => {
+        const norm = normalizePhoneNumber(c.contactNumber || c.phone || '');
+        return {
+          contactId: c.contactId || c.id || `cnt_${Date.now()}_${idx}_${Math.random().toString(36).substr(2, 4)}`,
+          userId,
+          contactName: (c.contactName || c.name || 'Emergency Contact').trim(),
+          contactNumber: norm,
+          relation: (c.relation || 'Contact').trim(),
+          isPrimary: !!c.isPrimary
+        };
+      });
+
+      // Ensure exactly one contact is primary if any exist
+      if (sanitized.length > 0 && !sanitized.some(c => c.isPrimary)) {
+        sanitized[0].isPrimary = true;
+      }
+
       localStorage.setItem(`${CONTACTS_DB_KEY}_${userId}`, JSON.stringify(sanitized));
       return true;
     } catch (e) {

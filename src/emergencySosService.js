@@ -1,22 +1,18 @@
+// SafeRoute: Central Zero-Tap Android Native & Web Emergency SOS Engine
+// Dynamic Authoritative Contacts -> 3-Second Countdown -> 100% Parallel Automatic GPS & Alert Dispatch
+
 import { userStore } from './userStore.js';
 import { authService } from './authService.js';
-// SafeRoute: Central Zero-Tap Android Native & Web Emergency SOS Engine
-// Pre-Authorized Setup -> 5-Second Countdown -> 100% Parallel Automatic GPS, Calling, Alert Dispatch & Foreground Live Tracking
-
 import { liveSosSessionStore } from './liveSosSessionStore.js';
 import { platformEmergencyBridge, COMM_STATUS } from './platformEmergencyBridge.js';
 import { androidNativeSosService } from './androidNativeSosService.js';
+import { normalizePhoneNumber } from './phoneUtils.js';
 
 export const SOS_STATUS = {
   INACTIVE: 'SOS INACTIVE',
   COUNTDOWN: 'SOS COUNTDOWN',
   ACTIVE: 'SOS ACTIVE'
 };
-
-const DEFAULT_CONTACTS = [
-  { id: 'c1', name: 'Mother', phone: '+919876543210', relation: 'Family', isPrimary: true, callStatus: 'Preparing', messageStatus: 'Preparing' },
-  { id: 'c2', name: 'Friend', phone: '+919123456789', relation: 'Friend', isPrimary: false, callStatus: 'Standby', messageStatus: 'Preparing' }
-];
 
 export class EmergencySosService {
   constructor(options = {}) {
@@ -61,42 +57,44 @@ export class EmergencySosService {
   }
 
   /**
-   * Loads contacts from localStorage
+   * Loads contacts from user-scoped database
    */
   loadContacts() {
-    try {
-      const saved = localStorage.getItem('saferoute_emergency_contacts_v3');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.map(c => ({
-            ...c,
-            callStatus: 'Preparing',
-            messageStatus: 'Preparing'
-          }));
-        }
-      }
-    } catch (e) {
-      console.warn('Failed to load emergency contacts', e);
-    }
-    return DEFAULT_CONTACTS.map(c => ({ ...c }));
+    const user = authService?.getAuthenticatedUser();
+    const userId = user?.userId || (user?.phone ? userStore.generateUserId(user.phone) : 'usr_default');
+    const userContacts = userStore.getUserContacts(userId);
+    return userContacts.map(c => ({
+      id: c.contactId || c.id,
+      contactId: c.contactId || c.id,
+      userId,
+      name: c.contactName || c.name || 'Emergency Contact',
+      phone: normalizePhoneNumber(c.contactNumber || c.phone || ''),
+      relation: c.relation || 'Contact',
+      isPrimary: !!c.isPrimary,
+      callStatus: 'Preparing',
+      messageStatus: 'Preparing'
+    }));
+  }
+
+  reloadUserContacts() {
+    this.contacts = this.loadContacts();
+    this.permissionState.contactsConfigured = this.contacts.length > 0;
+    this.permissionState.hasPrimaryContact = this.contacts.some(c => c.isPrimary);
+    this.onContactsChange(this.contacts);
+    this.checkReadiness();
   }
 
   /**
-   * Saves contacts to localStorage
+   * Saves contacts to user-scoped database
    */
   saveContacts() {
-    try {
-      localStorage.setItem('saferoute_emergency_contacts_v3', JSON.stringify(this.contacts.map(({ id, name, phone, relation, isPrimary }) => ({
-        id, name, phone, relation, isPrimary
-      }))));
-      this.permissionState.contactsConfigured = this.contacts.length > 0;
-      this.permissionState.hasPrimaryContact = this.contacts.some(c => c.isPrimary);
-      this.onContactsChange(this.contacts);
-      this.checkReadiness();
-    } catch (e) {
-      console.warn('Failed to save emergency contacts', e);
-    }
+    const user = authService?.getAuthenticatedUser();
+    const userId = user?.userId || (user?.phone ? userStore.generateUserId(user.phone) : 'usr_default');
+    userStore.saveUserContacts(userId, this.contacts);
+    this.permissionState.contactsConfigured = this.contacts.length > 0;
+    this.permissionState.hasPrimaryContact = this.contacts.some(c => c.isPrimary);
+    this.onContactsChange(this.contacts);
+    this.checkReadiness();
   }
 
   getContacts() {
@@ -109,9 +107,9 @@ export class EmergencySosService {
 
   addContact(name, phone, relation = 'Emergency Contact', isPrimary = false) {
     const cleanName = (name || '').trim();
-    const cleanPhone = (phone || '').trim();
+    const normPhone = normalizePhoneNumber(phone);
     if (!cleanName) return { success: false, error: 'Contact name is required.' };
-    if (!cleanPhone) return { success: false, error: 'Phone number is required.' };
+    if (!normPhone) return { success: false, error: 'Valid phone number is required.' };
 
     if (isPrimary || this.contacts.length === 0) {
       this.contacts.forEach(c => c.isPrimary = false);
@@ -119,8 +117,10 @@ export class EmergencySosService {
 
     const newContact = {
       id: `c_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      contactId: `c_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      userId: authService?.getAuthenticatedUser()?.userId || 'usr_default',
       name: cleanName,
-      phone: cleanPhone,
+      phone: normPhone,
       relation: relation.trim() || 'Contact',
       isPrimary: isPrimary || this.contacts.length === 0,
       callStatus: 'Preparing',
@@ -133,15 +133,15 @@ export class EmergencySosService {
   }
 
   updateContact(id, data) {
-    const contact = this.contacts.find(c => c.id === id);
+    const contact = this.contacts.find(c => c.id === id || c.contactId === id);
     if (!contact) return { success: false, error: 'Contact not found.' };
 
     if (data.name !== undefined) contact.name = data.name.trim();
-    if (data.phone !== undefined) contact.phone = data.phone.trim();
+    if (data.phone !== undefined) contact.phone = normalizePhoneNumber(data.phone);
     if (data.relation !== undefined) contact.relation = data.relation.trim();
     
     if (data.isPrimary) {
-      this.contacts.forEach(c => c.isPrimary = (c.id === id));
+      this.contacts.forEach(c => c.isPrimary = (c.id === id || c.contactId === id));
     }
 
     this.saveContacts();
@@ -149,13 +149,13 @@ export class EmergencySosService {
   }
 
   setPrimaryContact(id) {
-    this.contacts.forEach(c => c.isPrimary = (c.id === id));
+    this.contacts.forEach(c => c.isPrimary = (c.id === id || c.contactId === id));
     this.saveContacts();
   }
 
   deleteContact(id) {
     const prevLen = this.contacts.length;
-    this.contacts = this.contacts.filter(c => c.id !== id);
+    this.contacts = this.contacts.filter(c => c.id !== id && c.contactId !== id);
     if (this.contacts.length > 0 && !this.contacts.some(c => c.isPrimary)) {
       this.contacts[0].isPrimary = true;
     }
@@ -167,7 +167,6 @@ export class EmergencySosService {
   }
 
   // ================= PERMISSION PRE-AUTHORIZATION & MONITORING =================
-
   async initPermissionMonitoring() {
     await this.checkPermissionStatus();
 
@@ -183,61 +182,57 @@ export class EmergencySosService {
   }
 
   async checkPermissionStatus() {
-    if (!navigator.geolocation) {
-      this.permissionState.location = 'unsupported';
-    } else if (navigator.permissions && navigator.permissions.query) {
-      try {
-        const geoStatus = await navigator.permissions.query({ name: 'geolocation' });
-        this.permissionState.location = geoStatus.state;
-        geoStatus.onchange = () => this.checkPermissionStatus();
-      } catch (e) {
-        if (this.permissionState.location === 'unknown') {
-          this.permissionState.location = 'prompt';
-        }
-      }
-    }
+    let locStatus = 'prompt';
+    let micStatus = 'prompt';
+    let notifStatus = 'default';
 
     if (navigator.permissions && navigator.permissions.query) {
       try {
-        const micStatus = await navigator.permissions.query({ name: 'microphone' });
-        this.permissionState.microphone = micStatus.state;
-        micStatus.onchange = () => this.checkPermissionStatus();
+        const pLoc = await navigator.permissions.query({ name: 'geolocation' });
+        locStatus = pLoc.state;
+        pLoc.onchange = () => this.checkPermissionStatus();
+      } catch (e) {}
+
+      try {
+        const pMic = await navigator.permissions.query({ name: 'microphone' });
+        micStatus = pMic.state;
+        pMic.onchange = () => this.checkPermissionStatus();
       } catch (e) {}
     }
 
     if ('Notification' in window) {
-      this.permissionState.notifications = Notification.permission;
-    } else {
-      this.permissionState.notifications = 'unsupported';
+      notifStatus = Notification.permission;
     }
 
-    // Android Native Permission Inspection
-    const nativeReport = androidNativeSosService.checkNativePermissions();
-    if (nativeReport.isNative) {
-      this.permissionState.androidCalling = nativeReport.callPhone ? 'granted' : 'prompt';
-      this.permissionState.androidSms = nativeReport.sendSms ? 'granted' : 'prompt';
-      this.permissionState.androidBackgroundLoc = nativeReport.backgroundLocation ? 'granted' : 'prompt';
-    }
+    const nativePerms = androidNativeSosService.checkNativePermissions();
 
-    this.permissionState.contactsConfigured = this.contacts.length > 0;
-    this.permissionState.hasPrimaryContact = this.contacts.some(c => c.isPrimary);
+    this.permissionState = {
+      location: locStatus,
+      microphone: micStatus,
+      notifications: notifStatus,
+      androidCalling: nativePerms.callPhone ? 'granted' : 'prompt',
+      androidSms: nativePerms.sendSms ? 'granted' : 'prompt',
+      androidBackgroundLoc: nativePerms.backgroundLocation ? 'granted' : 'prompt',
+      contactsConfigured: this.contacts.length > 0,
+      hasPrimaryContact: this.contacts.some(c => c.isPrimary)
+    };
 
-    return this.checkReadiness();
+    this.checkReadiness();
+    return this.permissionState;
   }
 
   checkReadiness() {
-    const isLocationReady = this.permissionState.location === 'granted';
-    const isContactsReady = this.permissionState.contactsConfigured && this.permissionState.hasPrimaryContact;
-    const isReady = isLocationReady && isContactsReady;
+    const isReady = (
+      this.permissionState.location === 'granted' &&
+      this.permissionState.contactsConfigured &&
+      this.permissionState.hasPrimaryContact
+    );
 
     const report = {
       isReady,
       location: this.permissionState.location,
       microphone: this.permissionState.microphone,
       notifications: this.permissionState.notifications,
-      androidCalling: this.permissionState.androidCalling,
-      androidSms: this.permissionState.androidSms,
-      androidBackgroundLoc: this.permissionState.androidBackgroundLoc,
       contactsCount: this.contacts.length,
       primaryContact: this.getPrimaryContact(),
       platform: platformEmergencyBridge.platform,
@@ -319,12 +314,11 @@ export class EmergencySosService {
   }
 
   // ================= ZERO-TAP AUTOMATIC NATIVE SOS PIPELINE =================
-
-  /**
-   * Starts 5-Second False-Activation-Prevention Countdown
-   */
   startSosCountdown(source = 'Manual Button') {
     if (this.state === SOS_STATUS.COUNTDOWN || this.state === SOS_STATUS.ACTIVE) return;
+
+    // Refresh contacts from store before activation
+    this.contacts = this.loadContacts();
 
     this.state = SOS_STATUS.COUNTDOWN;
     this.triggerSource = source;
@@ -345,9 +339,6 @@ export class EmergencySosService {
     }, 1000);
   }
 
-  /**
-   * User cancels the SOS countdown
-   */
   cancelSosCountdown() {
     if (this.countdownTimer) {
       clearInterval(this.countdownTimer);
@@ -357,20 +348,14 @@ export class EmergencySosService {
     this.onStateChange(this.state, { cancelled: true });
   }
 
-  /**
-   * CENTRAL NATIVE ZERO-TAP SOS FUNCTION (Called at Countdown = 0)
-   * Runs all operations in PARALLEL without sequential delays:
-   * 1. Get Live GPS
-   * 2. Start Live Location Tracking + Android Foreground Service
-   * 3. Send Emergency Alert (Native SMS / Backend Cloud Alert)
-   * 4. Call Primary Contact (Android Native Telephony ACTION_CALL)
-   * 5. Show SOS ACTIVE status screen (ZERO taps required)
-   */
   async activateNativeSOS(source = this.triggerSource) {
     if (this.countdownTimer) {
       clearInterval(this.countdownTimer);
       this.countdownTimer = null;
     }
+
+    // Always ensure freshest contacts from store
+    this.contacts = this.loadContacts();
 
     this.state = SOS_STATUS.ACTIVE;
     this.triggerSource = source;
@@ -409,11 +394,11 @@ export class EmergencySosService {
     this.startLiveLocationTracking();
     platformEmergencyBridge.startForegroundService(this.activeLiveSession.id);
 
-    // 4. Parallel Task D: Automatically Dispatch Emergency Alert
+    // 4. Parallel Task D: Automatically Dispatch Emergency Alert to Authoritative Contacts
     this.autoDispatchEmergencyAlert(liveTrackingUrl);
 
     // 5. Parallel Task E: Automatically Initiate Primary Phone Call (on Android Native)
-    if (primary) {
+    if (primary && primary.phone) {
       this.autoInitiatePrimaryCall(primary);
     }
 
@@ -428,16 +413,10 @@ export class EmergencySosService {
     });
   }
 
-  /**
-   * Backward-compatible alias for activateNativeSOS
-   */
   async activateSOS(source = this.triggerSource) {
     return this.activateNativeSOS(source);
   }
 
-  /**
-   * Queries real browser/device Geolocation API
-   */
   async fetchCurrentLocation() {
     return new Promise((resolve) => {
       if (!navigator.geolocation) {
@@ -475,9 +454,6 @@ export class EmergencySosService {
     });
   }
 
-  /**
-   * Continuous Live Location Watcher
-   */
   startLiveLocationTracking() {
     if (this.watchPositionId !== null) {
       navigator.geolocation.clearWatch(this.watchPositionId);
@@ -510,16 +486,17 @@ export class EmergencySosService {
     );
   }
 
-  /**
-   * Automatically dispatches the emergency live-location alert
-   */
   async autoDispatchEmergencyAlert(liveTrackingUrl) {
+    const user = authService?.getAuthenticatedUser();
+    const userPhone = user?.mobileNumber || user?.phone || '+91 User';
+
     const res = await platformEmergencyBridge.autoDispatchAlert({
       sessionId: this.activeLiveSession ? this.activeLiveSession.id : 'unknown',
       location: this.currentLocation,
       contacts: this.contacts,
       timestamp: this.sosTimestamp,
-      liveTrackingUrl
+      liveTrackingUrl,
+      userPhone
     });
 
     if (res && res.success) {
@@ -530,9 +507,6 @@ export class EmergencySosService {
     this.onContactsChange(this.contacts);
   }
 
-  /**
-   * Automatically initiates the phone call to the primary contact
-   */
   async autoInitiatePrimaryCall(primary) {
     const res = await platformEmergencyBridge.autoInitiateCall(primary.phone);
     if (res && res.success) {
@@ -543,20 +517,14 @@ export class EmergencySosService {
     this.onContactsChange(this.contacts);
   }
 
-  /**
-   * Manual call execution for Web fallback
-   */
   manualCallPrimary() {
     const primary = this.getPrimaryContact();
-    if (primary) {
+    if (primary && primary.phone) {
       return platformEmergencyBridge.manualWebCall(primary.phone);
     }
     return { success: false, error: 'No primary contact configured.' };
   }
 
-  /**
-   * Stops active SOS and terminates live location session
-   */
   stopSOS() {
     if (this.watchPositionId !== null) {
       navigator.geolocation.clearWatch(this.watchPositionId);

@@ -1,6 +1,15 @@
 // Serverless Function: /api/sos/alert
 // Automated WhatsApp Business / Cloud API Emergency Alert Dispatcher
 
+function normalizePhone(phone) {
+  if (!phone) return '';
+  const digits = phone.toString().replace(/[^0-9]/g, '');
+  if (!digits) return '';
+  if (digits.length === 12 && digits.startsWith('91')) return `+${digits}`;
+  if (digits.length === 10) return `+91${digits}`;
+  return `+${digits}`;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
@@ -13,12 +22,16 @@ export default async function handler(req, res) {
       ? `https://www.google.com/maps?q=${location.latitude},${location.longitude}`
       : (liveTrackingUrl || 'Location tracking active');
 
-    const formattedUserPhone = userPhone || 'Registered SafeRoute User';
+    const formattedUserPhone = normalizePhone(userPhone || '+91 User');
 
-    // WhatsApp Message Body Structure
+    // Exact WhatsApp Emergency Message Structure
     const messageBody = `🚨 *EMERGENCY ALERT*\n\nSOS has been activated.\n\nThe user may need immediate assistance.\n\n📍 *Current location:*\n${gmapsUrl}\n\n*User mobile:*\n${formattedUserPhone}\n\nPlease contact them immediately.`;
 
-    const recipients = (contacts || []).filter(c => c.phone);
+    const recipients = (contacts || []).map(c => ({
+      ...c,
+      phone: normalizePhone(c.phone || c.contactNumber)
+    })).filter(c => c.phone);
+
     const results = [];
 
     // WhatsApp Cloud API Configuration
@@ -27,7 +40,7 @@ export default async function handler(req, res) {
 
     if (waToken && waPhoneId) {
       for (const contact of recipients) {
-        const cleanRecipientPhone = contact.phone.replace(/[^0-9]/g, '');
+        const cleanRecipientDigits = contact.phone.replace(/[^0-9]/g, '');
         try {
           const waRes = await fetch(`https://graph.facebook.com/v19.0/${waPhoneId}/messages`, {
             method: 'POST',
@@ -37,7 +50,7 @@ export default async function handler(req, res) {
             },
             body: JSON.stringify({
               messaging_product: 'whatsapp',
-              to: cleanRecipientPhone,
+              to: cleanRecipientDigits,
               type: 'text',
               text: { body: messageBody }
             })
@@ -55,8 +68,7 @@ export default async function handler(req, res) {
         }
       }
     } else {
-      // Development mode fallback simulation (if WhatsApp Business credentials not set in env)
-      console.log(`[SafeRoute WhatsApp Backend] Simulated WhatsApp Emergency Alert dispatched for ${formattedUserPhone} to ${recipients.length} contact(s).`);
+      console.log(`[SafeRoute WhatsApp Backend] Simulated WhatsApp Emergency Alert dispatched for ${formattedUserPhone} to ${recipients.length} contact(s):`, recipients.map(r => r.phone));
       recipients.forEach(c => {
         results.push({ id: c.id, phone: c.phone, status: 'SENT', provider: 'SafeRoute Cloud Gateway (Simulated)' });
       });

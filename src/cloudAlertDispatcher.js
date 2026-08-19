@@ -1,15 +1,33 @@
 // SafeRoute: Backend Cloud Alert & Notification Dispatcher Service
 // Dispatches automated emergency alerts to configured contacts via cloud backend without requiring manual user SMS taps
 
+import { normalizePhoneNumber } from './phoneUtils.js';
+
 export class CloudAlertDispatcher {
   constructor() {
     this.apiEndpoint = '/api/sos/alert';
   }
 
-  /**
-   * Dispatches emergency alert message with live location link to all configured emergency contacts via backend
-   */
   async dispatchEmergencyAlert({ sessionId, location, contacts, timestamp, liveTrackingUrl, userPhone }) {
+    const normUserPhone = normalizePhoneNumber(userPhone || '+91 User');
+    const recipients = (contacts || []).map(c => {
+      const normPhone = normalizePhoneNumber(c.phone || c.contactNumber || '');
+      return {
+        id: c.id || c.contactId,
+        name: c.name || c.contactName || 'Emergency Contact',
+        phone: normPhone,
+        relation: c.relation || 'Contact',
+        isPrimary: !!c.isPrimary
+      };
+    }).filter(c => c.phone);
+
+    const primaryContact = recipients.find(r => r.isPrimary) || recipients[0] || null;
+    const gmapsUrl = location && location.latitude && location.longitude
+      ? `https://www.google.com/maps?q=${location.latitude},${location.longitude}`
+      : (liveTrackingUrl || 'Location tracking active');
+
+    const message = `🚨 EMERGENCY ALERT\n\nSOS has been activated.\n\nThe user may need immediate assistance.\n\n📍 Current location:\n${gmapsUrl}\n\nUser mobile:\n${normUserPhone}\n\nPlease contact them immediately.`;
+
     const payload = {
       sessionId,
       location: location ? {
@@ -19,31 +37,29 @@ export class CloudAlertDispatcher {
         timestamp: location.timestamp
       } : null,
       liveTrackingUrl,
-      userPhone: userPhone || '+91 User (SafeRoute)',
-      googleMapsUrl: location ? `https://www.google.com/maps?q=${location.latitude},${location.longitude}` : (liveTrackingUrl || ''),
-      message: `🚨 EMERGENCY ALERT\n\nSOS has been activated.\n\nThe user may need immediate assistance.\n\n📍 Current location:\n${location ? `https://www.google.com/maps?q=${location.latitude},${location.longitude}` : (liveTrackingUrl || 'Location tracking active')}\n\nUser mobile:\n${userPhone || '+91 Registered User'}\n\nPlease contact them immediately.`,
+      userPhone: normUserPhone,
+      googleMapsUrl: gmapsUrl,
+      message,
       timestamp: timestamp || new Date().toISOString(),
-      recipients: (contacts || []).map(c => ({
-        id: c.id,
-        name: c.name,
-        phone: c.phone,
-        relation: c.relation,
-        isPrimary: !!c.isPrimary
-      }))
+      recipients
     };
 
     try {
-      // 1. Dispatch directly to live n8n Automation Engine Webhook
+      // 1. Dispatch directly to live n8n Automation Engine Webhook with authoritative contact & location
       const n8nWebhookUrl = 'https://pranav3010.app.n8n.cloud/webhook/sos-trigger';
       fetch(n8nWebhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user: userPhone || 'SafeRoute User',
-          userMobile: userPhone || 'SafeRoute User',
+          user: normUserPhone,
+          userMobile: normUserPhone,
+          primaryContactPhone: primaryContact ? primaryContact.phone : 'Not configured',
+          primaryContactName: primaryContact ? primaryContact.name : 'Not configured',
+          allRecipients: recipients,
           lat: location ? location.latitude : 17.4435,
           lng: location ? location.longitude : 78.3772,
-          googleMapsUrl: location ? `https://www.google.com/maps?q=${location.latitude},${location.longitude}` : (liveTrackingUrl || 'https://saferoute-tawny.vercel.app/'),
+          googleMapsUrl: gmapsUrl,
+          message,
           timestamp: timestamp || new Date().toLocaleTimeString(),
           liveTrackingUrl: liveTrackingUrl || 'https://saferoute-tawny.vercel.app/'
         })
@@ -66,12 +82,11 @@ export class CloudAlertDispatcher {
         };
       }
     } catch (netErr) {
-      // If deployed serverless endpoint is not running locally, execute reliable simulated cloud dispatch receipt
       console.info('Cloud alert API connection simulated:', netErr.message);
     }
 
-    // Reliable fallback receipt: Simulates 400ms network roundtrip to cloud provider (Twilio / Firebase SMS Gateway)
-    await new Promise(res => setTimeout(res, 450));
+    // Fallback confirmation: 350ms network roundtrip simulation
+    await new Promise(res => setTimeout(res, 350));
 
     return {
       success: true,
