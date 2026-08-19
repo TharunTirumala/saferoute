@@ -122,9 +122,6 @@ export class SmartNewsReader {
       finalRiskImpact = parseFloat((-0.12).toFixed(2)); // Police patrol lowers risk!
     }
 
-    const initialNewsRisk = 0.15;
-    const newLocationRisk = parseFloat(Math.min(0.95, Math.max(0.05, initialNewsRisk + finalRiskImpact)).toFixed(2));
-
     return {
       headline,
       locationsFound: targetLocations,
@@ -140,6 +137,19 @@ export class SmartNewsReader {
       riskDelta: finalRiskImpact > 0 ? `+${finalRiskImpact}` : `${finalRiskImpact}`,
       impactTag: isPositiveAction ? "POLICE RESPONSE (RISK DECREASED)" : "ACTIVE INCIDENT (RISK INCREASED)"
     };
+  }
+
+  /**
+   * Ingest and dynamically load scraped headline list into sample options
+   * @param {Array<string>} headlines 
+   */
+  ingestHeadlines(headlines) {
+    if (!Array.isArray(headlines)) return;
+    headlines.forEach(h => {
+      if (h && typeof h === 'string' && !this.sampleHeadlines.includes(h)) {
+        this.sampleHeadlines.unshift(h);
+      }
+    });
   }
 }
 

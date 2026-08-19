@@ -2011,6 +2011,36 @@ function processHeadlineNLP(headlineText) {
     nlpImpactBadge.textContent = result.impactTag;
     nlpImpactBadge.className = `badge-tag-clean ${result.isPositiveAction ? 'success' : 'danger'}`;
   }
+
+  // Plot Scraped News Incident Location Marker on Leaflet Map
+  const locationCoordsMap = {
+    'Charminar': [17.3616, 78.4747],
+    'Banjara Hills': [17.4156, 78.4347],
+    'Hitech City': [17.4435, 78.3772],
+    'Gachibowli': [17.4401, 78.3489],
+    'Begumpet': [17.4447, 78.4664],
+    'Jubilee Hills': [17.4319, 78.4071],
+    'Hyderabad': [17.3850, 78.4867]
+  };
+
+  if (safeRouteMapRenderer && safeRouteMapRenderer.map) {
+    result.locationsFound.forEach(locName => {
+      const coords = locationCoordsMap[locName] || [17.4435, 78.3772];
+      const markerColor = result.isPositiveAction ? '#10b981' : '#ef4444';
+      const iconHtml = `<div style="background: ${markerColor}; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; border: 2px solid white; box-shadow: 0 0 10px ${markerColor};">${result.isPositiveAction ? '👮' : '🚨'}</div>`;
+      const customIcon = L.divIcon({ html: iconHtml, className: 'news-hazard-marker', iconSize: [28, 28] });
+      
+      const newsMarker = L.marker(coords, { icon: customIcon }).addTo(safeRouteMapRenderer.map);
+      newsMarker.bindPopup(`
+        <div style="font-family: sans-serif; padding: 4px;">
+          <strong style="color: ${markerColor};">${result.impactTag}</strong><br/>
+          <small><strong>Location:</strong> ${locName}</small><br/>
+          <small><strong>Headline:</strong> "${headlineText}"</small><br/>
+          <small><strong>New Risk Index:</strong> ${result.newLocationRisk} (${result.riskDelta})</small>
+        </div>
+      `).openPopup();
+    });
+  }
 }
 
 if (selectSampleHeadline) {
