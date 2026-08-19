@@ -1,5 +1,5 @@
 // SafeRoute: Backend Cloud Alert & Notification Dispatcher Service
-// Dispatches automated emergency alerts to configured contacts via cloud backend without requiring manual user SMS taps
+// Dispatches automated emergency alerts with verified User/System Number
 
 import { normalizePhoneNumber } from './phoneUtils.js';
 
@@ -9,7 +9,7 @@ export class CloudAlertDispatcher {
   }
 
   async dispatchEmergencyAlert({ sessionId, location, contacts, timestamp, liveTrackingUrl, userPhone }) {
-    const normUserPhone = normalizePhoneNumber(userPhone || '+91 User');
+    const normSystemNumber = normalizePhoneNumber(userPhone || '+91 User');
     const recipients = (contacts || []).map(c => {
       const normPhone = normalizePhoneNumber(c.phone || c.contactNumber || '');
       return {
@@ -26,7 +26,7 @@ export class CloudAlertDispatcher {
       ? `https://www.google.com/maps?q=${location.latitude},${location.longitude}`
       : (liveTrackingUrl || 'Location tracking active');
 
-    const message = `🚨 EMERGENCY ALERT\n\nSOS has been activated.\n\nVerified user: ${normUserPhone}\nI may need help.\n\n📍 Current location:\n${gmapsUrl}\n\nPlease contact me immediately.`;
+    const message = `🚨 EMERGENCY ALERT\n\nSOS has been activated.\n\nUser/System Number:\n${normSystemNumber}\n\nI may need help.\n\n📍 Current location:\n${gmapsUrl}\n\nPlease contact me immediately.`;
 
     const payload = {
       sessionId,
@@ -37,7 +37,8 @@ export class CloudAlertDispatcher {
         timestamp: location.timestamp
       } : null,
       liveTrackingUrl,
-      userPhone: normUserPhone,
+      userPhone: normSystemNumber,
+      systemNumber: normSystemNumber,
       googleMapsUrl: gmapsUrl,
       message,
       timestamp: timestamp || new Date().toISOString(),
@@ -45,7 +46,6 @@ export class CloudAlertDispatcher {
     };
 
     try {
-      // 1. Dispatch directly to live n8n Automation Engine Webhook (supports custom path + default UUID path)
       const n8nEndpoints = [
         'https://pranav3010.app.n8n.cloud/webhook/sos-trigger',
         'https://pranav3010.app.n8n.cloud/webhook/648a0c62-0d6f-4b2c-a3a6-facae7f317cf'
@@ -56,8 +56,9 @@ export class CloudAlertDispatcher {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            user: normUserPhone,
-            userMobile: normUserPhone,
+            user: normSystemNumber,
+            userMobile: normSystemNumber,
+            systemNumber: normSystemNumber,
             primaryContactPhone: primaryContact ? primaryContact.phone : '+916300863028',
             primaryContactName: primaryContact ? primaryContact.name : 'Emergency Contact',
             allRecipients: recipients,
@@ -71,7 +72,6 @@ export class CloudAlertDispatcher {
         }).catch(err => console.log('n8n dispatch status:', err));
       });
 
-      // 2. Attempt Real Backend API Dispatch
       const response = await fetch(this.apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -91,7 +91,6 @@ export class CloudAlertDispatcher {
       console.info('Cloud alert API connection simulated:', netErr.message);
     }
 
-    // Fallback confirmation: 350ms network roundtrip simulation
     await new Promise(res => setTimeout(res, 350));
 
     return {

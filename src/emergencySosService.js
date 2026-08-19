@@ -1,5 +1,5 @@
 // SafeRoute: Central Zero-Tap Android Native & Web Emergency SOS Engine
-// Dynamic Authoritative Contacts -> 3-Second Countdown -> 100% Parallel Automatic GPS & Alert Dispatch
+// Bound to Authenticated User's Permanent System Number -> 3-Second Countdown -> Automatic GPS & Alert Dispatch
 
 import { userStore } from './userStore.js';
 import { authService } from './authService.js';
@@ -35,7 +35,6 @@ export class EmergencySosService {
 
     this.contacts = this.loadContacts();
 
-    // Permissions State Cache
     this.permissionState = {
       location: 'unknown',
       microphone: 'unknown',
@@ -56,17 +55,15 @@ export class EmergencySosService {
     }
   }
 
-  /**
-   * Loads contacts from user-scoped database
-   */
   loadContacts() {
     const user = authService?.getAuthenticatedUser();
-    const userId = user?.userId || (user?.phone ? userStore.generateUserId(user.phone) : 'usr_default');
-    const userContacts = userStore.getUserContacts(userId);
+    const systemNumber = user?.systemNumber || user?.mobileNumber || user?.phone || 'usr_default';
+    const userContacts = userStore.getUserContacts(systemNumber);
     return userContacts.map(c => ({
       id: c.contactId || c.id,
       contactId: c.contactId || c.id,
-      userId,
+      userId: user?.userId || 'usr_default',
+      systemNumber,
       name: c.contactName || c.name || 'Emergency Contact',
       phone: normalizePhoneNumber(c.contactNumber || c.phone || ''),
       relation: c.relation || 'Contact',
@@ -84,13 +81,10 @@ export class EmergencySosService {
     this.checkReadiness();
   }
 
-  /**
-   * Saves contacts to user-scoped database
-   */
   saveContacts() {
     const user = authService?.getAuthenticatedUser();
-    const userId = user?.userId || (user?.phone ? userStore.generateUserId(user.phone) : 'usr_default');
-    userStore.saveUserContacts(userId, this.contacts);
+    const systemNumber = user?.systemNumber || user?.mobileNumber || user?.phone || 'usr_default';
+    userStore.saveUserContacts(systemNumber, this.contacts);
     this.permissionState.contactsConfigured = this.contacts.length > 0;
     this.permissionState.hasPrimaryContact = this.contacts.some(c => c.isPrimary);
     this.onContactsChange(this.contacts);
@@ -115,10 +109,14 @@ export class EmergencySosService {
       this.contacts.forEach(c => c.isPrimary = false);
     }
 
+    const user = authService?.getAuthenticatedUser();
+    const systemNumber = user?.systemNumber || user?.mobileNumber || user?.phone || 'usr_default';
+
     const newContact = {
       id: `c_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
       contactId: `c_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-      userId: authService?.getAuthenticatedUser()?.userId || 'usr_default',
+      userId: user?.userId || 'usr_default',
+      systemNumber,
       name: cleanName,
       phone: normPhone,
       relation: relation.trim() || 'Contact',
@@ -166,7 +164,6 @@ export class EmergencySosService {
     return false;
   }
 
-  // ================= PERMISSION PRE-AUTHORIZATION & MONITORING =================
   async initPermissionMonitoring() {
     await this.checkPermissionStatus();
 
@@ -317,9 +314,7 @@ export class EmergencySosService {
   startSosCountdown(source = 'Manual Button') {
     if (this.state === SOS_STATUS.COUNTDOWN || this.state === SOS_STATUS.ACTIVE) return;
 
-    // Refresh contacts from store before activation
     this.contacts = this.loadContacts();
-
     this.state = SOS_STATUS.COUNTDOWN;
     this.triggerSource = source;
     this.countdownSeconds = 3;
@@ -354,9 +349,7 @@ export class EmergencySosService {
       this.countdownTimer = null;
     }
 
-    // Always ensure freshest contacts from store
     this.contacts = this.loadContacts();
-
     this.state = SOS_STATUS.ACTIVE;
     this.triggerSource = source;
     this.sosTimestamp = new Date().toLocaleTimeString();
@@ -365,7 +358,6 @@ export class EmergencySosService {
     const primary = this.getPrimaryContact();
     const isNative = platformEmergencyBridge.isNativeAndroid();
 
-    // Reset status indicators
     this.contacts.forEach(c => {
       if (c.isPrimary) {
         c.callStatus = isNative ? 'Calling' : 'Web Standby';
@@ -383,21 +375,34 @@ export class EmergencySosService {
       statusPhase: 'INITIALIZING'
     });
 
-    // 1. Parallel Task A: Obtain Real GPS Fix
+    // 1. Obtain Real GPS Fix
     const initialCoords = await this.fetchCurrentLocation();
 
-    // 2. Parallel Task B: Initialize Secure SOS Live Session
+    // 2. Initialize Secure SOS Live Session
     this.activeLiveSession = liveSosSessionStore.createSession(initialCoords, this.triggerSource);
     const liveTrackingUrl = liveSosSessionStore.getLiveTrackingUrl(this.activeLiveSession.id);
 
-    // 3. Parallel Task C: Start Continuous GPS Tracking & Persistent Foreground Service
+    // 3. Log event into user's isolated SOS history
+    const user = authService?.getAuthenticatedUser();
+    const systemNumber = user?.systemNumber || user?.mobileNumber || user?.phone || 'usr_default';
+    userStore.logSosEvent(systemNumber, {
+      id: this.activeLiveSession.id,
+      systemNumber,
+      triggerSource: this.triggerSource,
+      timestamp: this.sosTimestamp,
+      location: initialCoords,
+      contactsNotified: this.contacts.map(c => ({ name: c.name, phone: c.phone })),
+      status: 'ACTIVE'
+    });
+
+    // 4. Start Continuous GPS Tracking & Persistent Foreground Service
     this.startLiveLocationTracking();
     platformEmergencyBridge.startForegroundService(this.activeLiveSession.id);
 
-    // 4. Parallel Task D: Automatically Dispatch Emergency Alert to Authoritative Contacts
+    // 5. Automatically Dispatch Emergency Alert with User's System Number
     this.autoDispatchEmergencyAlert(liveTrackingUrl);
 
-    // 5. Parallel Task E: Automatically Initiate Primary Phone Call (on Android Native)
+    // 6. Automatically Initiate Primary Phone Call
     if (primary && primary.phone) {
       this.autoInitiatePrimaryCall(primary);
     }
@@ -492,7 +497,7 @@ export class EmergencySosService {
 
   async autoDispatchEmergencyAlert(liveTrackingUrl) {
     const user = authService?.getAuthenticatedUser();
-    const userPhone = user?.mobileNumber || user?.phone || '+91 User';
+    const systemNumber = user?.systemNumber || user?.mobileNumber || user?.phone || '+91 User';
 
     const res = await platformEmergencyBridge.autoDispatchAlert({
       sessionId: this.activeLiveSession ? this.activeLiveSession.id : 'unknown',
@@ -500,7 +505,7 @@ export class EmergencySosService {
       contacts: this.contacts,
       timestamp: this.sosTimestamp,
       liveTrackingUrl,
-      userPhone
+      userPhone: systemNumber
     });
 
     if (res && res.success) {

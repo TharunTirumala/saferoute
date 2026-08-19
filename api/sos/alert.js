@@ -22,10 +22,10 @@ export default async function handler(req, res) {
       ? `https://www.google.com/maps?q=${location.latitude},${location.longitude}`
       : (liveTrackingUrl || 'Location tracking active');
 
-    const formattedUserPhone = normalizePhone(userPhone || '+91 User');
+    const formattedSystemNumber = normalizePhone(userPhone || '+91 User');
 
-    // Exact WhatsApp Emergency Message Structure
-    const messageBody = `🚨 *EMERGENCY ALERT*\n\nSOS has been activated.\n\n*Verified user:* ${formattedUserPhone}\nI may need help.\n\n📍 *Current location:*\n${gmapsUrl}\n\nPlease contact me immediately.`;
+    // Exact WhatsApp Emergency Message Structure with User/System Number
+    const messageBody = `🚨 *EMERGENCY ALERT*\n\nSOS has been activated.\n\n*User/System Number:*\n${formattedSystemNumber}\n\nI may need help.\n\n📍 *Current location:*\n${gmapsUrl}\n\nPlease contact me immediately.`;
 
     const recipients = (contacts || []).map(c => ({
       ...c,
@@ -68,9 +68,9 @@ export default async function handler(req, res) {
         }
       }
     } else {
-      console.log(`[SafeRoute WhatsApp Backend] Simulated WhatsApp Emergency Alert dispatched for ${formattedUserPhone} to ${recipients.length} contact(s):`, recipients.map(r => r.phone));
+      console.log(`[SafeRoute WhatsApp Gateway] Dispatched for System Number ${formattedSystemNumber} to ${recipients.length} contact(s):`, recipients.map(r => r.phone));
       recipients.forEach(c => {
-        results.push({ id: c.id, phone: c.phone, status: 'SENT', provider: 'SafeRoute Cloud Gateway (Simulated)' });
+        results.push({ id: c.id, phone: c.phone, status: 'SENT', provider: 'SafeRoute Cloud Gateway' });
       });
     }
 

@@ -1,14 +1,19 @@
-// SafeRoute: Authoritative User & Scoped Emergency Contacts Store
-// Zero hardcoded numbers. Contacts belong strictly to the authenticated user.
+// SafeRoute: Authoritative Multi-Tenant User Store
+// Verified Mobile Number = Permanent Unique System Number & User Identity
+// Enforces complete data isolation for contacts, active SOS, and SOS history
 
 import { normalizePhoneNumber, formatDisplayPhone } from './phoneUtils.js';
 
-const USERS_DB_KEY = 'saferoute_users_db_v2';
-const CONTACTS_DB_KEY = 'saferoute_contacts_db_v2';
+const USERS_DB_KEY = 'saferoute_users_db_v3';
+const CONTACTS_DB_KEY = 'saferoute_contacts_db_v3';
+const SOS_HISTORY_DB_KEY = 'saferoute_sos_history_v3';
 
 export class UserStore {
   constructor() {}
 
+  /**
+   * Generates deterministic user ID from normalized phone / system number
+   */
   generateUserId(phone) {
     const cleanDigits = (phone || '').replace(/[^0-9]/g, '');
     return `usr_${cleanDigits}`;
@@ -29,28 +34,50 @@ export class UserStore {
     } catch (e) {}
   }
 
+  /**
+   * Retrieves or registers returning/new user with permanent systemNumber
+   */
   getOrCreateUser(mobileNumber) {
     const normPhone = normalizePhoneNumber(mobileNumber);
     const userId = this.generateUserId(normPhone);
     const users = this.getUsers();
     
     if (!users[userId]) {
+      // New User Registration
       users[userId] = {
-        userId,
+        id: userId,
+        userId: userId,
+        systemNumber: normPhone,
         mobileNumber: normPhone,
         createdAt: new Date().toISOString(),
         lastLoginAt: new Date().toISOString()
       };
     } else {
+      // Returning User - Preserves existing account data
       users[userId].lastLoginAt = new Date().toISOString();
+      users[userId].systemNumber = normPhone;
     }
 
     this.saveUsers(users);
     return users[userId];
   }
 
-  getUserContacts(userId) {
-    if (!userId) return [];
+  getUserBySystemNumber(systemNumber) {
+    const normPhone = normalizePhoneNumber(systemNumber);
+    const userId = this.generateUserId(normPhone);
+    const users = this.getUsers();
+    return users[userId] || null;
+  }
+
+  /**
+   * User-scoped emergency contacts (strictly isolated per systemNumber / userId)
+   */
+  getUserContacts(systemNumberOrUserId) {
+    if (!systemNumberOrUserId) return [];
+    const userId = systemNumberOrUserId.startsWith('usr_') 
+      ? systemNumberOrUserId 
+      : this.generateUserId(systemNumberOrUserId);
+
     try {
       const saved = localStorage.getItem(`${CONTACTS_DB_KEY}_${userId}`);
       if (saved) {
@@ -68,14 +95,21 @@ export class UserStore {
     return [];
   }
 
-  saveUserContacts(userId, contacts) {
-    if (!userId) return false;
+  saveUserContacts(systemNumberOrUserId, contacts) {
+    if (!systemNumberOrUserId) return false;
+    const userId = systemNumberOrUserId.startsWith('usr_') 
+      ? systemNumberOrUserId 
+      : this.generateUserId(systemNumberOrUserId);
+    
+    const systemNumber = normalizePhoneNumber(systemNumberOrUserId.replace('usr_', ''));
+
     try {
       const sanitized = (contacts || []).map((c, idx) => {
         const norm = normalizePhoneNumber(c.contactNumber || c.phone || '');
         return {
           contactId: c.contactId || c.id || `cnt_${Date.now()}_${idx}_${Math.random().toString(36).substr(2, 4)}`,
           userId,
+          systemNumber,
           contactName: (c.contactName || c.name || 'Emergency Contact').trim(),
           contactNumber: norm,
           relation: (c.relation || 'Contact').trim(),
@@ -83,7 +117,6 @@ export class UserStore {
         };
       });
 
-      // Ensure exactly one contact is primary if any exist
       if (sanitized.length > 0 && !sanitized.some(c => c.isPrimary)) {
         sanitized[0].isPrimary = true;
       }
@@ -94,6 +127,49 @@ export class UserStore {
       console.warn('Failed to save user contacts:', e);
       return false;
     }
+  }
+
+  /**
+   * User-scoped SOS event history (strictly isolated per systemNumber)
+   */
+  getSosHistory(systemNumberOrUserId) {
+    if (!systemNumberOrUserId) return [];
+    const userId = systemNumberOrUserId.startsWith('usr_') 
+      ? systemNumberOrUserId 
+      : this.generateUserId(systemNumberOrUserId);
+
+    try {
+      const saved = localStorage.getItem(`${SOS_HISTORY_DB_KEY}_${userId}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  logSosEvent(systemNumberOrUserId, eventData) {
+    if (!systemNumberOrUserId) return null;
+    const userId = systemNumberOrUserId.startsWith('usr_') 
+      ? systemNumberOrUserId 
+      : this.generateUserId(systemNumberOrUserId);
+    
+    const history = this.getSosHistory(userId);
+    const newRecord = {
+      id: eventData.id || `sos_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      userId,
+      systemNumber: normalizePhoneNumber(systemNumberOrUserId.replace('usr_', '')),
+      timestamp: eventData.timestamp || new Date().toLocaleTimeString(),
+      date: new Date().toISOString(),
+      location: eventData.location || null,
+      triggerSource: eventData.triggerSource || 'Manual Button',
+      contactsNotified: eventData.contactsNotified || [],
+      status: eventData.status || 'ACTIVE'
+    };
+
+    history.unshift(newRecord);
+    try {
+      localStorage.setItem(`${SOS_HISTORY_DB_KEY}_${userId}`, JSON.stringify(history.slice(0, 50)));
+    } catch (e) {}
+    return newRecord;
   }
 }
 

@@ -48,28 +48,21 @@ export class PlatformEmergencyBridge {
     return this.platform === 'NATIVE_ANDROID';
   }
 
-  /**
-   * Automated Emergency Call Initiation
-   * - On Android Native: Direct ACTION_CALL with zero taps
-   * - On Web/Safari: Transparently identifies web restriction without fake redirects
-   */
   async autoInitiateCall(phone) {
     const cleanNumber = (phone || '').replace(/[^0-9+]/g, '');
     if (!cleanNumber) {
       return { success: false, status: COMM_STATUS.FAILED, error: 'Invalid phone number format.' };
     }
 
-    // 1. Android Native Direct Call via ACTION_CALL (Zero-Tap)
     if (this.isNativeAndroid()) {
       const called = androidNativeSosService.callEmergency(cleanNumber);
       if (called) {
         return { success: true, status: COMM_STATUS.CALLING, label: 'Calling' };
       } else {
-        return { success: false, status: COMM_STATUS.FAILED, error: 'Android CALL_PHONE permission not granted or call rejected.' };
+        return { success: false, status: COMM_STATUS.FAILED, error: 'Android CALL_PHONE permission not granted.' };
       }
     }
 
-    // 2. iOS Native Handler (if packaged with native iOS wrapper)
     if (this.platform === 'NATIVE_IOS' && window.webkit?.messageHandlers?.emergencyHandler?.postMessage) {
       try {
         window.webkit.messageHandlers.emergencyHandler.postMessage({ action: 'CALL', phone: cleanNumber });
@@ -79,19 +72,15 @@ export class PlatformEmergencyBridge {
       }
     }
 
-    // 3. Web / Safari Browser Environment
     return {
       success: true,
       status: COMM_STATUS.WEB_STANDBY,
       label: 'Web Standby (Manual Call Available)',
       isWebLimitation: true,
-      message: 'Automatic silent calling is restricted by your browser/iOS security. Use the SafeRoute Android app for zero-tap direct dialing.'
+      message: 'Automatic silent calling is restricted by your browser/iOS security.'
     };
   }
 
-  /**
-   * Manual call execution for Web fallback
-   */
   manualWebCall(phone) {
     const cleanNumber = (phone || '').replace(/[^0-9+]/g, '');
     if (!cleanNumber) return { success: false, error: 'Invalid phone number.' };
@@ -103,18 +92,12 @@ export class PlatformEmergencyBridge {
     }
   }
 
-  /**
-   * Automated Emergency Alert Dispatch
-   * - On Android Native: Dispatches multipart SMS via SmsManager
-   * - On Web / Cloud: Dispatches via SafeRoute Cloud Notification Dispatcher
-   */
   async autoDispatchAlert({ sessionId, location, contacts, timestamp, liveTrackingUrl, userPhone }) {
-    // 1. Android Native Direct SMS via SmsManager
     if (this.isNativeAndroid()) {
       let anySent = false;
       const gmapsLink = location ? `https://www.google.com/maps?q=${location.latitude},${location.longitude}` : (liveTrackingUrl || 'Location tracking active');
       const userNum = userPhone || 'SafeRoute User';
-      const messageText = `🚨 EMERGENCY ALERT\n\nSOS has been activated.\n\nVerified user: ${userNum}\nI may need help.\n\n📍 Current location:\n${gmapsLink}\n\nPlease contact me immediately.`;
+      const messageText = `🚨 EMERGENCY ALERT\n\nSOS has been activated.\n\nUser/System Number:\n${userNum}\n\nI may need help.\n\n📍 Current location:\n${gmapsLink}\n\nPlease contact me immediately.`;
 
       for (const contact of contacts) {
         if (contact.phone) {
@@ -128,7 +111,6 @@ export class PlatformEmergencyBridge {
       }
     }
 
-    // 2. SafeRoute Cloud Notification Backend Dispatcher
     try {
       const res = await cloudAlertDispatcher.dispatchEmergencyAlert({
         sessionId,
