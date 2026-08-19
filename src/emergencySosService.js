@@ -417,6 +417,10 @@ export class EmergencySosService {
     return this.activateNativeSOS(source);
   }
 
+  executeSosNow(source = this.triggerSource) {
+    this.startSosCountdown(source);
+  }
+
   async fetchCurrentLocation() {
     return new Promise((resolve) => {
       if (!navigator.geolocation) {
