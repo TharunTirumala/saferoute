@@ -144,10 +144,10 @@ export class LeafletMapRenderer {
           ⏱ <b>${route.durationMin} min</b> &nbsp;|&nbsp; 📏 <b>${route.distanceKm} km</b>
         </div>
         <div style="font-size:12px;font-weight:bold;color:${strokeColor};margin-top:4px;">
-          🛡️ Safety Score: ${route.safetyScore}/100 (${route.scoreLabel})
+          🛡️ Safety Score: ${route.safetyScore}/100
         </div>
         <div style="font-size:11px;color:#64748b;margin-top:4px;">
-          💡 Lighting: <b>${route.lightingPercent}%</b> | 🚓 Police: <b>${route.policeCount} nearby</b>
+          ${route.reasonsWhy && route.reasonsWhy[0] ? route.reasonsWhy[0] : (route.provider || 'Real Road Network')}
         </div>
       `;
 
