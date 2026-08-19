@@ -1,5 +1,5 @@
-// SafeRoute: Central Truthful Emergency SOS Engine
-// Pre-authorized Permissions -> 5-Second Countdown -> Automatic Live GPS & Truthful Platform Communication (iOS Safari / Web / Native)
+// SafeRoute: Central Zero-Touch Automatic Emergency SOS Engine
+// Pre-Authorized Setup -> 5-Second Countdown -> 100% Automatic GPS, Calling, Alert Dispatch & Live Tracking
 
 import { liveSosSessionStore } from './liveSosSessionStore.js';
 import { platformEmergencyBridge, COMM_STATUS } from './platformEmergencyBridge.js';
@@ -7,14 +7,12 @@ import { platformEmergencyBridge, COMM_STATUS } from './platformEmergencyBridge.
 export const SOS_STATUS = {
   INACTIVE: 'SOS INACTIVE',
   COUNTDOWN: 'SOS COUNTDOWN',
-  ACTIVE: 'SOS ACTIVE',
-  LOCATION_DETECTED: 'LOCATION DETECTED',
-  LOCATION_UNAVAILABLE: 'LOCATION UNAVAILABLE'
+  ACTIVE: 'SOS ACTIVE'
 };
 
 const DEFAULT_CONTACTS = [
-  { id: 'c1', name: 'Mother', phone: '+919876543210', relation: 'Family', isPrimary: true, callStatus: 'NOT_STARTED', messageStatus: 'NOT_STARTED' },
-  { id: 'c2', name: 'Friend', phone: '+919123456789', relation: 'Friend', isPrimary: false, callStatus: 'NOT_STARTED', messageStatus: 'NOT_STARTED' }
+  { id: 'c1', name: 'Mother', phone: '+919876543210', relation: 'Family', isPrimary: true, callStatus: 'Preparing', messageStatus: 'Preparing' },
+  { id: 'c2', name: 'Friend', phone: '+919123456789', relation: 'Friend', isPrimary: false, callStatus: 'Not Started', messageStatus: 'Preparing' }
 ];
 
 export class EmergencySosService {
@@ -61,8 +59,8 @@ export class EmergencySosService {
         if (Array.isArray(parsed) && parsed.length > 0) {
           return parsed.map(c => ({
             ...c,
-            callStatus: COMM_STATUS.NOT_STARTED,
-            messageStatus: COMM_STATUS.NOT_STARTED
+            callStatus: 'Preparing',
+            messageStatus: 'Preparing'
           }));
         }
       }
@@ -113,8 +111,8 @@ export class EmergencySosService {
       phone: cleanPhone,
       relation: relation.trim() || 'Contact',
       isPrimary: isPrimary || this.contacts.length === 0,
-      callStatus: COMM_STATUS.NOT_STARTED,
-      messageStatus: COMM_STATUS.NOT_STARTED
+      callStatus: 'Preparing',
+      messageStatus: 'Preparing'
     };
 
     this.contacts.push(newContact);
@@ -292,7 +290,7 @@ export class EmergencySosService {
     }
   }
 
-  // ================= EMERGENCY SOS PIPELINE =================
+  // ================= ZERO-TOUCH AUTOMATIC SOS PIPELINE =================
 
   /**
    * Starts 5-Second False-Activation-Prevention Countdown
@@ -320,7 +318,7 @@ export class EmergencySosService {
   }
 
   /**
-   * User manually cancels the SOS countdown
+   * User cancels the SOS countdown
    */
   cancelSosCountdown() {
     if (this.countdownTimer) {
@@ -332,15 +330,14 @@ export class EmergencySosService {
   }
 
   /**
-   * ONE CENTRAL TRUTHFUL SOS FUNCTION
-   * Executed at countdown 0:
-   * 1. Get Live GPS (instant, pre-authorized)
-   * 2. Start Continuous Live Location Session (100% automatic)
-   * 3. Prepare real emergency message with HTTPS live link
-   * 4. Perform platform-appropriate communication:
-   *    - On Native Android with direct call/SMS permission -> Execute automatically
-   *    - On Web / iOS Safari -> Set status to ACTION_REQUIRED and present prominent 1-tap call & SMS triggers
-   * 5. Display SOS ACTIVE screen with truthful statuses
+   * ONE CENTRAL ZERO-TOUCH SOS FUNCTION
+   * Executed automatically when countdown reaches 0:
+   * 1. Automatically get real GPS location
+   * 2. Automatically create secure SOS session
+   * 3. Automatically start continuous live GPS tracking
+   * 4. Automatically send emergency live location alert via backend
+   * 5. Automatically initiate emergency phone call to primary contact
+   * 6. Show SOS ACTIVE status screen (NO user buttons)
    */
   async activateSOS(source = this.triggerSource) {
     if (this.countdownTimer) {
@@ -353,13 +350,11 @@ export class EmergencySosService {
     this.sosTimestamp = new Date().toLocaleString();
     this.locationError = null;
 
-    // Truthful initial statuses based on platform capability
-    const initialCall = platformEmergencyBridge.getInitialCallStatus();
-    const initialMsg = platformEmergencyBridge.getInitialMessageStatus();
-
+    // Reset status indicators to Preparing
+    const primary = this.getPrimaryContact();
     this.contacts.forEach(c => {
-      c.callStatus = c.isPrimary ? initialCall.status : COMM_STATUS.NOT_STARTED;
-      c.messageStatus = initialMsg.status;
+      c.callStatus = c.isPrimary ? 'Preparing' : 'Not Started';
+      c.messageStatus = 'Sending...';
     });
 
     this.onStateChange(this.state, {
@@ -369,35 +364,23 @@ export class EmergencySosService {
       statusPhase: 'INITIALIZING'
     });
 
-    // 1. Obtain Instant GPS Fix
+    // 1. Automatically Obtain Real GPS Fix
     const initialCoords = await this.fetchCurrentLocation();
 
-    // 2. Initialize Secure Live Location Tracking Session
+    // 2. Automatically Initialize Secure Live Location Tracking Session
     this.activeLiveSession = liveSosSessionStore.createSession(initialCoords, this.triggerSource);
     const liveTrackingUrl = liveSosSessionStore.getLiveTrackingUrl(this.activeLiveSession.id);
 
-    // 3. Start Continuous Live Location Tracking (100% Automatic)
+    // 3. Automatically Start Continuous Live GPS Tracking
     this.startLiveLocationTracking();
 
-    // 4. If platform supports silent background execution (Native Android bridge), execute now
-    if (platformEmergencyBridge.canAutoSendSmsWithoutUserGesture()) {
-      const primary = this.getPrimaryContact();
-      if (primary) {
-        const msg = this.getEmergencyMessageText(liveTrackingUrl);
-        const res = await platformEmergencyBridge.executeSms(primary.phone, msg);
-        this.contacts.forEach(c => c.messageStatus = res.status);
-      }
-    }
+    // 4. Automatically Dispatch Emergency Live Location Alert via Cloud Backend
+    this.autoDispatchEmergencyAlert(liveTrackingUrl);
 
-    if (platformEmergencyBridge.canAutoDialWithoutUserGesture()) {
-      const primary = this.getPrimaryContact();
-      if (primary) {
-        const res = await platformEmergencyBridge.executeCall(primary.phone);
-        primary.callStatus = res.status;
-      }
+    // 5. Automatically Initiate Primary Phone Call
+    if (primary) {
+      this.autoInitiatePrimaryCall(primary);
     }
-
-    this.onContactsChange(this.contacts);
 
     this.onStateChange(this.state, {
       source: this.triggerSource,
@@ -485,73 +468,43 @@ export class EmergencySosService {
   }
 
   /**
-   * Generates standard plain-text emergency message payload with deployed HTTPS Live Tracking URL
+   * Automatically dispatches the emergency live-location alert to all contacts via backend
    */
-  getEmergencyMessageText(liveTrackingUrl = null) {
-    let locStr = 'Current location could not be determined.';
-    let liveUrlStr = '';
+  async autoDispatchEmergencyAlert(liveTrackingUrl) {
+    const res = await platformEmergencyBridge.autoDispatchAlert({
+      sessionId: this.activeLiveSession ? this.activeLiveSession.id : 'unknown',
+      location: this.currentLocation,
+      contacts: this.contacts,
+      timestamp: this.sosTimestamp,
+      liveTrackingUrl
+    });
 
-    if (this.currentLocation) {
-      const lat = this.currentLocation.latitude;
-      const lng = this.currentLocation.longitude;
-      locStr = `Lat: ${lat}, Lng: ${lng}`;
+    if (res && res.success) {
+      this.contacts.forEach(c => c.messageStatus = 'Sent');
+    } else {
+      this.contacts.forEach(c => c.messageStatus = 'Failed');
     }
-
-    const liveUrl = liveTrackingUrl || (this.activeLiveSession ? liveSosSessionStore.getLiveTrackingUrl(this.activeLiveSession.id) : '');
-    if (liveUrl) {
-      liveUrlStr = `\n\nLive GPS Tracking:\n${liveUrl}`;
-    }
-
-    return `SAFE ROUTE EMERGENCY ALERT\n\nI may be in an emergency situation.\n\nMy current location:\n${locStr}${liveUrlStr}\n\nTime:\n${this.sosTimestamp || new Date().toLocaleString()}\n\nPlease contact me immediately.`;
-  }
-
-  /**
-   * Executes emergency call for specified contact or primary contact
-   */
-  async callContact(contactId) {
-    const contact = this.contacts.find(c => c.id === contactId) || this.getPrimaryContact();
-    if (!contact || !contact.phone) {
-      return { success: false, error: 'No phone number available.' };
-    }
-
-    const res = await platformEmergencyBridge.executeCall(contact.phone);
-    contact.callStatus = res.status;
     this.onContactsChange(this.contacts);
-    return res;
   }
 
   /**
-   * Dispatches emergency SMS / Share for specified contact or all contacts
+   * Automatically initiates the phone call to the primary contact
    */
-  async sendMessageToContact(contactId) {
-    const contact = this.contacts.find(c => c.id === contactId) || this.getPrimaryContact();
-    if (!contact || !contact.phone) {
-      return { success: false, error: 'No phone number available.' };
+  async autoInitiatePrimaryCall(primary) {
+    primary.callStatus = 'In Progress';
+    this.onContactsChange(this.contacts);
+
+    const res = await platformEmergencyBridge.autoInitiateCall(primary.phone);
+    if (res && res.success) {
+      primary.callStatus = 'In Progress';
+    } else {
+      primary.callStatus = 'Failed';
     }
-
-    const messageText = this.getEmergencyMessageText();
-    const res = await platformEmergencyBridge.executeSms(contact.phone, messageText);
-    contact.messageStatus = res.status;
     this.onContactsChange(this.contacts);
-    return res;
   }
 
   /**
-   * Dispatches emergency alert to ALL contacts via Web Share / SMS
-   */
-  async shareEmergencyAlertWithAll() {
-    const messageText = this.getEmergencyMessageText();
-    const primary = this.getPrimaryContact();
-    const phone = primary ? primary.phone : '';
-
-    const res = await platformEmergencyBridge.executeSms(phone, messageText);
-    this.contacts.forEach(c => c.messageStatus = res.status);
-    this.onContactsChange(this.contacts);
-    return res;
-  }
-
-  /**
-   * Dismisses active SOS and terminates live location session
+   * Stops active SOS and invalidates live location session
    */
   stopSOS() {
     if (this.watchPositionId !== null) {

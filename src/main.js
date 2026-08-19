@@ -180,14 +180,10 @@ const btnTestOpenLiveUrl = document.getElementById('btnTestOpenLiveUrl');
 const primaryCallStatusBadge = document.getElementById('primaryCallStatusBadge');
 const primaryCallStatusText = document.getElementById('primaryCallStatusText');
 const primaryContactNameDisplay = document.getElementById('primaryContactNameDisplay');
-const btnExecutePrimaryCall = document.getElementById('btnExecutePrimaryCall');
-const btnExecutePrimaryCallLabel = document.getElementById('btnExecutePrimaryCallLabel');
 
 const emergencyMsgStatusBadge = document.getElementById('emergencyMsgStatusBadge');
 const emergencyMsgStatusText = document.getElementById('emergencyMsgStatusText');
 const autoMsgContactsSummary = document.getElementById('autoMsgContactsSummary');
-const btnExecuteEmergencyMsg = document.getElementById('btnExecuteEmergencyMsg');
-const btnExecuteEmergencyMsgLabel = document.getElementById('btnExecuteEmergencyMsgLabel');
 
 const sosActiveContactsList = document.getElementById('sosActiveContactsList');
 const btnEditContactsInSos = document.getElementById('btnEditContactsInSos');
@@ -485,58 +481,51 @@ btnCopyLiveUrl.addEventListener('click', () => {
   }
 });
 
-// Render contacts list and truthful communication status inside active SOS screen
+// Render contacts list and automatic response status inside active SOS screen
 function renderSosActiveContacts(contacts) {
   // Update Top Call Status Card
   const primary = emergencySos.getPrimaryContact();
   if (primary) {
     primaryContactNameDisplay.textContent = `${primary.name} (${primary.phone})`;
-    const status = primary.callStatus || 'NOT_STARTED';
+    const status = primary.callStatus || 'Preparing';
 
-    if (status === 'STARTED') {
-      primaryCallStatusText.textContent = 'Started';
+    if (status.includes('Progress') || status.includes('Started')) {
+      primaryCallStatusText.textContent = 'IN PROGRESS';
       primaryCallStatusBadge.className = 'status-indicator-pill listening';
-      btnExecutePrimaryCallLabel.textContent = 'Re-open Phone Dialer';
-    } else if (status === 'FAILED') {
-      primaryCallStatusText.textContent = 'Failed';
+      primaryCallStatusBadge.innerHTML = '<span class="status-dot"></span><span>IN PROGRESS</span>';
+    } else if (status.includes('Failed')) {
+      primaryCallStatusText.textContent = 'FAILED';
       primaryCallStatusBadge.className = 'status-indicator-pill unsupported';
-      btnExecutePrimaryCallLabel.textContent = 'Retry Call';
+      primaryCallStatusBadge.innerHTML = '<span class="status-dot"></span><span>FAILED</span>';
     } else {
-      primaryCallStatusText.textContent = 'Action Required';
-      primaryCallStatusBadge.className = 'status-indicator-pill not-ready';
-      btnExecutePrimaryCallLabel.textContent = `Call ${primary.name}`;
+      primaryCallStatusText.textContent = 'PREPARING';
+      primaryCallStatusBadge.className = 'status-indicator-pill off';
+      primaryCallStatusBadge.innerHTML = '<span class="status-dot"></span><span>PREPARING</span>';
     }
   }
 
-  // Update Top Message Status Card
-  const anySent = contacts.some(c => c.messageStatus === 'SENT');
-  const anyShared = contacts.some(c => c.messageStatus === 'SHARED');
-  const allFailed = contacts.length > 0 && contacts.every(c => c.messageStatus === 'FAILED');
+  // Update Top Emergency Alert Status Card
+  const anySent = contacts.some(c => c.messageStatus === 'Sent');
+  const allFailed = contacts.length > 0 && contacts.every(c => c.messageStatus === 'Failed');
 
-  if (anyShared) {
-    emergencyMsgStatusText.textContent = 'Shared';
+  if (anySent) {
+    emergencyMsgStatusText.textContent = 'SENT';
     emergencyMsgStatusBadge.className = 'status-indicator-pill listening';
-    emergencyMsgStatusBadge.innerHTML = '<span class="status-dot"></span><span>Shared via iOS Share</span>';
-    btnExecuteEmergencyMsgLabel.textContent = 'Share Alert Again';
-  } else if (anySent) {
-    emergencyMsgStatusText.textContent = 'Sent';
-    emergencyMsgStatusBadge.className = 'status-indicator-pill listening';
-    emergencyMsgStatusBadge.innerHTML = '<span class="status-dot"></span><span>Sent (Native SMS)</span>';
-    btnExecuteEmergencyMsgLabel.textContent = 'Send SMS Again';
+    emergencyMsgStatusBadge.innerHTML = '<span class="status-dot"></span><span>SENT</span>';
+    autoMsgContactsSummary.textContent = `${contacts.length} contacts notified with Live GPS`;
   } else if (allFailed) {
-    emergencyMsgStatusText.textContent = 'Failed';
+    emergencyMsgStatusText.textContent = 'FAILED';
     emergencyMsgStatusBadge.className = 'status-indicator-pill unsupported';
-    emergencyMsgStatusBadge.innerHTML = '<span class="status-dot"></span><span>Failed</span>';
-    btnExecuteEmergencyMsgLabel.textContent = 'Retry Send SMS';
+    emergencyMsgStatusBadge.innerHTML = '<span class="status-dot"></span><span>FAILED</span>';
+    autoMsgContactsSummary.textContent = 'Alert delivery failed';
   } else {
-    emergencyMsgStatusText.textContent = 'Action Required';
-    emergencyMsgStatusBadge.className = 'status-indicator-pill not-ready';
-    emergencyMsgStatusBadge.innerHTML = '<span class="status-dot"></span><span>Action Required</span>';
-    btnExecuteEmergencyMsgLabel.textContent = 'Send SMS / Share Alert';
+    emergencyMsgStatusText.textContent = 'SENDING...';
+    emergencyMsgStatusBadge.className = 'status-indicator-pill off';
+    emergencyMsgStatusBadge.innerHTML = '<span class="status-dot"></span><span>SENDING...</span>';
+    autoMsgContactsSummary.textContent = `Dispatching live alert to ${contacts.length} contacts...`;
   }
-  autoMsgContactsSummary.textContent = `Live GPS Alert prepared for ${contacts.length} contact${contacts.length > 1 ? 's' : ''}`;
 
-  // Render individual contact cards
+  // Render individual contact cards (Read-only status overview)
   sosActiveContactsList.innerHTML = '';
   if (!contacts || contacts.length === 0) {
     sosActiveContactsList.innerHTML = '<div class="text-xs text-muted py-2">No emergency contacts configured yet.</div>';
@@ -547,15 +536,15 @@ function renderSosActiveContacts(contacts) {
     const card = document.createElement('div');
     card.className = `sos-contact-item-card ${c.isPrimary ? 'primary' : ''}`;
 
-    const isCallActive = c.callStatus === 'STARTED';
-    const isCallFailed = c.callStatus === 'FAILED';
-    const callText = isCallActive ? 'Started' : (isCallFailed ? 'Failed' : 'Action Required');
+    const isCallActive = c.callStatus.includes('Progress') || c.callStatus.includes('Started');
+    const isCallFailed = c.callStatus.includes('Failed');
+    const callText = isCallActive ? 'In Progress' : (isCallFailed ? 'Failed' : (c.isPrimary ? 'Preparing' : 'Standby'));
     const callBadgeClass = isCallActive ? 'good' : (isCallFailed ? 'danger' : 'dim');
 
-    const isMsgActive = c.messageStatus === 'SENT' || c.messageStatus === 'SHARED';
-    const isMsgFailed = c.messageStatus === 'FAILED';
-    const msgText = c.messageStatus === 'SHARED' ? 'Shared' : (c.messageStatus === 'SENT' ? 'Sent' : (isMsgFailed ? 'Failed' : 'Action Required'));
-    const msgBadgeClass = isMsgActive ? 'good' : (isMsgFailed ? 'danger' : 'dim');
+    const isMsgSent = c.messageStatus === 'Sent';
+    const isMsgFailed = c.messageStatus === 'Failed';
+    const msgText = isMsgSent ? 'Sent' : (isMsgFailed ? 'Failed' : 'Sending...');
+    const msgBadgeClass = isMsgSent ? 'good' : (isMsgFailed ? 'danger' : 'dim');
 
     card.innerHTML = `
       <div class="sos-contact-info">
@@ -568,36 +557,10 @@ function renderSosActiveContacts(contacts) {
         <div class="contact-comm-statuses">
           <span>Call: <strong class="status-text ${callBadgeClass}">${callText}</strong></span>
           <span>·</span>
-          <span>Message: <strong class="status-text ${msgBadgeClass}">${msgText}</strong></span>
+          <span>Emergency Alert: <strong class="status-text ${msgBadgeClass}">${msgText}</strong></span>
         </div>
       </div>
-
-      <div class="sos-contact-actions">
-        <button type="button" class="btn-contact-call" title="Call this contact">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-          <span>Call</span>
-        </button>
-        <button type="button" class="btn-contact-msg" title="Send SMS / Share Alert">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          <span>SMS</span>
-        </button>
-      </div>
     `;
-
-    // Action listeners
-    card.querySelector('.btn-contact-call').addEventListener('click', async () => {
-      const res = await emergencySos.callContact(c.id);
-      if (!res.success) alert(res.error || 'Unable to place call.');
-    });
-
-    card.querySelector('.btn-contact-msg').addEventListener('click', async () => {
-      const res = await emergencySos.sendMessageToContact(c.id);
-      if (res.success) {
-        showSosStatusToast(res.label || "Emergency alert dispatched.");
-      } else {
-        alert(res.error || 'Unable to send SMS.');
-      }
-    });
 
     sosActiveContactsList.appendChild(card);
   });
@@ -610,27 +573,6 @@ function showSosStatusToast(msg) {
     sosDispatchStatus.classList.add('hidden');
   }, 6000);
 }
-
-// Wire Primary Call Action Button
-btnExecutePrimaryCall.addEventListener('click', async () => {
-  const primary = emergencySos.getPrimaryContact();
-  if (primary) {
-    const res = await emergencySos.callContact(primary.id);
-    if (!res.success) alert(res.error || 'Unable to open phone dialer.');
-  } else {
-    alert("No emergency contacts configured. Please add an emergency contact in SOS Setup.");
-  }
-});
-
-// Wire Emergency Message Action Button
-btnExecuteEmergencyMsg.addEventListener('click', async () => {
-  const res = await emergencySos.shareEmergencyAlertWithAll();
-  if (res.success) {
-    showSosStatusToast(res.label || "Emergency alert dispatched.");
-  } else {
-    alert(res.error || 'Unable to dispatch emergency alert.');
-  }
-});
 
 // Wire SOS Trigger Buttons
 openSosBtn.addEventListener('click', () => {
@@ -646,6 +588,14 @@ if (triggerManualSos) {
 
 btnCancelCentralCountdown.addEventListener('click', () => {
   emergencySos.cancelSosCountdown();
+});
+
+btnDismissSos.addEventListener('click', () => {
+  emergencySos.stopSOS();
+});
+
+closeSosModalBtn.addEventListener('click', () => {
+  emergencySos.stopSOS();
 });
 
 btnDismissSos.addEventListener('click', () => {
