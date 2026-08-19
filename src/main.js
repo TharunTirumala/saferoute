@@ -611,25 +611,36 @@ function showSosStatusToast(msg) {
 }
 
 // Wire SOS Trigger Buttons (Zero Delay Instant Dispatch)
-openSosBtn && openSosBtn.addEventListener('click', () => {
-  console.log("🚨 ONE-TAP SOS Clicked -> Dispatching n8n & Twilio Calls Immediately");
-  emergencySos.executeSosNow('One-Tap SOS Button');
-});
+const triggerSosImmediately = (sourceName) => {
+  console.log(`🚨 ${sourceName} Triggered -> Dispatching n8n & Twilio Calls Immediately`);
+  emergencySos.executeSosNow(sourceName);
+  cloudAlertDispatcher.dispatchEmergencyAlert({
+    sessionId: 'instant_' + Date.now(),
+    location: emergencySos.currentLocation,
+    contacts: emergencySos.contacts,
+    timestamp: new Date().toLocaleTimeString(),
+    liveTrackingUrl: 'https://saferoute-tawny.vercel.app/',
+    userPhone: '+916300863028'
+  });
+};
+
+const btnHeaderGlobalSos = document.getElementById('btnHeaderGlobalSos');
+if (btnHeaderGlobalSos) {
+  btnHeaderGlobalSos.addEventListener('click', () => triggerSosImmediately('Header Global ONE-TAP SOS'));
+}
+
+if (openSosBtn) {
+  openSosBtn.addEventListener('click', () => triggerSosImmediately('One-Tap SOS Button'));
+}
 
 const btnSidebarSos = document.getElementById('btnSidebarSos');
 if (btnSidebarSos) {
-  btnSidebarSos.addEventListener('click', () => {
-    console.log("🚨 Menu SOS Clicked -> Dispatching n8n & Twilio Calls Immediately");
-    emergencySos.executeSosNow('Menu SOS Button');
-  });
+  btnSidebarSos.addEventListener('click', () => triggerSosImmediately('Menu SOS Button'));
 }
 
 const triggerManualSos = document.getElementById('triggerManualSos');
 if (triggerManualSos) {
-  triggerManualSos.addEventListener('click', () => {
-    console.log("🚨 Manual CCTV SOS Clicked -> Dispatching n8n & Twilio Calls Immediately");
-    emergencySos.executeSosNow('Manual CCTV Emergency');
-  });
+  triggerManualSos.addEventListener('click', () => triggerSosImmediately('Manual CCTV Emergency'));
 }
 
 btnCancelCentralCountdown.addEventListener('click', () => {
