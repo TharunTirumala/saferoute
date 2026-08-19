@@ -2100,18 +2100,41 @@ function showAuthStepOtp(phone, devOtp) {
   if (otpDigitInputs[0]) setTimeout(() => otpDigitInputs[0].focus(), 150);
 }
 
-// 1. Send OTP Handler
+// 1. Mobile Number Submit Handler (OTP required ONLY ONCE per number)
 formSendOtp && formSendOtp.addEventListener('submit', async (e) => {
   e.preventDefault();
   const phoneVal = (inputAuthMobile?.value || '').trim();
   if (authMobileError) authMobileError.classList.add('hidden');
 
-  if (sendOtpBtnText) sendOtpBtnText.textContent = 'Sending OTP...';
+  if (sendOtpBtnText) sendOtpBtnText.textContent = 'Checking...';
   if (btnSendOtp) btnSendOtp.disabled = true;
 
+  // Check if number is already verified previously
+  const checkRes = await authService.checkOrLoginUser(phoneVal);
+
+  if (!checkRes.success) {
+    if (sendOtpBtnText) sendOtpBtnText.textContent = 'Continue';
+    if (btnSendOtp) btnSendOtp.disabled = false;
+    if (authMobileError) {
+      authMobileError.textContent = checkRes.error || 'Invalid mobile number.';
+      authMobileError.classList.remove('hidden');
+    }
+    return;
+  }
+
+  // RETURNING VERIFIED USER -> DO NOT SEND OTP, DO NOT ASK FOR OTP
+  if (checkRes.isReturningUser) {
+    if (sendOtpBtnText) sendOtpBtnText.textContent = 'Continue';
+    if (btnSendOtp) btnSendOtp.disabled = false;
+    updateAuthUIState();
+    return;
+  }
+
+  // NEW USER -> Send OTP for first-time verification
+  if (sendOtpBtnText) sendOtpBtnText.textContent = 'Sending OTP...';
   const res = await authService.sendOtp(phoneVal);
 
-  if (sendOtpBtnText) sendOtpBtnText.textContent = 'Send OTP';
+  if (sendOtpBtnText) sendOtpBtnText.textContent = 'Continue';
   if (btnSendOtp) btnSendOtp.disabled = false;
 
   if (res.success) {

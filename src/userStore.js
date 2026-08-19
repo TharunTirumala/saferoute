@@ -1,19 +1,16 @@
 // SafeRoute: Authoritative Multi-Tenant User Store
-// Verified Mobile Number = Permanent Unique System Number & User Identity
-// Enforces complete data isolation for contacts, active SOS, and SOS history
+// ONE VERIFIED MOBILE NUMBER = ONE USER ACCOUNT = ONE SYSTEM NUMBER
+// Each mobile number requires OTP verification ONLY ONCE.
 
 import { normalizePhoneNumber, formatDisplayPhone } from './phoneUtils.js';
 
-const USERS_DB_KEY = 'saferoute_users_db_v3';
-const CONTACTS_DB_KEY = 'saferoute_contacts_db_v3';
-const SOS_HISTORY_DB_KEY = 'saferoute_sos_history_v3';
+const USERS_DB_KEY = 'saferoute_users_db_v4';
+const CONTACTS_DB_KEY = 'saferoute_contacts_db_v4';
+const SOS_HISTORY_DB_KEY = 'saferoute_sos_history_v4';
 
 export class UserStore {
   constructor() {}
 
-  /**
-   * Generates deterministic user ID from normalized phone / system number
-   */
   generateUserId(phone) {
     const cleanDigits = (phone || '').replace(/[^0-9]/g, '');
     return `usr_${cleanDigits}`;
@@ -34,26 +31,55 @@ export class UserStore {
     } catch (e) {}
   }
 
-  /**
-   * Retrieves or registers returning/new user with permanent systemNumber
-   */
+  isUserVerified(mobileNumber) {
+    if (!mobileNumber) return false;
+    const normPhone = normalizePhoneNumber(mobileNumber);
+    const userId = this.generateUserId(normPhone);
+    const users = this.getUsers();
+    return !!(users[userId] && users[userId].isVerified);
+  }
+
+  markUserVerified(mobileNumber) {
+    const normPhone = normalizePhoneNumber(mobileNumber);
+    const userId = this.generateUserId(normPhone);
+    const users = this.getUsers();
+    
+    if (!users[userId]) {
+      users[userId] = {
+        id: userId,
+        userId: userId,
+        systemNumber: normPhone,
+        mobileNumber: normPhone,
+        isVerified: true,
+        createdAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString()
+      };
+    } else {
+      users[userId].isVerified = true;
+      users[userId].lastLoginAt = new Date().toISOString();
+      users[userId].systemNumber = normPhone;
+    }
+
+    this.saveUsers(users);
+    return users[userId];
+  }
+
   getOrCreateUser(mobileNumber) {
     const normPhone = normalizePhoneNumber(mobileNumber);
     const userId = this.generateUserId(normPhone);
     const users = this.getUsers();
     
     if (!users[userId]) {
-      // New User Registration
       users[userId] = {
         id: userId,
         userId: userId,
         systemNumber: normPhone,
         mobileNumber: normPhone,
+        isVerified: false,
         createdAt: new Date().toISOString(),
         lastLoginAt: new Date().toISOString()
       };
     } else {
-      // Returning User - Preserves existing account data
       users[userId].lastLoginAt = new Date().toISOString();
       users[userId].systemNumber = normPhone;
     }
@@ -69,9 +95,6 @@ export class UserStore {
     return users[userId] || null;
   }
 
-  /**
-   * User-scoped emergency contacts (strictly isolated per systemNumber / userId)
-   */
   getUserContacts(systemNumberOrUserId) {
     if (!systemNumberOrUserId) return [];
     const userId = systemNumberOrUserId.startsWith('usr_') 
@@ -129,9 +152,6 @@ export class UserStore {
     }
   }
 
-  /**
-   * User-scoped SOS event history (strictly isolated per systemNumber)
-   */
   getSosHistory(systemNumberOrUserId) {
     if (!systemNumberOrUserId) return [];
     const userId = systemNumberOrUserId.startsWith('usr_') 

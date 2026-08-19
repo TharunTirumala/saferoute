@@ -1,6 +1,6 @@
 // SafeRoute: Authentication & User Session Service
-// Mandatory Mobile Number + OTP Verification on every fresh start
-// Assigns verified mobile number as permanent unique systemNumber
+// ONE VERIFIED MOBILE NUMBER = ONE USER ACCOUNT = ONE SYSTEM NUMBER
+// Each mobile number requires OTP verification ONLY ONCE.
 
 import { userStore } from './userStore.js';
 import { normalizePhoneNumber, formatDisplayPhone } from './phoneUtils.js';
@@ -45,7 +45,52 @@ export class AuthService {
   }
 
   /**
-   * Sends OTP to given 10-digit mobile number
+   * Check if user is already verified:
+   * - Returning verified user -> Logs in immediately, BYPASSES OTP.
+   * - New user -> Needs 1-time OTP verification.
+   */
+  async checkOrLoginUser(phoneInput) {
+    const cleanDigits = (phoneInput || '').replace(/[^0-9]/g, '');
+    if (cleanDigits.length !== 10) {
+      return { success: false, error: 'Please enter a valid 10-digit mobile number.' };
+    }
+
+    const formattedPhone = normalizePhoneNumber(cleanDigits);
+
+    // If this mobile number has already been verified before -> DO NOT send OTP again!
+    if (userStore.isUserVerified(formattedPhone)) {
+      const dbUser = userStore.getOrCreateUser(formattedPhone);
+      const userObj = {
+        id: dbUser.userId,
+        userId: dbUser.userId,
+        systemNumber: formattedPhone,
+        mobileNumber: formattedPhone,
+        phone: formattedPhone,
+        isVerified: true,
+        verifiedAt: dbUser.createdAt,
+        lastLoginAt: new Date().toISOString(),
+        sessionToken: `sess_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
+      };
+
+      this.currentUser = userObj;
+      console.log(`[SafeRoute Auth] Recognized verified user: ${formattedPhone} -> Bypassing OTP`);
+      return {
+        success: true,
+        isReturningUser: true,
+        user: userObj
+      };
+    }
+
+    // First-time New User -> Needs OTP verification
+    return {
+      success: true,
+      isReturningUser: false,
+      phone: formattedPhone
+    };
+  }
+
+  /**
+   * Sends OTP for 1-time verification of a new mobile number
    */
   async sendOtp(phoneInput) {
     const cleanDigits = (phoneInput || '').replace(/[^0-9]/g, '');
@@ -99,7 +144,7 @@ export class AuthService {
   }
 
   /**
-   * Verifies 6-digit OTP against active challenge and sets systemNumber identity
+   * Verifies 6-digit OTP, creates permanent account, and marks mobile number as permanently verified
    */
   async verifyOtp(phoneInput, otpInput) {
     const cleanDigits = (phoneInput || '').replace(/[^0-9]/g, '');
@@ -132,14 +177,15 @@ export class AuthService {
 
         if (res.ok) {
           const data = await res.json();
-          // Load or register user with permanent systemNumber
-          const dbUser = userStore.getOrCreateUser(formattedPhone);
+          // Mark permanently verified in database
+          const dbUser = userStore.markUserVerified(formattedPhone);
           const userObj = {
             id: dbUser.userId,
             userId: dbUser.userId,
             systemNumber: formattedPhone,
             mobileNumber: formattedPhone,
             phone: formattedPhone,
+            isVerified: true,
             verifiedAt: new Date().toISOString(),
             sessionToken: data.sessionToken || `sess_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
           };
@@ -156,13 +202,15 @@ export class AuthService {
     }
 
     if (this.activeChallenge.clientOtp && this.activeChallenge.clientOtp === cleanOtp) {
-      const dbUser = userStore.getOrCreateUser(formattedPhone);
+      // Mark permanently verified in database
+      const dbUser = userStore.markUserVerified(formattedPhone);
       const userObj = {
         id: dbUser.userId,
         userId: dbUser.userId,
         systemNumber: formattedPhone,
         mobileNumber: formattedPhone,
         phone: formattedPhone,
+        isVerified: true,
         verifiedAt: new Date().toISOString(),
         sessionToken: `sess_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
       };
