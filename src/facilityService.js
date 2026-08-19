@@ -2,39 +2,52 @@
 import { haversineDistance } from './safeRouteEngine.js';
 
 export const VERIFIED_FACILITIES = [
-  // Police Stations
-  { name: 'Banjara Hills Police Station', lat: 17.4182, lng: 78.4265, category: 'Police', phone: '040-27852482', city: 'Hyderabad' },
-  { name: 'Madhapur Police Outpost', lat: 17.4482, lng: 78.3875, category: 'Police', phone: '040-27853412', city: 'Hyderabad' },
-  { name: 'Gachibowli Police Station', lat: 17.4398, lng: 78.3655, category: 'Police', phone: '040-27854100', city: 'Hyderabad' },
-  { name: 'Panjagutta Police Station', lat: 17.4260, lng: 78.4520, category: 'Police', phone: '040-27852422', city: 'Hyderabad' },
-  { name: 'Jubilee Hills Police Station', lat: 17.4320, lng: 78.4070, category: 'Police', phone: '040-27852495', city: 'Hyderabad' },
+  // ================= HYDERABAD POLICE STATIONS & SHE TEAM KIOSKS =================
   { name: 'Cyberabad Police Commissionerate', lat: 17.4365, lng: 78.3750, category: 'Police', phone: '040-27853400', city: 'Hyderabad' },
-  { name: 'Connaught Place Police Station', lat: 28.6328, lng: 77.2197, category: 'Police', phone: '011-23747100', city: 'Delhi' },
-  { name: 'Hauz Khas Police Station', lat: 28.5494, lng: 77.2001, category: 'Police', phone: '011-26510070', city: 'Delhi' },
-  { name: 'Cubbon Park Police Station', lat: 12.9778, lng: 77.5925, category: 'Police', phone: '080-22942581', city: 'Bengaluru' },
-  { name: 'Indiranagar Police Station', lat: 12.9784, lng: 77.6408, category: 'Police', phone: '080-22942542', city: 'Bengaluru' },
-  { name: 'Colaba Police Station', lat: 18.9220, lng: 72.8346, category: 'Police', phone: '022-22852885', city: 'Mumbai' },
-  { name: 'Bandra Police Station', lat: 19.0596, lng: 72.8295, category: 'Police', phone: '022-26422042', city: 'Mumbai' },
+  { name: 'Madhapur Police Outpost & She Team', lat: 17.4482, lng: 78.3875, category: 'Police', phone: '040-27853412', city: 'Hyderabad' },
+  { name: 'Hitech City She Team Kiosk', lat: 17.4470, lng: 78.3760, category: 'Police', phone: '040-27853415', city: 'Hyderabad' },
+  { name: 'Gachibowli Police Station', lat: 17.4398, lng: 78.3655, category: 'Police', phone: '040-27854100', city: 'Hyderabad' },
+  { name: 'Banjara Hills Police Station', lat: 17.4182, lng: 78.4265, category: 'Police', phone: '040-27852482', city: 'Hyderabad' },
+  { name: 'Jubilee Hills Police Station', lat: 17.4320, lng: 78.4070, category: 'Police', phone: '040-27852495', city: 'Hyderabad' },
+  { name: 'Panjagutta Police Station', lat: 17.4260, lng: 78.4520, category: 'Police', phone: '040-27852422', city: 'Hyderabad' },
+  { name: 'Begumpet Police Station', lat: 17.4440, lng: 78.4670, category: 'Police', phone: '040-27852450', city: 'Hyderabad' },
+  { name: 'SR Nagar Police Station', lat: 17.4410, lng: 78.4480, category: 'Police', phone: '040-27852460', city: 'Hyderabad' },
+  { name: 'Ameerpet Women Safety Cell', lat: 17.4370, lng: 78.4480, category: 'Police', phone: '040-27852465', city: 'Hyderabad' },
+  { name: 'Charminar Police Station', lat: 17.3616, lng: 78.4747, category: 'Police', phone: '040-27852310', city: 'Hyderabad' },
+  { name: 'Koti Police Station', lat: 17.3850, lng: 78.4860, category: 'Police', phone: '040-27852320', city: 'Hyderabad' },
+  { name: 'Abids Police Station', lat: 17.3910, lng: 78.4730, category: 'Police', phone: '040-27852330', city: 'Hyderabad' },
+  { name: 'Malakpet Police Station', lat: 17.3780, lng: 78.4980, category: 'Police', phone: '040-27852340', city: 'Hyderabad' },
+  { name: 'Secunderabad Police Station', lat: 17.4390, lng: 78.4980, category: 'Police', phone: '040-27852510', city: 'Hyderabad' },
+  { name: 'Gopalapuram Police Station', lat: 17.4330, lng: 78.5030, category: 'Police', phone: '040-27852520', city: 'Hyderabad' },
+  { name: 'Miyapur Police Station', lat: 17.4960, lng: 78.3580, category: 'Police', phone: '040-27853430', city: 'Hyderabad' },
+  { name: 'Kukatpally Police Station', lat: 17.4840, lng: 78.4080, category: 'Police', phone: '040-27853440', city: 'Hyderabad' },
+  { name: 'KPHB Colony Police Outpost', lat: 17.4920, lng: 78.3990, category: 'Police', phone: '040-27853445', city: 'Hyderabad' },
 
-  // Hospitals & 24/7 Medical Centers
-  { name: 'Care Hospital Banjara Hills', lat: 17.4140, lng: 78.4380, category: 'Hospital', phone: '040-61656565', city: 'Hyderabad' },
-  { name: 'Apollo Hospital Jubilee Hills', lat: 17.4128, lng: 78.4319, category: 'Hospital', phone: '040-23607777', city: 'Hyderabad' },
+  // ================= HYDERABAD HOSPITALS & 24/7 MEDICAL CENTERS =================
   { name: 'Medicover Hospital Hitech City', lat: 17.4451, lng: 78.3712, category: 'Hospital', phone: '040-68334455', city: 'Hyderabad' },
+  { name: 'AIG Hospitals Gachibowli', lat: 17.4430, lng: 78.3650, category: 'Hospital', phone: '040-42444244', city: 'Hyderabad' },
   { name: 'Continental Hospital Gachibowli', lat: 17.4325, lng: 78.3412, category: 'Hospital', phone: '040-67000000', city: 'Hyderabad' },
-  { name: 'AIIMS New Delhi', lat: 28.5672, lng: 77.2100, category: 'Hospital', phone: '011-26588500', city: 'Delhi' },
-  { name: 'Safdarjung Hospital', lat: 28.5700, lng: 77.2070, category: 'Hospital', phone: '011-26165060', city: 'Delhi' },
-  { name: 'Manipal Hospital Old Airport Rd', lat: 12.9592, lng: 77.6480, category: 'Hospital', phone: '080-25024444', city: 'Bengaluru' },
-  { name: 'Lilavati Hospital Bandra', lat: 19.0515, lng: 72.8288, category: 'Hospital', phone: '022-26751000', city: 'Mumbai' },
+  { name: 'Apollo Hospital Jubilee Hills', lat: 17.4128, lng: 78.4319, category: 'Hospital', phone: '040-23607777', city: 'Hyderabad' },
+  { name: 'Care Hospital Banjara Hills', lat: 17.4140, lng: 78.4380, category: 'Hospital', phone: '040-61656565', city: 'Hyderabad' },
+  { name: 'Yashoda Hospital Somajiguda', lat: 17.4250, lng: 78.4590, category: 'Hospital', phone: '040-45674567', city: 'Hyderabad' },
+  { name: 'Yashoda Hospital Malakpet', lat: 17.3750, lng: 78.5020, category: 'Hospital', phone: '040-45674568', city: 'Hyderabad' },
+  { name: 'KIMS Hospital Secunderabad', lat: 17.4360, lng: 78.4920, category: 'Hospital', phone: '040-44885000', city: 'Hyderabad' },
+  { name: 'Sunshine Hospital Gachibowli', lat: 17.4415, lng: 78.3680, category: 'Hospital', phone: '040-44550000', city: 'Hyderabad' },
+  { name: 'MaxCure Hospital Madhapur', lat: 17.4480, lng: 78.3810, category: 'Hospital', phone: '040-49404940', city: 'Hyderabad' },
+  { name: 'NIMS Hospital Punjagutta', lat: 17.4220, lng: 78.4550, category: 'Hospital', phone: '040-23489000', city: 'Hyderabad' },
+  { name: 'Osmania General Hospital', lat: 17.3710, lng: 78.4790, category: 'Hospital', phone: '040-24600121', city: 'Hyderabad' },
+  { name: 'Gandhi Hospital Secunderabad', lat: 17.4240, lng: 78.5040, category: 'Hospital', phone: '040-27505566', city: 'Hyderabad' },
 
-  // Public Hubs, Commercial Areas & Metros
+  // ================= HYDERABAD PUBLIC HUBS & SAFE TRANSIT STATIONS =================
   { name: 'Hitech City Cyber Towers Hub', lat: 17.4485, lng: 78.3770, category: 'Public Hub', city: 'Hyderabad' },
   { name: 'Inorbit Mall Corridor', lat: 17.4340, lng: 78.3860, category: 'Public Hub', city: 'Hyderabad' },
+  { name: 'Mindspace IT Park Entrance', lat: 17.4420, lng: 78.3810, category: 'Public Hub', city: 'Hyderabad' },
   { name: 'Road No 36 Jubilee Hills Metro', lat: 17.4268, lng: 78.4085, category: 'Public Hub', city: 'Hyderabad' },
   { name: 'Gachibowli Stadium Junction', lat: 17.4401, lng: 78.3488, category: 'Public Hub', city: 'Hyderabad' },
-  { name: 'Connaught Place Central Circle', lat: 28.6315, lng: 77.2167, category: 'Public Hub', city: 'Delhi' },
-  { name: 'Saket Select Citywalk Corridor', lat: 28.5284, lng: 77.2190, category: 'Public Hub', city: 'Delhi' },
-  { name: 'MG Road Metro Station Hub', lat: 12.9756, lng: 77.6066, category: 'Public Hub', city: 'Bengaluru' },
-  { name: 'Bandra Kurla Complex (BKC)', lat: 19.0664, lng: 72.8681, category: 'Public Hub', city: 'Mumbai' }
+  { name: 'Financial District Wipro Circle', lat: 17.4190, lng: 78.3440, category: 'Public Hub', city: 'Hyderabad' },
+  { name: 'Ameerpet Metro Interchange', lat: 17.4355, lng: 78.4482, category: 'Public Hub', city: 'Hyderabad' },
+  { name: 'Begumpet Metro Station Hub', lat: 17.4430, lng: 78.4650, category: 'Public Hub', city: 'Hyderabad' },
+  { name: 'KPHB Metro Station Hub', lat: 17.4930, lng: 78.3980, category: 'Public Hub', city: 'Hyderabad' }
 ];
 
 export class FacilityService {
