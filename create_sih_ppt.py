@@ -577,7 +577,7 @@ def create_enhanced_presentation():
     p.space_after = Pt(6)
 
     p2 = tf.add_paragraph()
-    p2.text = "• Live Deployed Web Application: saferoute-tawny.vercel.app\n• GitHub Codebase: github.com/pranav-3010/saferoute\n\nThank you judges! We welcome your questions."
+    p2.text = "• Live Deployed Web Application: saferoute-tawny.vercel.app\n• GitHub Codebase: github.com/TharunTirumala/saferoute\n\nThank you judges! We welcome your questions."
     p2.font.size = Pt(13)
     p2.font.bold = True
     p2.font.color.rgb = DARK_TEXT

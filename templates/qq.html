@@ -1,0 +1,368 @@
+{%load staticfiles %}
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Location Safety Index</title>
+		<meta charset="utf-8">
+		<link rel="stylesheet" type="text/css" media="screen" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.9.0/themes/base/jquery-ui.css" />
+		<script src= {% static "src/markerclusterer_compiled.js" %} ></script>
+		<script src="/media/data1.json"></script>
+		<style>
+			body {
+				margin: 5%; padding: 0;
+				font-family: Arial, sans-serif;
+				font-size: 15px;
+				line-height: 25px;
+				color: #515151;
+			}
+			article, aside, figcaption, figure, footer, header, hgroup, nav, section {display: block;}
+			h1, h2, h3, h4 {margin: 1em 0 .5em; line-height: 1.25;}
+			h1 {font-size: 2em;}
+			h2 {font-size: 1.5em;}
+			h3 {font-size: 1.2em;}
+			ul, ol {margin: 1em 0; padding-left: 40px;}
+			p, figure {margin: 1em 0;}
+			a img {border: none;}
+			sup, sub {line-height: 0;}
+
+			#maps-location-search {
+				width:500px;
+			}
+
+			#latitude {
+				width:150px;
+			}
+			#longitude {
+				width:150px;
+			}
+			.form {
+				width:600px;
+				margin:20px;
+			}
+			.form input {
+				height: 25px; width:600px;padding:5px;margin:5px;
+			}
+			.form textarea{
+				height:100px; width:604px;padding:5px;font-family: 'Arial';margin:5px;
+			}
+			.form button{
+				  font-family: Arial;
+				  color: #ffffff;
+				  font-size: 14px;
+				  background: #7ebde8;
+				  padding: 10px 20px 10px 20px;
+				  text-decoration: none;
+			}
+
+			.form button:hover {
+			  	background: #3cb0fd;
+			}
+
+			.field {
+				margin: 10px; width: 100%;
+			}
+			.error {
+				color:red;
+			}
+		</style>
+	</head>
+	<body>
+		<h1><center>Location Safety Index</center></h1>
+		<form id="formMap" class="form" action="" method="GET">
+      {% csrf_token %}
+			<div class="field">
+				<strong>Find Location: </strong>
+				<input placeholder="Enter address or name of location to find on map" id="maps-location-search" type="text">
+			</div>
+
+			<div class="field">
+				<strong>Marker Coordinates: </strong>
+				<input type="text" id="latitude"> , <input type="text" id="longitude">
+			</div>
+			<div class="formdata">
+				<strong>Your Feedback</strong><br>
+
+				<input type="text" id="title" placeholder="Title"><br>
+				<input type="text" id="sdesc" placeholder="Short Description"><br>
+				<textarea id="ldesc" placeholder="Long Description"></textarea><br>
+				<input type="text" id="rating" placeholder="Rating"><br>
+				<button type="button"onclick="createtask();">Submit</button>
+				<button type="button"onclick="clearMap();">Clear</button>
+
+			</div>
+		</form>
+			<div class="element-map" id="gmaps-canvas" class="field" style="clear: both;height:295px;border: 1px solid #999;">
+			</div>
+			<div id="gmaps-error" class="error"></div>
+
+
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js" type="text/javascript"></script>
+		<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.0/jquery-ui.min.js" type="text/javascript"></script>
+		<script src="https://maps.googleapis.com/maps/api/js?v=3&sensor=false"></script>
+		<script>
+			var geocoder;
+			var map;
+			var marker;
+			var formName = 'formMap';
+			var formLatitudeField = 'latitude';
+			var formLongitudeField = 'longitude';
+			var formSearchLocation = 'maps-location-search';
+			var formErrorText = 'gmaps-error';
+			var formTitle='title';
+			var existingLat;
+			var existingLng;
+			var markers;
+			var markerCluster;
+			var count=60;
+			// Initialize Google Maps
+			function initialize_google_maps(){
+
+				// If no lat/lng values, center the map marker on 0,0 coordinates
+				if (existingLat == null) {
+					var latlng = new google.maps.LatLng(28.6139391,77.2090212);
+					var zoomLevel = 10;
+				} else {
+					var latlng = new google.maps.LatLng(existingLat,existingLng,true);
+					var zoomLevel = 12;
+				}
+
+				// Set the options for the map
+				var options = {
+					zoom: zoomLevel,
+					center: latlng,
+					mapTypeId: google.maps.MapTypeId.ROADMAP
+				};
+
+				// Create the Google Maps Object
+				map = new google.maps.Map(document.getElementById("gmaps-canvas"), options);
+
+				// Create Google Geocode Object that will let us do lat/lng lookups based on address or location name
+				geocoder = new google.maps.Geocoder();
+				// var image="./images/black_marker.png"
+				// Add marker. Set draggable to TRUE to allow it to be moved around the map
+				marker = new google.maps.Marker({
+					map: map,
+					draggable: true,
+					position: latlng,
+					animation: google.maps.Animation.DROP,
+					title:"Drag me",
+				});
+				markers = [];
+		        for (var i = 0; i < count; i++) {
+		          var dataPhoto = data1.dic[i];
+		          console.log(dataPhoto);
+		          var latLng = new google.maps.LatLng(dataPhoto.latitude,
+		              dataPhoto.longitude);
+		          var markerM = new google.maps.Marker({
+		            position: latLng
+		          });
+		          markers.push(markerM);
+		        }
+		        markerCluster = new MarkerClusterer(map, markers);
+				// Listen for event when marker is dragged and dropped
+				google.maps.event.addListener(marker, 'dragend', function() {
+					update_ui('', marker.getPosition(), true);
+					$('#' + formErrorText).html('');
+				});
+
+				// Listen for event when marker is dropped (map clicked)
+				google.maps.event.addListener(map, 'click', function(event) {
+				    marker.setPosition(event.latLng);
+				    update_ui(event.latLng.lat() + ', ' + event.latLng.lng(), event.latLng, true);
+				    $('#' + formErrorText).html('');
+				});
+
+				// Listen for map zoom changing
+				google.maps.event.addListener(map, 'zoom_changed', function() {
+					zoomChangeBoundsListener =
+					    google.maps.event.addListener(map, 'bounds_changed', function(event) {
+					        if (this.getZoom() > 15 && this.initialZoom == true) {
+					            // Change max/min zoom here
+					            this.setZoom(15);
+					            this.initialZoom = false;
+					        }
+					    google.maps.event.removeListener(zoomChangeBoundsListener);
+					});
+				});
+
+			  map.initialZoom = true;
+
+			}
+
+			function toggleBounce() {
+			    if (marker.getAnimation() !== null) {
+			    marker.setAnimation(null);
+			  } else {
+			    marker.setAnimation(google.maps.Animation.BOUNCE);
+			  }
+			}
+
+			// Moves the map marker to a given lat/lng and centers the map on that location
+			function update_map( geometry ) {
+				marker.setPosition(geometry.location);
+				map.fitBounds(geometry.viewport);
+			}
+
+			// Updates form fields with address and/or lat/lng info
+			function update_ui( address, latLng, plot ) {
+				$('#' + formSearchLocation).autocomplete("close");
+
+				// If we are plotting a point with the marker, we need to clear out
+				// any text in location search.
+				if (plot){
+					$('#' + formSearchLocation).val('');
+				}
+
+
+			   	oFormObject = document.forms[formName];
+				oFormLat = oFormObject.elements[formLatitudeField].value = latLng.lat();
+				oFormLng = oFormObject.elements[formLongitudeField].value = latLng.lng();
+
+			}
+
+			// Query the Google geocode object
+			//
+			// type: 'address' for search by address
+			//       'latLng'  for search by latLng (reverse lookup)
+			//
+			// value: search query
+			//
+			// update: should we update the map (center map and position marker)?
+			function geocode_lookup( type, value, update ) {
+			  // default value: update = false
+			  update = typeof update !== 'undefined' ? update : false;
+
+			  request = {};
+			  request[type] = value;
+
+			  geocoder.geocode(request, function(results, status) {
+			    $('#' + formErrorText).html('');
+			    if (status == google.maps.GeocoderStatus.OK) {
+			      // Google geocoding has succeeded!
+			      if (results[0]) {
+			        // Always update the UI elements with new location data
+			        update_ui( results[0].formatted_address,
+			                   results[0].geometry.location,
+			                   false )
+
+			        // Only update the map (position marker and center map) if requested
+			        if( update ) { update_map( results[0].geometry ) }
+			      } else {
+			        // Geocoder status ok but no results!?
+			        $('#' + formErrorText).html("Sorry, something went wrong. Try again!");
+			      }
+			    } else {
+			      // Google Geocoding has failed. Two common reasons:
+			      //   * Address not recognised (e.g. search for 'zxxzcxczxcx')
+			      //   * Location doesn't map to address (e.g. click in middle of Atlantic)
+
+			      if( type == 'address' ) {
+			        // User has typed in an address which we can't geocode to a location
+			        $('#' + formErrorText).html("Google could not find " + value + ". Try a different search term, or click the map to manually select a location." );
+			      }
+			    };
+			  });
+			};
+
+
+
+
+
+
+			$(document).ready(function() {
+
+				if( $('#gmaps-canvas').length  ) {
+
+
+					initialize_google_maps();
+
+					$('#' + formSearchLocation).autocomplete({
+
+						// source is the list of input options shown in the autocomplete dropdown.
+						// see documentation: http://jqueryui.com/demos/autocomplete/
+						source: function(request,response) {
+
+							// the geocode method takes an address or LatLng to search for
+							// and a callback function which should process the results into
+							// a format accepted by jqueryUI autocomplete
+							geocoder.geocode( {'address': request.term }, function(results, status) {
+								response($.map(results, function(item) {
+									return {
+										label: item.formatted_address, // appears in dropdown box
+										value: item.formatted_address, // inserted into input element when selected
+										geocode: item                  // all geocode data
+									}
+								}));
+							})
+						},
+
+						// event triggered when drop-down option selected
+						select: function(event,ui){
+							update_ui(  ui.item.value, ui.item.geocode.geometry.location )
+							update_map( ui.item.geocode.geometry )
+						}
+
+					});
+
+					// triggered when user presses a key in the address box
+				    $('#' + formSearchLocation).bind('keydown', function(event) {
+				      if(event.keyCode == 13) {
+				        geocode_lookup( 'address', $('#' + formSearchLocation).val(), true );
+
+				        // ensures dropdown disappears when enter is pressed
+				        $('#' + formSearchLocation).autocomplete("disable")
+				      } else {
+				        // re-enable if previously disabled above
+				        $('#' + formSearchLocation).autocomplete("enable")
+				      }
+				    });
+
+
+
+				};
+
+			});
+
+			function clearMap() {
+
+				$('#' + formLatitudeField).val(null);
+				$('#' + formLongitudeField).val(null);
+				$('#' + formSearchLocation).val(null);
+				$('#' + formErrorText).html('');
+				$('#' + formTitle).val(null);
+				$('#sdesc').val(null);
+				$('#ldesc').val(null);
+				$('#rating').val(null);
+				var latLng = new google.maps.LatLng(0,0);
+			  	var bounds = new google.maps.LatLngBounds(latLng);
+
+				marker.setPosition(latLng);
+				map.setZoom(5);
+
+			}
+      function createtask(){
+      	$.ajax({
+      		type: "POST",
+      		url: "",
+      		dataType: "json",
+      		async: true,
+      		data: {
+      			csrfmiddlewaretoken: '{{csrf_token}}',
+      			lati: $('#latitude').val(),
+      			long:$('#longitude').val() ,
+            title:$('#title').val(),
+            sdesc:$('#sdesc').val(),
+            ldesc:$('#ldesc').val(),
+            rating:$('#rating').val(),
+
+      		},
+      		success: function(json){
+      			$('#output').html(json.message);
+      			//$(str2).load(location.href + " " + str2);
+             window.location.reload(true);
+      		}
+      	});
+      }
+		</script>
+	</body>
+</html>

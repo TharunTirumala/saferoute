@@ -1,0 +1,30 @@
+ {% load material_form %}
+{% include 'material/includes/material_css.html' %}
+    <script src="//code.jquery.com/jquery-1.12.0.min.js"></script>
+    {% include 'material/includes/material_js.html' %}
+
+<html>
+<head><title>Login</title></head>
+<body>
+  <style>
+  #innerbox
+{
+width:250px; /* or whatever width you want. */
+max-width:250px; /* or whatever width you want. */
+display: inline-block;
+align-self: center;
+align: center;
+}
+</style>
+<div align = "center">
+  <div id = "innerbox" align = "center">
+  <form method = "POST" action="">
+    {% csrf_token %}
+    {% form form=form %}{% endform %}
+    <input type="Submit" />
+  </form>
+  <a href="/register"> Register</a>
+</div>
+</div>
+</body>
+</html>

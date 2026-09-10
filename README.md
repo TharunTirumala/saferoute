@@ -40,10 +40,10 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/pranav-3010/women_safety.git
+git clone https://github.com/TharunTirumala/saferoute.git
 
 # Navigate to the project directory
-cd women_safety
+cd saferoute
 
 # Install dependencies
 npm install
