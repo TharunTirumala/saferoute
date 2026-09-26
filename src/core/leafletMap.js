@@ -43,11 +43,10 @@ export class LeafletMapRenderer {
       preferCanvas: true
     });
 
-    // Dark sleek map tiles matching SafeRoute theme
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; OpenStreetMap &copy; CARTO',
-      maxZoom: 19,
-      subdomains: 'abcd'
+    // Clean high-resolution map tiles with zero watermark
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19
     }).addTo(this.map);
 
     this.routesLayer = L.layerGroup().addTo(this.map);
@@ -111,6 +110,7 @@ export class LeafletMapRenderer {
 
   render(engine) {
     if (!this.map) return;
+    this.map.invalidateSize({ animate: false });
 
     this.routesLayer.clearLayers();
     this.reportsLayer.clearLayers();
@@ -299,7 +299,9 @@ export class LeafletMapRenderer {
     if (allPoints.length > 1) {
       try {
         const bounds = L.latLngBounds(allPoints);
-        this.map.fitBounds(bounds.pad(0.16), { animate: false });
+        if (bounds.isValid()) {
+          this.map.fitBounds(bounds.pad(0.16), { animate: false, maxZoom: 16 });
+        }
       } catch (e) {
         console.warn("fitBounds warning:", e);
       }

@@ -109,16 +109,34 @@ export class SafeRouteEngine {
   }
 
   /**
-   * Geocodes arbitrary address to exact latitude and longitude via OSM Nominatim
+   * Geocodes arbitrary address to exact latitude and longitude via OSM Nominatim & Verified Facility Index
    */
   async geocode(query) {
     if (!query || query.trim().length === 0) {
       throw new Error("Please enter a location.");
     }
 
+    const trimmed = query.trim();
+    const lower = trimmed.toLowerCase();
+
+    // 1. Fast exact/fuzzy match against verified local facilities and hubs
+    const localMatch = VERIFIED_FACILITIES.find(f => {
+      const fn = f.name.toLowerCase();
+      return fn === lower || fn.includes(lower) || lower.includes(fn);
+    });
+
+    if (localMatch) {
+      return [{
+        name: `${localMatch.name}, ${localMatch.city || 'Hyderabad'}`,
+        fullName: `${localMatch.name}, ${localMatch.city || 'Hyderabad'}, India`,
+        lat: localMatch.lat,
+        lng: localMatch.lng
+      }];
+    }
+
     try {
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`;
-      const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(trimmed)}&countrycodes=in&limit=5&addressdetails=1`;
+      const res = await fetch(url, { headers: { 'Accept-Language': 'en', 'User-Agent': 'SafeRoute-App/1.0' } });
       if (!res.ok) throw new Error(`Geocoding failed with status ${res.status}`);
       const data = await res.json();
       if (!Array.isArray(data) || data.length === 0) {

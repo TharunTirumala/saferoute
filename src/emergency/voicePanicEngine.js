@@ -397,6 +397,10 @@ export class VoicePanicEngine {
   /**
    * Explicitly enables Hands-Free Voice SOS & requests microphone permission
    */
+  startListening() {
+    return this.enable();
+  }
+
   async enable() {
     if (!this.isSupported) {
       this.state = 'UNSUPPORTED';

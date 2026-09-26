@@ -1291,8 +1291,18 @@ btnFindSafestRoute.addEventListener('click', async (e) => {
 });
 
 async function handleFindSafeRoutes() {
-  const srcVal = (sourceInput.value || '').trim();
-  const destVal = (destInput.value || '').trim();
+  let srcVal = (sourceInput.value || '').trim();
+  let destVal = (destInput.value || '').trim();
+
+  // If both inputs are empty, auto-populate from the active preset
+  if (!srcVal && !destVal) {
+    const activePresetBtn = document.querySelector('.preset-pill-clean.active') || document.querySelector('.preset-pill-clean');
+    if (activePresetBtn) {
+      activePresetBtn.click();
+      srcVal = (sourceInput.value || '').trim();
+      destVal = (destInput.value || '').trim();
+    }
+  }
 
   if (!srcVal) {
     alert("Please enter a starting location.");
@@ -1341,6 +1351,10 @@ async function handleFindSafeRoutes() {
     document.body.classList.add('page-second');
     interfaceTripInput.classList.add('hidden');
     interfaceRouteResult.classList.remove('hidden');
+
+    if (safeRouteMapRenderer && safeRouteMapRenderer.map) {
+      safeRouteMapRenderer.map.invalidateSize({ animate: false });
+    }
 
     summaryLocations.innerHTML = `
       <span class="loc-text origin">${safeRouteEngine.origin ? safeRouteEngine.origin.name : srcVal}</span>
