@@ -1,8 +1,8 @@
 // SafeRoute: Central Zero-Tap Android Native & Web Emergency SOS Engine
 // Bound to Authenticated User's Permanent System Number -> 3-Second Countdown -> Automatic GPS & Alert Dispatch
 
-import { userStore } from './userStore.js';
-import { authService } from './authService.js';
+import { userStore } from '../user/userStore.js';
+import { authService } from '../user/authService.js';
 import { liveSosSessionStore } from './liveSosSessionStore.js';
 import { platformEmergencyBridge, COMM_STATUS } from './platformEmergencyBridge.js';
 import { androidNativeSosService } from './androidNativeSosService.js';

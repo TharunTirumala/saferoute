@@ -3,7 +3,7 @@
 // Each mobile number requires OTP verification ONLY ONCE.
 
 import { userStore } from './userStore.js';
-import { normalizePhoneNumber, formatDisplayPhone } from './phoneUtils.js';
+import { normalizePhoneNumber, formatDisplayPhone } from '../emergency/phoneUtils.js';
 
 export class AuthService {
   constructor() {

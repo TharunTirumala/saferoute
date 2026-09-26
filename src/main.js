@@ -1,17 +1,17 @@
 import './style.css';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { nearbyPlacesService } from './nearbyPlacesService.js';
-import { sound } from './sound.js';
-import { SafeRouteEngine } from './safeRouteEngine.js';
-import { LeafletMapRenderer } from './leafletMap.js';
-import { reportStore } from './reportStore.js';
-import { AIReportClassifier } from './aiClassifier.js';
-import { VoicePanicEngine } from './voicePanicEngine.js';
-import { EmergencySosService, SOS_STATUS } from './emergencySosService.js';
-import { liveSosSessionStore } from './liveSosSessionStore.js';
-import { generateRouteExplanation } from './explainabilityEngine.js';
-import { safetyForecastEngine } from './safetyForecastEngine.js';
+import { nearbyPlacesService } from './core/nearbyPlacesService.js';
+import { sound } from './emergency/sound.js';
+import { SafeRouteEngine } from './core/safeRouteEngine.js';
+import { LeafletMapRenderer } from './core/leafletMap.js';
+import { reportStore } from './user/reportStore.js';
+import { AIReportClassifier } from './user/aiClassifier.js';
+import { VoicePanicEngine } from './emergency/voicePanicEngine.js';
+import { EmergencySosService, SOS_STATUS } from './emergency/emergencySosService.js';
+import { liveSosSessionStore } from './emergency/liveSosSessionStore.js';
+import { generateRouteExplanation } from './ai/explainabilityEngine.js';
+import { safetyForecastEngine } from './core/safetyForecastEngine.js';
 
 // ================= VIEW INITIALIZATION =================
 const tabSafeRoute = document.getElementById('tabSafeRoute');

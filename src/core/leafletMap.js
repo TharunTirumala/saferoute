@@ -1,7 +1,7 @@
 // LeafletMap: Interactive Safety Map, Polylines, Exact Pins, Heatmap Layer & Click-Picker
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { reportStore } from './reportStore.js';
+import { reportStore } from '../user/reportStore.js';
 import { VERIFIED_FACILITIES } from './facilityService.js';
 
 export class LeafletMapRenderer {

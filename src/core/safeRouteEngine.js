@@ -1,6 +1,6 @@
 // SafeRoute Engine: Authoritative Real Road Routing (Google Directions / OSRM) + Dynamic Safe Detour Algorithm
 import { SAFETY_CONFIG, getScoreMetadata } from './safetyConfig.js';
-import { reportStore } from './reportStore.js';
+import { reportStore } from '../user/reportStore.js';
 import { FacilityService } from './facilityService.js';
 
 // Haversine Distance in Kilometers

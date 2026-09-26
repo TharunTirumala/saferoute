@@ -2,7 +2,7 @@
 // ONE VERIFIED MOBILE NUMBER = ONE USER ACCOUNT = ONE SYSTEM NUMBER
 // Each mobile number requires OTP verification ONLY ONCE.
 
-import { normalizePhoneNumber } from './phoneUtils.js';
+import { normalizePhoneNumber } from '../emergency/phoneUtils.js';
 
 const USERS_DB_KEY = 'saferoute_users_db_v4';
 const CONTACTS_DB_KEY = 'saferoute_contacts_db_v4';

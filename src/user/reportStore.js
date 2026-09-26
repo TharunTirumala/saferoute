@@ -1,5 +1,5 @@
 // ReportStore: Exact Coordinate Storage with LocalStorage Persistence & Recency Decay
-import { SAFETY_CONFIG } from './safetyConfig.js';
+import { SAFETY_CONFIG } from '../core/safetyConfig.js';
 
 const STORAGE_KEY = 'saferoute_unsafe_reports_v2';
 
