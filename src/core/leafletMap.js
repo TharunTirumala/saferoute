@@ -110,7 +110,6 @@ export class LeafletMapRenderer {
 
   render(engine) {
     if (!this.map) return;
-    this.map.invalidateSize({ animate: false });
 
     this.routesLayer.clearLayers();
     this.reportsLayer.clearLayers();
@@ -299,9 +298,7 @@ export class LeafletMapRenderer {
     if (allPoints.length > 1) {
       try {
         const bounds = L.latLngBounds(allPoints);
-        if (bounds.isValid()) {
-          this.map.fitBounds(bounds.pad(0.16), { animate: false, maxZoom: 16 });
-        }
+        this.map.fitBounds(bounds.pad(0.16), { animate: false });
       } catch (e) {
         console.warn("fitBounds warning:", e);
       }
