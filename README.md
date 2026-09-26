@@ -39,7 +39,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/pranav-3010/saferoute.git
+git clone https://github.com/TharunTirumala/saferoute.git
 
 # Navigate to the project directory
 cd saferoute
@@ -52,3 +52,11 @@ npm run dev
 ```
 
 The application will be available at `http://localhost:5173/`.
+
+---
+
+### 👤 Author
+
+**Tharun Tirumala**
+- GitHub: [@TharunTirumala](https://github.com/TharunTirumala)
+- Repository: [TharunTirumala/saferoute](https://github.com/TharunTirumala/saferoute)
