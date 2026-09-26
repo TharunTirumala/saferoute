@@ -7,11 +7,9 @@ import { SafeRouteEngine } from './safeRouteEngine.js';
 import { LeafletMapRenderer } from './leafletMap.js';
 import { reportStore } from './reportStore.js';
 import { AIReportClassifier } from './aiClassifier.js';
-import { SAFETY_CONFIG } from './safetyConfig.js';
-import { VoicePanicEngine, SUPPORTED_LANGUAGES } from './voicePanicEngine.js';
+import { VoicePanicEngine } from './voicePanicEngine.js';
 import { EmergencySosService, SOS_STATUS } from './emergencySosService.js';
 import { liveSosSessionStore } from './liveSosSessionStore.js';
-import { generateLLMSafetyReasoning } from './llmService.js';
 import { generateRouteExplanation } from './explainabilityEngine.js';
 import { safetyForecastEngine } from './safetyForecastEngine.js';
 
