@@ -44,33 +44,41 @@ export class AuthService {
     this.clearSession();
   }
 
+  _sanitizeAndNormalizePhone(phoneInput) {
+    const cleanDigits = (phoneInput || '').replace(/[^0-9]/g, '');
+    if (cleanDigits.length !== 10) return null;
+    return normalizePhoneNumber(cleanDigits);
+  }
+
+  _createUserSession(dbUser, formattedPhone, sessionToken) {
+    return {
+      id: dbUser.userId,
+      userId: dbUser.userId,
+      systemNumber: formattedPhone,
+      mobileNumber: formattedPhone,
+      phone: formattedPhone,
+      isVerified: true,
+      verifiedAt: dbUser.createdAt || new Date().toISOString(),
+      lastLoginAt: new Date().toISOString(),
+      sessionToken: sessionToken || `sess_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
+    };
+  }
+
   /**
    * Check if user is already verified:
    * - Returning verified user -> Logs in immediately, BYPASSES OTP.
    * - New user -> Needs 1-time OTP verification.
    */
   async checkOrLoginUser(phoneInput) {
-    const cleanDigits = (phoneInput || '').replace(/[^0-9]/g, '');
-    if (cleanDigits.length !== 10) {
+    const formattedPhone = this._sanitizeAndNormalizePhone(phoneInput);
+    if (!formattedPhone) {
       return { success: false, error: 'Please enter a valid 10-digit mobile number.' };
     }
-
-    const formattedPhone = normalizePhoneNumber(cleanDigits);
 
     // If this mobile number has already been verified before -> DO NOT send OTP again!
     if (userStore.isUserVerified(formattedPhone)) {
       const dbUser = userStore.getOrCreateUser(formattedPhone);
-      const userObj = {
-        id: dbUser.userId,
-        userId: dbUser.userId,
-        systemNumber: formattedPhone,
-        mobileNumber: formattedPhone,
-        phone: formattedPhone,
-        isVerified: true,
-        verifiedAt: dbUser.createdAt,
-        lastLoginAt: new Date().toISOString(),
-        sessionToken: `sess_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
-      };
+      const userObj = this._createUserSession(dbUser, formattedPhone);
 
       this.currentUser = userObj;
       console.log(`[SafeRoute Auth] Recognized verified user: ${formattedPhone} -> Bypassing OTP`);
@@ -93,12 +101,10 @@ export class AuthService {
    * Sends OTP for 1-time verification of a new mobile number
    */
   async sendOtp(phoneInput) {
-    const cleanDigits = (phoneInput || '').replace(/[^0-9]/g, '');
-    if (cleanDigits.length !== 10) {
+    const formattedPhone = this._sanitizeAndNormalizePhone(phoneInput);
+    if (!formattedPhone) {
       return { success: false, error: 'Please enter a valid 10-digit mobile number.' };
     }
-
-    const formattedPhone = normalizePhoneNumber(cleanDigits);
 
     try {
       const res = await fetch('/api/auth/send-otp', {
@@ -147,9 +153,8 @@ export class AuthService {
    * Verifies 6-digit OTP, creates permanent account, and marks mobile number as permanently verified
    */
   async verifyOtp(phoneInput, otpInput) {
-    const cleanDigits = (phoneInput || '').replace(/[^0-9]/g, '');
+    const formattedPhone = this._sanitizeAndNormalizePhone(phoneInput);
     const cleanOtp = (otpInput || '').trim();
-    const formattedPhone = normalizePhoneNumber(cleanDigits);
 
     if (cleanOtp.length !== 6) {
       return { success: false, error: 'Please enter all 6 digits of the OTP code.' };
@@ -179,16 +184,7 @@ export class AuthService {
           const data = await res.json();
           // Mark permanently verified in database
           const dbUser = userStore.markUserVerified(formattedPhone);
-          const userObj = {
-            id: dbUser.userId,
-            userId: dbUser.userId,
-            systemNumber: formattedPhone,
-            mobileNumber: formattedPhone,
-            phone: formattedPhone,
-            isVerified: true,
-            verifiedAt: new Date().toISOString(),
-            sessionToken: data.sessionToken || `sess_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
-          };
+          const userObj = this._createUserSession(dbUser, formattedPhone, data.sessionToken);
 
           this.currentUser = userObj;
           return { success: true, user: userObj };
@@ -204,16 +200,7 @@ export class AuthService {
     if (this.activeChallenge.clientOtp && this.activeChallenge.clientOtp === cleanOtp) {
       // Mark permanently verified in database
       const dbUser = userStore.markUserVerified(formattedPhone);
-      const userObj = {
-        id: dbUser.userId,
-        userId: dbUser.userId,
-        systemNumber: formattedPhone,
-        mobileNumber: formattedPhone,
-        phone: formattedPhone,
-        isVerified: true,
-        verifiedAt: new Date().toISOString(),
-        sessionToken: `sess_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
-      };
+      const userObj = this._createUserSession(dbUser, formattedPhone);
 
       this.currentUser = userObj;
       return { success: true, user: userObj };

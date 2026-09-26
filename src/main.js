@@ -11,7 +11,6 @@ import { VoicePanicEngine } from './emergency/voicePanicEngine.js';
 import { EmergencySosService, SOS_STATUS } from './emergency/emergencySosService.js';
 import { liveSosSessionStore } from './emergency/liveSosSessionStore.js';
 import { generateRouteExplanation } from './ai/explainabilityEngine.js';
-import { safetyForecastEngine } from './core/safetyForecastEngine.js';
 
 // ================= VIEW INITIALIZATION =================
 const tabSafeRoute = document.getElementById('tabSafeRoute');
@@ -77,7 +76,6 @@ const destSuggestions = document.getElementById('destSuggestions');
 const sourceCoordDisplay = document.getElementById('sourceCoordDisplay');
 const destCoordDisplay = document.getElementById('destCoordDisplay');
 const btnGpsSource = document.getElementById('btnGpsSource');
-const travelTimeSelect = document.getElementById('travelTimeSelect');
 
 // Deviation Alert
 const deviationAlertBanner = document.getElementById('deviationAlertBanner');
@@ -88,9 +86,6 @@ const routesListContainer = document.getElementById('routesListContainer');
 const whyRouteCard = document.getElementById('whyRouteCard');
 const whyCardTitle = document.getElementById('whyCardTitle');
 const whyScoreBadge = document.getElementById('whyScoreBadge');
-const factorsMatrix = document.getElementById('factorsMatrix');
-const positiveReasonsList = document.getElementById('positiveReasonsList');
-const riskWarningsList = document.getElementById('riskWarningsList');
 const btnStartNavigation = document.getElementById('btnStartNavigation');
 const btnShareRoute = document.getElementById('btnShareRoute');
 
@@ -103,7 +98,6 @@ const reportsDrawer = document.getElementById('reportsDrawer');
 const closeDrawerBtn = document.getElementById('closeDrawerBtn');
 const communityReportsList = document.getElementById('communityReportsList');
 
-const btnHeaderReportModal = document.getElementById('btnHeaderReportModal');
 const btnResultReportModal = document.getElementById('btnResultReportModal');
 const reportModal = document.getElementById('reportModal');
 const closeModalBtn = document.getElementById('closeModalBtn');
@@ -127,13 +121,6 @@ const btnRemovePhoto = document.getElementById('btnRemovePhoto');
 const btnOpenSosSetup = document.getElementById('btnOpenSosSetup');
 const headerSosReadinessPill = document.getElementById('headerSosReadinessPill');
 const headerSosReadinessLabel = document.getElementById('headerSosReadinessLabel');
-
-const sosReadinessBanner = document.getElementById('sosReadinessBanner');
-const readinessIconBox = document.getElementById('readinessIconBox');
-const readinessBannerTitle = document.getElementById('readinessBannerTitle');
-const readinessBadgeTag = document.getElementById('readinessBadgeTag');
-const readinessBannerSub = document.getElementById('readinessBannerSub');
-const btnBannerOpenSetup = document.getElementById('btnBannerOpenSetup');
 
 const sosSetupModal = document.getElementById('sosSetupModal');
 const closeSosSetupBtn = document.getElementById('closeSosSetupBtn');
@@ -163,7 +150,6 @@ const centralCountdownNumber = document.getElementById('centralCountdownNumber')
 const centralCountdownNoticeSecs = document.getElementById('centralCountdownNoticeSecs');
 const btnCancelCentralCountdown = document.getElementById('btnCancelCentralCountdown');
 
-const openSosBtn = document.getElementById('openSosBtn');
 const sosModal = document.getElementById('sosModal');
 const closeSosModalBtn = document.getElementById('closeSosModalBtn');
 const sosTriggerSourceName = document.getElementById('sosTriggerSourceName');
@@ -210,7 +196,6 @@ const contactsManagerList = document.getElementById('contactsManagerList');
 // Voice SOS Modal Elements
 const btnOpenVoiceSettings = document.getElementById('btnOpenVoiceSettings');
 const headerVoiceLabel = document.getElementById('headerVoiceLabel');
-const btnInputVoiceToggle = document.getElementById('btnInputVoiceToggle');
 const btnOpenVoiceSettingsPromo = document.getElementById('btnOpenVoiceSettingsPromo');
 const voiceSettingsModal = document.getElementById('voiceSettingsModal');
 const closeVoiceSettingsBtn = document.getElementById('closeVoiceSettingsBtn');
@@ -302,16 +287,6 @@ function renderSosReadiness(isReady, report) {
     if (headerSosReadinessPill) headerSosReadinessPill.className = 'status-indicator-pill ready';
     if (headerSosReadinessLabel) headerSosReadinessLabel.textContent = 'SOS READY';
 
-    if (sosReadinessBanner) sosReadinessBanner.className = 'sos-readiness-banner ready';
-    if (readinessIconBox) readinessIconBox.className = 'readiness-icon-box ready';
-    if (readinessBannerTitle) readinessBannerTitle.textContent = 'SOS READY';
-    if (readinessBadgeTag) {
-      readinessBadgeTag.className = 'badge-tag-clean success';
-      readinessBadgeTag.textContent = 'Pre-Authorized';
-    }
-    if (readinessBannerSub) readinessBannerSub.textContent = 'All emergency permissions pre-authorized. 1-Tap SOS will execute immediately with zero prompts.';
-    if (btnBannerOpenSetup) btnBannerOpenSetup.textContent = 'Check Setup';
-
     if (setupStatusDot) setupStatusDot.className = 'status-indicator-dot ready';
     if (setupStatusHeadline) setupStatusHeadline.textContent = 'SOS READY';
     if (setupStatusSubtext) setupStatusSubtext.textContent = 'Emergency SOS is fully pre-authorized. In an emergency, alerts dispatch instantly.';
@@ -320,16 +295,6 @@ function renderSosReadiness(isReady, report) {
   } else {
     if (headerSosReadinessPill) headerSosReadinessPill.className = 'status-indicator-pill not-ready';
     if (headerSosReadinessLabel) headerSosReadinessLabel.textContent = 'SOS Setup Required';
-
-    if (sosReadinessBanner) sosReadinessBanner.className = 'sos-readiness-banner not-ready';
-    if (readinessIconBox) readinessIconBox.className = 'readiness-icon-box not-ready';
-    if (readinessBannerTitle) readinessBannerTitle.textContent = 'SOS NOT READY';
-    if (readinessBadgeTag) {
-      readinessBadgeTag.className = 'badge-tag-clean warning';
-      readinessBadgeTag.textContent = 'Setup Required';
-    }
-    if (readinessBannerSub) readinessBannerSub.textContent = 'Some emergency permissions or contacts are missing. Complete one-time setup now to ensure instant 1-tap SOS.';
-    if (btnBannerOpenSetup) btnBannerOpenSetup.textContent = 'Complete Setup';
 
     if (setupStatusDot) setupStatusDot.className = 'status-indicator-dot not-ready';
     if (setupStatusHeadline) setupStatusHeadline.textContent = 'SOS NOT READY';
@@ -390,7 +355,6 @@ function openSosSetupModal() {
 }
 
 if (btnOpenSosSetup) btnOpenSosSetup.addEventListener('click', openSosSetupModal);
-if (btnBannerOpenSetup) btnBannerOpenSetup.addEventListener('click', openSosSetupModal);
 closeSosSetupBtn.addEventListener('click', () => sosSetupModal.classList.add('hidden'));
 btnDoneSosSetup.addEventListener('click', () => sosSetupModal.classList.add('hidden'));
 
@@ -617,39 +581,17 @@ const triggerSosImmediately = (sourceName) => {
   });
 };
 
-// Universal event listener: catches clicks on ANY button/element related to SOS
+// Universal delegated click listener for SOS buttons
 document.addEventListener('click', (e) => {
-  const target = e.target.closest('#btnHeaderGlobalSos, #openSosBtn, #btnSidebarSos, #triggerManualSos, .btn-emergency-sos-sm, .sos-menu-btn');
+  const target = e.target.closest('#btnSidebarSos, .btn-emergency-sos-sm, .sos-menu-btn');
   if (target) {
     e.preventDefault();
     triggerSosImmediately(target.id || target.textContent.trim() || 'Global SOS Click');
   }
 });
 
-const btnHeaderGlobalSos = document.getElementById('btnHeaderGlobalSos');
-if (btnHeaderGlobalSos) {
-  btnHeaderGlobalSos.addEventListener('click', () => triggerSosImmediately('Header Global ONE-TAP SOS'));
-}
-
-if (openSosBtn) {
-  openSosBtn.addEventListener('click', () => triggerSosImmediately('One-Tap SOS Button'));
-}
-
-const btnSidebarSos = document.getElementById('btnSidebarSos');
-if (btnSidebarSos) {
-  btnSidebarSos.addEventListener('click', () => triggerSosImmediately('Menu SOS Button'));
-}
-
 btnCancelCentralCountdown.addEventListener('click', () => {
   emergencySos.cancelSosCountdown();
-});
-
-btnDismissSos.addEventListener('click', () => {
-  emergencySos.stopSOS();
-});
-
-closeSosModalBtn.addEventListener('click', () => {
-  emergencySos.stopSOS();
 });
 
 btnDismissSos.addEventListener('click', () => {
@@ -793,11 +735,6 @@ function updateVoicePanicStatusUI(status) {
     if (btnOpenVoiceSettingsPromo) btnOpenVoiceSettingsPromo.classList.add('listening');
     btnModalToggleVoice.textContent = 'Disable';
     btnModalToggleVoice.className = 'btn-danger-outline-sm';
-
-    if (btnInputVoiceToggle) {
-      btnInputVoiceToggle.textContent = 'Disable Voice SOS';
-      btnInputVoiceToggle.classList.add('active');
-    }
   } else if (status === 'STARTING') {
     modalVoiceStatusPill.className = 'status-indicator-pill off';
     modalVoiceStatusPill.innerHTML = '<span class="status-dot"></span><span class="status-label">Starting...</span>';
@@ -812,22 +749,12 @@ function updateVoicePanicStatusUI(status) {
     if (btnOpenVoiceSettingsPromo) btnOpenVoiceSettingsPromo.classList.remove('listening');
     btnModalToggleVoice.textContent = 'Unsupported';
     btnModalToggleVoice.disabled = true;
-
-    if (btnInputVoiceToggle) {
-      btnInputVoiceToggle.textContent = 'Browser Unsupported';
-      btnInputVoiceToggle.disabled = true;
-    }
   } else {
     if (headerVoiceLabel) headerVoiceLabel.textContent = 'Voice SOS';
     if (btnOpenVoiceSettings) btnOpenVoiceSettings.classList.remove('listening');
     if (btnOpenVoiceSettingsPromo) btnOpenVoiceSettingsPromo.classList.remove('listening');
     btnModalToggleVoice.textContent = 'Enable';
     btnModalToggleVoice.className = 'btn-primary-action-sm';
-
-    if (btnInputVoiceToggle) {
-      btnInputVoiceToggle.textContent = 'Enable Voice SOS';
-      btnInputVoiceToggle.classList.remove('active');
-    }
   }
 }
 
@@ -851,16 +778,6 @@ btnModalToggleVoice.addEventListener('click', () => {
   }
   voicePanicEngine.toggle();
 });
-
-if (btnInputVoiceToggle) {
-  btnInputVoiceToggle.addEventListener('click', () => {
-    if (!voicePanicEngine.isSupported) {
-      alert("Hands-Free Voice SOS is not supported by your current browser. Please use Chrome or Edge for Web Speech API support.");
-      return;
-    }
-    voicePanicEngine.toggle();
-  });
-}
 
 function renderPhrasesList() {
   const phrases = voicePanicEngine.getPhrases();
@@ -1181,56 +1098,6 @@ const TRAVEL_MODES = {
   auto: { name: 'Auto', icon: '🛺', speed: 24.0 }
 };
 
-function formatDurationText(durationMin) {
-  const rounded = Math.round(durationMin);
-  if (rounded < 60) {
-    return `${rounded} min`;
-  }
-  const hrs = Math.floor(rounded / 60);
-  const mins = rounded % 60;
-  return mins > 0 ? `${hrs} hr ${mins < 10 ? '0' : ''}${mins} min` : `${hrs} hr`;
-}
-
-// Function to calculate and update live route distance and time preview on First Interface
-function updateFirstPageRoutePreview() {
-  const origin = safeRouteEngine.origin;
-  const dest = safeRouteEngine.destination;
-  const modeKey = safeRouteEngine.travelMode || 'car';
-  const modeInfo = TRAVEL_MODES[modeKey] || TRAVEL_MODES.car;
-
-  const previewTravelingByTag = document.getElementById('previewTravelingByTag');
-  const previewDistanceValue = document.getElementById('previewDistanceValue');
-  const previewTimeValue = document.getElementById('previewTimeValue');
-
-  if (previewTravelingByTag) {
-    previewTravelingByTag.textContent = `Traveling by ${modeInfo.icon} ${modeInfo.name}`;
-  }
-
-  if (origin && dest && !isNaN(origin.lat) && !isNaN(dest.lat)) {
-    // Mode-specific route distance calculation based on urban road curvature
-    const R = 6371;
-    const dLat = ((dest.lat - origin.lat) * Math.PI) / 180;
-    const dLon = ((dest.lng - origin.lng) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((origin.lat * Math.PI) / 180) *
-        Math.cos((dest.lat * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const rawDist = R * c;
-    const curvatureFactor = modeKey === 'walking' ? 1.18 : modeKey === 'bus' ? 1.32 : 1.25;
-    const distKm = Math.max(0.5, Math.round(rawDist * curvatureFactor * 10) / 10);
-    const durMin = (distKm / modeInfo.speed) * 60;
-
-    if (previewDistanceValue) previewDistanceValue.textContent = `${distKm} km`;
-    if (previewTimeValue) previewTimeValue.textContent = formatDurationText(durMin);
-  } else {
-    if (previewDistanceValue) previewDistanceValue.textContent = `-- km`;
-    if (previewTimeValue) previewTimeValue.textContent = `-- min`;
-  }
-}
-
 // ================= TRAVEL MODE DROPDOWN =================
 const btnTravelModeDropdownTrigger = document.getElementById('btnTravelModeDropdownTrigger');
 const travelModePopover = document.getElementById('travelModePopover');
@@ -1285,7 +1152,6 @@ modeOptionButtons.forEach((btn) => {
     if (selectedModeDisplay) selectedModeDisplay.textContent = `How are you travelling? → ${modeInfo.icon} ${modeInfo.name}`;
 
     toggleModePopover(false);
-    updateFirstPageRoutePreview();
   });
 });
 
@@ -1678,32 +1544,6 @@ function renderSafeRouteUI() {
       });
     }
 
-    // FEATURE 1: UPDATE SAFETY FORECAST PREDICTIVE RISK CARD
-    const currentRiskValue = parseFloat((1 - (selected.safetyScore / 100)).toFixed(2));
-    const forecast = safetyForecastEngine.predictRiskForecast({
-      currentRiskScore: currentRiskValue,
-      zoneName: selected.name || 'Selected Corridor'
-    }, selectedForecastHours);
-
-    const forecastNowScore = document.getElementById('forecastNowScore');
-    const forecastFutureScore = document.getElementById('forecastFutureScore');
-    const forecastDeltaTag = document.getElementById('forecastDeltaTag');
-    const forecastTrendBadge = document.getElementById('forecastTrendBadge');
-    const forecastDriversList = document.getElementById('forecastDriversList');
-
-    if (forecastNowScore) forecastNowScore.textContent = forecast.currentRiskScore;
-    if (forecastFutureScore) forecastFutureScore.textContent = `${forecast.predictedRiskScore} ${forecast.trendIcon}`;
-    if (forecastDeltaTag) {
-      forecastDeltaTag.textContent = `${forecast.percentChange} ${forecast.trendStatus}`;
-      forecastDeltaTag.style.color = forecast.trendColor;
-    }
-    if (forecastTrendBadge) {
-      forecastTrendBadge.textContent = `+${selectedForecastHours}h Forecast`;
-      forecastTrendBadge.style.color = forecast.trendColor;
-    }
-    if (forecastDriversList) {
-      forecastDriversList.innerHTML = forecast.forecastDrivers.map(d => `<li>${d}</li>`).join('');
-    }
   }
 
   safeRouteMapRenderer.render(safeRouteEngine);
@@ -1816,7 +1656,6 @@ function openReportModal() {
   reportModal.classList.remove('hidden');
 }
 
-if (btnHeaderReportModal) btnHeaderReportModal.addEventListener('click', openReportModal);
 btnResultReportModal.addEventListener('click', openReportModal);
 
 closeModalBtn.addEventListener('click', () => reportModal.classList.add('hidden'));
@@ -1961,22 +1800,6 @@ function renderCommunityReportsDrawer() {
 document.body.classList.add('page-first');
 document.body.classList.remove('page-second');
 renderCommunityReportsDrawer();
-
-// ================= FEATURE 1: SAFETY FORECAST CONTROLS =================
-let selectedForecastHours = 3;
-document.querySelectorAll('.forecast-hour-btn').forEach((btn) => {
-  btn.addEventListener('click', (e) => {
-    document.querySelectorAll('.forecast-hour-btn').forEach((b) => b.classList.remove('active'));
-    e.currentTarget.classList.add('active');
-    selectedForecastHours = parseInt(e.currentTarget.getAttribute('data-hours'), 10) || 3;
-    renderRouteResultsUI();
-  });
-});
-
-// Initialize First Page Route Preview on load
-setTimeout(() => {
-  updateFirstPageRoutePreview();
-}, 200);
 
 // ================= NEARBY SAFETY PLACES CONTROLLER =================
 const checkNearbyPolice = document.getElementById('checkNearbyPolice');

@@ -3,6 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { reportStore } from '../user/reportStore.js';
 import { VERIFIED_FACILITIES } from './facilityService.js';
+import { haversineDistance } from './safeRouteEngine.js';
 
 export class LeafletMapRenderer {
   constructor(containerId, options = {}) {
@@ -564,24 +565,13 @@ function calculateBearing(lat1, lon1, lat2, lon2) {
   return (brng + 360) % 360;
 }
 
-function calculateSubDistanceKm(lat1, lon1, lat2, lon2) {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
 function generateSmoothRoutePoints(path, totalSamples = 160) {
   if (!path || path.length < 2) return [];
   
   const distances = [0];
   let totalDist = 0;
   for (let i = 0; i < path.length - 1; i++) {
-    const d = calculateSubDistanceKm(path[i].lat, path[i].lng, path[i + 1].lat, path[i + 1].lng);
+    const d = haversineDistance(path[i].lat, path[i].lng, path[i + 1].lat, path[i + 1].lng);
     totalDist += d;
     distances.push(totalDist);
   }
