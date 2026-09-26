@@ -1,38 +1,37 @@
-# women_safety
+# SafeRoute — Professional Safety Navigation & One-Tap Emergency SOS
 
-## SafeRoute & Guardian Eye // AI GPS Navigation & Safety Intelligence System
-
-**SafeRoute** is an AI-powered GPS navigation and real-time crime risk-zone scoring platform designed to ensure women's safety during transit. It dynamically calculates route safety using Haversine distance-based crime cluster analysis and NLP-based crime news intelligence.
+**SafeRoute** is an AI-powered safety navigation platform with verified road network routing, pre-authorized one-tap emergency SOS, and continuous live GPS location tracking.
 
 ---
 
 ### 🚀 Key Features
 
-1. **AI Route Safety Scoring (Haversine Formula)**
-   - Computes weighted proximity to verified crime incident hotspots across the Delhi NCR region.
-   - Evaluates alternative paths and recommends the safest route over the fastest/riskiest route.
+1. **AI Route Safety Scoring**
+   - Multi-factor safety scoring evaluating lighting coverage, verified police presence, time-of-day risk multipliers, and pedestrian infrastructure.
+   - Evaluates alternative paths and recommends the safest route over purely fastest routes.
 
-2. **Interactive Crime Risk Heatmap & Incident Clusters**
-   - Visualizes color-coded risk vectors (Red = Risky Hotspots, Green = Safest Path, Yellow = Highway Alternate).
-   - Real-time pinpointing of high-risk zones, poorly lit streets, and isolated corridors.
+2. **Interactive Safety Map & Overlays**
+   - Color-coded safety routes (Safest path in green, alternative routes in blue, high-risk routes in red).
+   - Real-time safety heatmap and verified facilities overlay (Police stations, Hospitals, Public places).
 
-3. **Community Safety Reporting**
-   - Allows users to report unsafe locations, broken streetlights, eve-teasing hotspots, and deserted stretches with danger ratings (1 to 5 stars).
+3. **One-Tap Emergency SOS & Live GPS Dispatch**
+   - Instant 3-second countdown emergency trigger connected to cloud webhooks and automated telephony.
+   - Generates secure live GPS tracking sessions for emergency contacts with continuous location breadcrumbs.
 
-4. **Live Crime Intelligence Feed**
-   - Simulates continuous NLP extraction and classification from news sources to update the crime hotspot database.
+4. **Hands-Free Multilingual Voice SOS**
+   - On-device speech recognition listening for emergency trigger phrases across multiple languages (English, Hindi, Telugu, Tamil, Kannada, Marathi, Spanish).
 
-5. **Guardian Eye CCTV Computer Vision Integration**
-   - Simulated YOLOv8 + Transformers computer vision module for lone woman detection, surrounded proximity threat alerts, distress facial emotion detection, and automated Telegram dispatch alerts.
+5. **Community Safety Reporting**
+   - Allows users to report unsafe locations, unlit areas, and hazards to dynamically inform routing safety scores.
 
 ---
 
 ### 🛠️ Tech Stack & Architecture
 
-- **Frontend**: Vanilla JavaScript (ES Modules), HTML5 Canvas, Modern CSS3
+- **Frontend**: Vanilla JavaScript (ES Modules), Leaflet Map Engine, Modern CSS3
 - **Build Tool**: Vite
-- **Routing Engine**: Custom Haversine Distance & Waypoint Risk Calculation Engine
-- **Icons & UI**: Custom SVG vector graphics, Glassmorphism design tokens
+- **Routing Engine**: OSRM Road Geometry & Haversine Distance Scoring
+- **Emergency Pipeline**: Automated Webhook Dispatch (n8n / Twilio Telephony)
 
 ---
 
@@ -40,10 +39,10 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/pranav-3010/women_safety.git
+git clone https://github.com/pranav-3010/saferoute.git
 
 # Navigate to the project directory
-cd women_safety
+cd saferoute
 
 # Install dependencies
 npm install

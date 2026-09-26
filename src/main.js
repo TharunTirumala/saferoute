@@ -2,9 +2,6 @@ import './style.css';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { nearbyPlacesService } from './nearbyPlacesService.js';
-import { ScenarioRunner } from './cvEngine.js';
-import { renderCCTV } from './canvasRenderer.js';
-import { telegramDispatcher } from './telegram.js';
 import { sound } from './sound.js';
 import { SafeRouteEngine } from './safeRouteEngine.js';
 import { LeafletMapRenderer } from './leafletMap.js';
@@ -17,35 +14,16 @@ import { liveSosSessionStore } from './liveSosSessionStore.js';
 import { generateLLMSafetyReasoning } from './llmService.js';
 import { generateRouteExplanation } from './explainabilityEngine.js';
 import { safetyForecastEngine } from './safetyForecastEngine.js';
-import { smartNewsReader } from './smartNewsReader.js';
 
-// ================= TAB SWITCHING =================
-const tabGuardianEye = document.getElementById('tabGuardianEye');
+// ================= VIEW INITIALIZATION =================
 const tabSafeRoute = document.getElementById('tabSafeRoute');
-const viewGuardianEye = document.getElementById('viewGuardianEye');
-const viewSafeRoute = document.getElementById('viewSafeRoute');
-
-function switchToSafeRoute() {
-  if (tabSafeRoute) tabSafeRoute.classList.add('active');
-  if (tabGuardianEye) tabGuardianEye.classList.remove('active');
-  if (viewSafeRoute) viewSafeRoute.classList.add('active');
-  if (viewGuardianEye) viewGuardianEye.classList.remove('active');
-  setTimeout(() => {
+if (tabSafeRoute) {
+  tabSafeRoute.addEventListener('click', () => {
     if (safeRouteMapRenderer && safeRouteMapRenderer.map) {
       safeRouteMapRenderer.map.invalidateSize();
     }
-  }, 100);
+  });
 }
-
-function switchToGuardianEye() {
-  if (tabGuardianEye) tabGuardianEye.classList.add('active');
-  if (tabSafeRoute) tabSafeRoute.classList.remove('active');
-  if (viewGuardianEye) viewGuardianEye.classList.add('active');
-  if (viewSafeRoute) viewSafeRoute.classList.remove('active');
-}
-
-if (tabSafeRoute) tabSafeRoute.addEventListener('click', switchToSafeRoute);
-if (tabGuardianEye) tabGuardianEye.addEventListener('click', switchToGuardianEye);
 
 // ================= SAFEROUTE ENGINE & MAP INITIALIZATION =================
 const safeRouteEngine = new SafeRouteEngine();
@@ -662,11 +640,6 @@ if (openSosBtn) {
 const btnSidebarSos = document.getElementById('btnSidebarSos');
 if (btnSidebarSos) {
   btnSidebarSos.addEventListener('click', () => triggerSosImmediately('Menu SOS Button'));
-}
-
-const triggerManualSos = document.getElementById('triggerManualSos');
-if (triggerManualSos) {
-  triggerManualSos.addEventListener('click', () => triggerSosImmediately('Manual CCTV Emergency'));
 }
 
 btnCancelCentralCountdown.addEventListener('click', () => {
@@ -1986,34 +1959,6 @@ function renderCommunityReportsDrawer() {
   });
 }
 
-// ================= GUARDIAN EYE CCTV ENGINE (PRESERVED) =================
-const cvRunner = new ScenarioRunner();
-const cctvCanvas = document.getElementById('cctvCanvas');
-const ctx = cctvCanvas.getContext('2d');
-const alertOverlay = document.getElementById('alertOverlay');
-const thresholdRange = document.getElementById('thresholdRange');
-const thresholdVal = document.getElementById('thresholdVal');
-const emotionSelect = document.getElementById('emotionSelect');
-const timeToggle = document.getElementById('timeToggle');
-const toggleNightVisionBtn = document.getElementById('toggleNightVisionBtn');
-
-let isNightVision = false;
-
-function cctvLoop() {
-  cvRunner.update();
-  const state = cvRunner.getState();
-  renderCCTV(ctx, state, isNightVision);
-
-  if (state.alert) {
-    alertOverlay.classList.remove('hidden');
-  } else {
-    alertOverlay.classList.add('hidden');
-  }
-
-  requestAnimationFrame(cctvLoop);
-}
-requestAnimationFrame(cctvLoop);
-
 // Initial setup checks & drawer counts
 document.body.classList.add('page-first');
 document.body.classList.remove('page-second');
@@ -2029,106 +1974,6 @@ document.querySelectorAll('.forecast-hour-btn').forEach((btn) => {
     renderRouteResultsUI();
   });
 });
-
-// ================= FEATURE 2: SMART NEWS READER NLP SANDBOX =================
-const smartNewsModal = document.getElementById('smartNewsModal');
-const btnOpenSmartNewsModal = document.getElementById('btnOpenSmartNewsModal');
-const closeSmartNewsBtn = document.getElementById('closeSmartNewsBtn');
-const selectSampleHeadline = document.getElementById('selectSampleHeadline');
-const inputNewsHeadline = document.getElementById('inputNewsHeadline');
-const formSmartNewsNLP = document.getElementById('formSmartNewsNLP');
-
-if (btnOpenSmartNewsModal && smartNewsModal) {
-  btnOpenSmartNewsModal.addEventListener('click', () => {
-    smartNewsModal.classList.remove('hidden');
-    // Process initial sample headline if input has text
-    if (selectSampleHeadline && selectSampleHeadline.options.length > 1) {
-      selectSampleHeadline.selectedIndex = 1;
-      const val = selectSampleHeadline.value;
-      if (inputNewsHeadline) inputNewsHeadline.value = val;
-      processHeadlineNLP(val);
-    }
-  });
-}
-
-if (closeSmartNewsBtn && smartNewsModal) {
-  closeSmartNewsBtn.addEventListener('click', () => {
-    smartNewsModal.classList.add('hidden');
-  });
-}
-
-function processHeadlineNLP(headlineText) {
-  if (!headlineText || !headlineText.trim()) return;
-
-  const result = smartNewsReader.analyzeHeadline(headlineText.trim());
-  if (!result) return;
-
-  const nlpLocationVal = document.getElementById('nlpLocationVal');
-  const nlpCrimeVal = document.getElementById('nlpCrimeVal');
-  const nlpTimeVal = document.getElementById('nlpTimeVal');
-  const nlpUrgencyVal = document.getElementById('nlpUrgencyVal');
-  const nlpScoreResult = document.getElementById('nlpScoreResult');
-  const nlpImpactBadge = document.getElementById('nlpImpactBadge');
-
-  if (nlpLocationVal) nlpLocationVal.textContent = result.locationsFound.join(', ');
-  if (nlpCrimeVal) nlpCrimeVal.textContent = `${result.crimesFound.join(', ')} (${result.maxCrimeSeverity})`;
-  if (nlpTimeVal) nlpTimeVal.textContent = `${result.detectedTimeContext} (${result.timeFactor}x)`;
-  if (nlpUrgencyVal) nlpUrgencyVal.textContent = `${result.urgencyFactor}x (${result.urgencyFactor > 1.2 ? 'High Concern' : 'Normal'})`;
-  if (nlpScoreResult) nlpScoreResult.textContent = `${result.initialNewsRisk} ➔ ${result.newLocationRisk} (${result.riskDelta})`;
-
-  if (nlpImpactBadge) {
-    nlpImpactBadge.textContent = result.impactTag;
-    nlpImpactBadge.className = `badge-tag-clean ${result.isPositiveAction ? 'success' : 'danger'}`;
-  }
-
-  // Plot Scraped News Incident Location Marker on Leaflet Map
-  const locationCoordsMap = {
-    'Charminar': [17.3616, 78.4747],
-    'Banjara Hills': [17.4156, 78.4347],
-    'Hitech City': [17.4435, 78.3772],
-    'Gachibowli': [17.4401, 78.3489],
-    'Begumpet': [17.4447, 78.4664],
-    'Jubilee Hills': [17.4319, 78.4071],
-    'Hyderabad': [17.3850, 78.4867]
-  };
-
-  if (safeRouteMapRenderer && safeRouteMapRenderer.map) {
-    result.locationsFound.forEach(locName => {
-      const coords = locationCoordsMap[locName] || [17.4435, 78.3772];
-      const markerColor = result.isPositiveAction ? '#10b981' : '#ef4444';
-      const iconHtml = `<div style="background: ${markerColor}; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; border: 2px solid white; box-shadow: 0 0 10px ${markerColor};">${result.isPositiveAction ? '👮' : '🚨'}</div>`;
-      const customIcon = L.divIcon({ html: iconHtml, className: 'news-hazard-marker', iconSize: [28, 28] });
-      
-      const newsMarker = L.marker(coords, { icon: customIcon }).addTo(safeRouteMapRenderer.map);
-      newsMarker.bindPopup(`
-        <div style="font-family: sans-serif; padding: 4px;">
-          <strong style="color: ${markerColor};">${result.impactTag}</strong><br/>
-          <small><strong>Location:</strong> ${locName}</small><br/>
-          <small><strong>Headline:</strong> "${headlineText}"</small><br/>
-          <small><strong>New Risk Index:</strong> ${result.newLocationRisk} (${result.riskDelta})</small>
-        </div>
-      `).openPopup();
-    });
-  }
-}
-
-if (selectSampleHeadline) {
-  selectSampleHeadline.addEventListener('change', (e) => {
-    const val = e.target.value;
-    if (val) {
-      if (inputNewsHeadline) inputNewsHeadline.value = val;
-      processHeadlineNLP(val);
-    }
-  });
-}
-
-if (formSmartNewsNLP) {
-  formSmartNewsNLP.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const text = inputNewsHeadline ? inputNewsHeadline.value : '';
-    processHeadlineNLP(text);
-  });
-}
 
 // Initialize First Page Route Preview on load
 setTimeout(() => {
